@@ -14,7 +14,10 @@ new-env = (parent) -> { parent, macros:{} }
 
 find-macro = (env, name) ->
   | env.macros[name] => that
-  | otherwise        => find-macro env.parent, name
+  | otherwise =>
+    if env.parent
+      find-macro env.parent, name
+    else null
 
 env = base-env
 
