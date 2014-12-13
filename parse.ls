@@ -1,5 +1,5 @@
 { Transform } = require \stream
-{ lists-to-obj } = require \prelude-ls
+{ lists-to-obj, map } = require \prelude-ls
 
 base-env =
   parent : null
@@ -17,7 +17,6 @@ base-env =
       return Number children.0
     array : (children) -> children
 
-
 new-env = (parent) -> { parent, macros:{} }
 
 find-macro = (env, name) ->
@@ -29,24 +28,31 @@ find-macro = (env, name) ->
 
 env = base-env
 
+evaluate = (env, tree) -->
+  console.log "Evaluating" tree
+  switch typeof! tree
+  | \Array =>
+    if find-macro env, tree.0
+      console.log "Applying to #{tree.0}"
+      code = tree.slice 1
+             |> map evaluate (new-env env)
+             |> that
+      console.log "Macro returned" code
+      return code
+    else throw Error "Undefined macro '#{tree.0}'"
+    # TODO compile to fun call
+  | _ => return tree
+
 module.exports = parse = (tokens) ->
 
-  parse-next = ->
+  parse-next = (options={}) ->
     tree = []
     while token = tokens.shift!
       switch token.name
-      | \L_PAREN  =>
-        tree.push parse-next!
-        env := new-env env
-      | \R_PAREN  =>
-        if find-macro env, tree.0
-          console.log "Applying to #{tree.0}"
-          env := env.parent || env
-          code = that tree.slice 1
-          console.log "Macro returned" code
-          return code
-        else throw Error "Undefined macro '#{tree.0}'"
+      | \L_PAREN  => tree.push parse-next!
+      | \R_PAREN  => return tree
       | otherwise => tree.push token.content
     return tree
 
-  parse-next!0
+  evaluate env, parse-next!0
+  # TODO wrap in implicit `Program` AST-node
