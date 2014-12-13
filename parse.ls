@@ -1,13 +1,21 @@
 { Transform } = require \stream
+{ lists-to-obj } = require \prelude-ls
 
 base-env =
   parent : null
   macros :
-    BinaryExpression : (operator, left, right) ->
-      console.log "operator" operator
-      { type : \BinaryExpression operator, left, right }
-    LiteralNum : (n) ->
-      { type : \Literal value : Number n }
+    object : (children) ->
+      keys   = []
+      values = []
+      children.for-each (a, i) ->
+        (if i % 2 is 0 then keys else values)
+          ..push a
+      lists-to-obj keys, values
+    number : (children) ->
+      if children.length > 1
+        throw Error "Number macro received too many arguments (1 expected)"
+      return Number children.0
+    array : (children) -> children
 
 
 new-env = (parent) -> { parent, macros:{} }
@@ -26,7 +34,6 @@ module.exports = parse = (tokens) ->
   parse-next = ->
     tree = []
     while token = tokens.shift!
-      console.log token
       switch token.name
       | \L_PAREN  =>
         tree.push parse-next!
@@ -35,7 +42,9 @@ module.exports = parse = (tokens) ->
         if find-macro env, tree.0
           console.log "Applying to #{tree.0}"
           env := env.parent || env
-          return that.apply null, tree.slice 1
+          code = that tree.slice 1
+          console.log "Macro returned" code
+          return code
         else throw Error "Undefined macro '#{tree.0}'"
       | otherwise => tree.push token.content
     return tree

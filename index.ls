@@ -5,34 +5,10 @@ lex = require \./lex.ls
 parse = require \./parse.ls
 concat = require \concat-stream
 
-new-env = (parent=null) ->
-  parent : parent
-  fexprs : {}
-  functions : {}
-
-env = new-env!
-  ..functions =
-    function-expression : (args, body) ->
-      # TODO Error if wrong types
-      type : \FunctionExpression
-      id : null
-      params : args.map -> type : \Literal name : it
-      defaults : []
-      body : body
-
-open-parens = 0
-
-ast = do
-  type : \Program
-  body : []
-
-{ body } = ast
-
 process.stdin .pipe lex! .pipe concat (tokens) ->
   tree = parse tokens
   console.log tree
   console.log es.generate tree
-
 
 
 #ast |> es.generate |> console.log

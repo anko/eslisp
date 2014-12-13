@@ -1,0 +1,23 @@
+(object
+    "type" "Program"
+    "body" (array
+        (object
+            "type" "VariableDeclaration"
+            "declarations" (array
+                (object
+                    "type" "VariableDeclarator"
+                    "id" (object
+                        "type" "Identifier"
+                        "name" "answer")
+                    "init" (object
+                        "type" "BinaryExpression"
+                        "operator" "*"
+                        "left" (object
+                            "type"  "Literal"
+                            "value" (number 6)
+                            "raw"   "6")
+                        "right" (object
+                            "type"  "Literal"
+                            "value" (number 7)
+                            "raw"   "6"))))
+            "kind" "var")))

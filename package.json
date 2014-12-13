@@ -12,8 +12,8 @@
     "LiveScript": "^1.3.1"
   },
   "dependencies": {
-    "concat-stream": "^1.4.6",
-    "stream-sink": "^1.2.0",
-    "escodegen": "^1.4.1"
+    "concat-stream": "^1.4.7",
+    "escodegen": "^1.4.1",
+    "prelude-ls": "^1.1.1"
   }
 }
