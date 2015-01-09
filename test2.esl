@@ -14,10 +14,10 @@
                         "operator" "*"
                         "left" (object
                             "type"  "Literal"
-                            "value" (number 6)
+                            "value" 6
                             "raw"   "6")
                         "right" (object
                             "type"  "Literal"
-                            "value" (number 7)
-                            "raw"   "6"))))
+                            "value"  7.5
+                            "raw"   "7.5"))))
             "kind" "var")))
