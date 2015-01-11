@@ -34,7 +34,7 @@ test "basic multiplication test" ->
 
 test "basic macro" ->
   @equals do
-    "var answer = 6 * 7.5;"
+    "var f = function() { return \"hi\"; }"
     esl """
 (array
   (macro fn (params expressions)
@@ -46,22 +46,15 @@ test "basic macro" ->
                                                     "body" ,expressions))))
   (object
     "type" "VariableDeclaration"
+    "kind" "var"
     "declarations" (array
                      (object
                        "type" "VariableDeclarator"
                        "id" (object
                               "type" "Identifier"
-                              "name" "answer")
-                       "init" (object
-                                "type" "BinaryExpression"
-                                "operator" "*"
-                                "left" (object
-                                         "type"  "Literal"
-                                         "value" 6
-                                         "raw"   "6")
-                                "right" (object
-                                          "type"  "Literal"
-                                          "value"  7.5
-                                          "raw"   "7.5"))))
-    "kind" "var"))
+                              "name" "f")
+                       "init" (fn () (array
+                                       (object "type" "ReturnStatement"
+                                               "argument" (object "type" "Literal"
+                                                                  "value" "hi"))))))))
 """
