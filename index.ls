@@ -9,5 +9,7 @@ print-and-pass-on = -> console.log JSON.stringify it ; return it
 module.exports = (input) ->
   input |> lex
   # |> print-and-pass-on
-  |> parse |> compile
+  |> parse
+  |> print-and-pass-on
+  |> compile
   # |> print-and-pass-on
