@@ -9,6 +9,17 @@ quote = (node) ->
   | \string => "\"#{node.text.replace /\"/g, "\\\""}\""
   | \list   => node.contents .map quote
 
+quasiquote = (node) ->
+  switch node.type
+  | \atom   => fallthrough
+  | \string => quote node
+  | \list   =>
+    [ head, ...rest ] = node.contents
+    if head.type is \atom and head.text is \unquote
+      rest
+    else
+      node.contents .map quasiquote
+
 unquote = (node) ->
   switch node.type
   | \atom   => # TODO handle number-looking atoms specially?
@@ -59,17 +70,9 @@ compile = (node, parent-macro-table) ->
       | \quote =>
         rest.map quote
       | \quasiquote =>
-        rest.map ->
-          | it.type is \list =>
-            [ head, rest ] = it.contents
-            if head.type is \atom and head.text is \unquote
-              rest.map unquote
-            else
-              quote it
-          | otherwise => quote it
+        rest.map quasiquote
       | \macro => # macro definition
         [ name, params, body ] = rest
-        console.log name, params, body
 
         if name.type isnt \atom
           throw Error "Macro name has bad type #{name.type} (expected atom)"
