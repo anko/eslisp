@@ -1,3 +1,4 @@
+#!/usr/bin/env lsc
 test = (name, test-func) ->
   (require \tape) name, (t) ->
     test-func.call t  # Make `this` refer to tape's asserts

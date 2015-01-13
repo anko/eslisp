@@ -1,5 +1,3 @@
-#!/usr/bin/env lsc
-
 concat  = require \concat-stream
 lex     = require \./lex.ls
 parse   = require \./parse.ls
