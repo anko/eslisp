@@ -6,56 +6,25 @@ test = (name, test-func) ->
 
 esl = require \./index.ls
 
-test "basic multiplication test" ->
+test "plain expression" ->
   @equals do
-    "var answer = 6 * 7.5;"
     esl """
-(array
-  (object
-    "type" "VariableDeclaration"
-    "declarations" (array
-                     (object
-                       "type" "VariableDeclarator"
-                       "id" (object
-                              "type" "Identifier"
-                              "name" "answer")
-                       "init" (object
-                                "type" "BinaryExpression"
-                                "operator" "*"
-                                "left" (object
-                                         "type"  "Literal"
-                                         "value" 6
-                                         "raw"   "6")
-                                "right" (object
-                                          "type"  "Literal"
-                                          "value"  7.5
-                                          "raw"   "7.5"))))
-    "kind" "var"))
-"""
+    (+ 3 4 5)
+    """
+    "3 + (4 + 5);"
 
-test "basic macro" ->
+test "func" ->
   @equals do
-    "var f = function() { return \"hi\"; }"
     esl """
-(array
-  (macro fn (params expressions)
-         (object "type" "ReturnStatement"
-                 "argument" `(object "type" "FunctionExpression"
-                                     "id" null
-                                     "params" ,params
-                                     "body" (object "type" "BlockStatement"
-                                                    "body" ,expressions))))
-  (object
-    "type" "VariableDeclaration"
-    "kind" "var"
-    "declarations" (array
-                     (object
-                       "type" "VariableDeclarator"
-                       "id" (object
-                              "type" "Identifier"
-                              "name" "f")
-                       "init" (fn () (array
-                                       (object "type" "ReturnStatement"
-                                               "argument" (object "type" "Literal"
-                                                                  "value" "hi"))))))))
-"""
+    (lambda (x) (+ x 1))
+    """
+    "(function (x) {\n    return x + 1;\n});"
+
+/*
+test "what" ->
+  @equals do
+    esl """
+    (macro eight () (+ 3 5))
+    (eight)
+    """
+    "8"
