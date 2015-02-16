@@ -50,37 +50,27 @@ module.exports = (ast) ->
         type : \EmptyStatement
       else
         { contents:[ head, ...rest ]:contents } = ast
-        switch head.text
-        | \quote =>
-          rest.0
-        | otherwise => # must be a function or macro call then
-          if find-macro macro-table, head.text
+        if find-macro macro-table, head.text
 
-            console.log "Found macro #{head.text}"
-            # This is a little subtle: The macro table is passed as `this` in the
-            # function application, to avoid shifting parameters when passing
-            # them to the macro.
-            m = that.apply macro-table, rest
+          console.log "Found macro #{head.text}"
+          # This is a little subtle: The macro table is passed as `this` in the
+          # function application, to avoid shifting parameters when passing
+          # them to the macro.
+          m = that.apply macro-table, rest
 
-            console.log "macro result" m
-            compile m
-          else
+          console.log "macro result" m
+          compile m
+        else
 
-            # TODO could do a compile-time check here for whether the callee is
-            # ofa sensible type (e.g. error when calling a string)
+          # TODO could do a compile-time check here for whether the callee is
+          # ofa sensible type (e.g. error when calling a string)
 
-            type : \CallExpression
-            callee : compile head, macro-table
-            arguments : rest .map -> compile it, macro-table
+          type : \CallExpression
+          callee : compile head, macro-table
+          arguments : rest .map -> compile it, macro-table
 
     | otherwise =>
       ast
-
-  quote = (thing) ->
-    type : \list
-    contents :
-      * type : \atom text : \quote
-      * thing
 
 
   statementify = (es-ast-node) ->
@@ -108,7 +98,7 @@ module.exports = (ast) ->
           | otherwise =>
             ... # TODO return (+), as in plus as a function
 
-        plus >> quote
+        plus
 
       ":=" : do
         equals = (name, value) ->
@@ -116,7 +106,7 @@ module.exports = (ast) ->
           operator : "="
           left : compile name, this
           right : compile value, this
-        equals >> quote
+        equals
 
       "=" : do
         declaration = ->
@@ -131,7 +121,7 @@ module.exports = (ast) ->
             init : compile arguments.1, this
           ]
 
-        declaration >> quote
+        declaration
 
       "if" : do
         if-statement = (test, consequent, alternate) ->
@@ -139,7 +129,7 @@ module.exports = (ast) ->
           test       : compile test, this
           consequent : statementify compile consequent, this
           alternate  : statementify compile alternate, this
-        if-statement >> quote
+        if-statement
 
       "?:" : do
         ternary = (test, consequent, alternate) ->
@@ -147,7 +137,7 @@ module.exports = (ast) ->
           test       : compile test, this
           consequent : compile consequent, this
           alternate  : compile alternate, this
-        ternary >> quote
+        ternary
 
       "." : do
         dot = ->
@@ -163,7 +153,7 @@ module.exports = (ast) ->
             plus do
               dot.apply this, initial.map -> compile it, this
               compile last, this
-        dot >> quote
+        dot
 
       \lambda : do
         compile-function-body = ([...nodes,last-node], macro-table) ->
@@ -182,7 +172,7 @@ module.exports = (ast) ->
           id : null
           params : params.contents.map -> compile it, macro-table
           body : compile-function-body body, macro-table
-        lambda >> quote
+        lambda
 
   type : \Program
   body : statements.map -> statementify compile it, root-macro-table
