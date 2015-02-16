@@ -21,6 +21,8 @@ find-macro = (macro-table, name) ->
 
 module.exports = (ast) ->
 
+  statements = ast.contents
+
   es-evaluate = (es-ast) ->
     eval es-generate es-ast
 
@@ -183,4 +185,4 @@ module.exports = (ast) ->
         dot >> quote
 
   type : \Program
-  body : [ statementify compile ast, root-macro-table ]
+  body : statements.map -> statementify compile it, root-macro-table

@@ -5,7 +5,8 @@ compile = (require \escodegen).generate _
 
 print-and-pass-on = -> console.log JSON.stringify it ; return it
 module.exports = (input) ->
-  input |> lex
+  "(#input)" # Implicit list around everything
+  |> lex
   # |> print-and-pass-on
   |> parse
   |> print-and-pass-on

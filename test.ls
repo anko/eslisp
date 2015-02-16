@@ -50,6 +50,10 @@ test "ternary expression" ->
   esl '(?: "something" 0 1)'
     ..`@equals` "'something' ? 0 : 1;"
 
+test "multiple statements in program" ->
+  esl '((. console log) "hello") ((. console log) "world")'
+    ..`@equals` "console.log('hello');\nconsole.log('world');"
+
 /*
 test "what" ->
   @equals do
