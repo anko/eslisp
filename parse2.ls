@@ -6,6 +6,7 @@
   compact,
   Obj : compact : obj-compact
   first
+  even
 } = require \prelude-ls
 es-generate = (require \escodegen).generate _
 
@@ -119,6 +120,7 @@ module.exports = (ast) ->
             ... # TODO return (+), as in plus as a function
 
         plus >> quote
+
       ":=" : do
         equals = (name, value) ->
           type : \AssignmentExpression
@@ -126,6 +128,21 @@ module.exports = (ast) ->
           left : compile name, this
           right : compile value, this
         equals >> quote
+
+      "=" : do
+        declaration = ->
+          if arguments.length isnt 2
+            throw Error "Expected variable declaration to get 2 arguments, \
+                         but got #{arguments.length}."
+          type : \VariableDeclaration
+          kind : "var"
+          declarations : [
+            type : \VariableDeclarator
+            id : compile arguments.0, this
+            init : compile arguments.1, this
+          ]
+
+        declaration >> quote
 
       "." : do
         dot = ->

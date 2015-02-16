@@ -18,6 +18,10 @@ test "assignment expression" ->
   esl "(:= f (lambda (x) (+ x 1)))"
     ..`@equals` "f = function (x) {\n    return x + 1;\n};"
 
+test "variable declaration statement" ->
+  esl "(= f (lambda (x) (+ x 1)))"
+    ..`@equals` "var f = function (x) {\n    return x + 1;\n};"
+
 test "empty statement" ->
   esl "()"
     ..`@equals` ";"
