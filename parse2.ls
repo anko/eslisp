@@ -62,7 +62,6 @@ module.exports = (ast) ->
         switch head.text
         | \quote =>
           rest.0
-        | \do =>
         | \lambda =>
           [ params, ...body ] = rest
           type : \FunctionExpression
@@ -152,7 +151,6 @@ module.exports = (ast) ->
 
       "if" : do
         if-statement = (test, consequent, alternate) ->
-          console.error arguments
           type : \IfStatement
           test       : compile test, this
           consequent : statementify compile consequent, this
