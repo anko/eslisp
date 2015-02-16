@@ -110,7 +110,13 @@ module.exports = (ast) ->
             ... # TODO return (+), as in plus as a function
 
         plus >> quote
-
+      ":=" : do
+        equals = (name, value) ->
+          type : \AssignmentExpression
+          operator : "="
+          left : compile name, this
+          right : compile value, this
+        equals >> quote
   type : \Program body : [
     type : \ExpressionStatement # TODO generalise
     expression : compile ast, root-macro-table

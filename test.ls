@@ -14,6 +14,9 @@ test "func" ->
   esl "(lambda (x) (+ x 1))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
 
+test "assign" ->
+  esl "(:= f (lambda (x) (+ x 1)))"
+    ..`@equals` "f = function (x) {\n    return x + 1;\n};"
 
 /*
 test "what" ->
