@@ -54,32 +54,35 @@ module.exports = (ast) ->
       value : ast.text
       raw : '"' + ast.text + '"'
     | \list =>
-      { contents:[ head, ...rest ]:contents } = ast
-      switch head.text
-      | \quote =>
-        rest.0
-      | \do =>
-      | \if =>
-      | \lambda =>
-        [ params, ...body ] = rest
-        type : \FunctionExpression
-        id : null
-        params : params.contents.map -> compile it, macro-table
-        body :
-          compile-function-body body
-      | otherwise => # must be a function or macro call then
-        if find-macro macro-table, head.text
+      if ast.contents.length is 0
+        type : \EmptyStatement
+      else
+        { contents:[ head, ...rest ]:contents } = ast
+        switch head.text
+        | \quote =>
+          rest.0
+        | \do =>
+        | \if =>
+        | \lambda =>
+          [ params, ...body ] = rest
+          type : \FunctionExpression
+          id : null
+          params : params.contents.map -> compile it, macro-table
+          body :
+            compile-function-body body
+        | otherwise => # must be a function or macro call then
+          if find-macro macro-table, head.text
 
-          # This is a little subtle: The macro table is passed as `this` in the
-          # function application, to avoid shifting parameters when passing
-          # them to the macro.
-          m = that.apply macro-table, rest
+            # This is a little subtle: The macro table is passed as `this` in the
+            # function application, to avoid shifting parameters when passing
+            # them to the macro.
+            m = that.apply macro-table, rest
 
-          console.log "macro result" m
-          compile m
-        else
-          console.error "function call"
-          ...
+            console.log "macro result" m
+            compile m
+          else
+            console.error "function call"
+            ...
     | otherwise =>
       ast
 
@@ -117,8 +120,11 @@ module.exports = (ast) ->
           left : compile name, this
           right : compile value, this
         equals >> quote
-  type : \Program body : [
-    type : \ExpressionStatement # TODO generalise
-    expression : compile ast, root-macro-table
-  ]
 
+  statementify = (es-ast-node) ->
+    if es-ast-node.type .match /Expression$/                # if expression
+      type : \ExpressionStatement expression : es-ast-node  # wrap it
+    else es-ast-node                                        # else OK as-is
+
+  type : \Program
+  body : [ statementify compile ast, root-macro-table ]
