@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.ls",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "lsc test.ls"
   },
   "author": "Anko <an@cyan.io> (http://an.cyan.io)",
   "license": "ISC",
