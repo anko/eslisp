@@ -10,11 +10,11 @@ test "plain expression" ->
   esl "(+ 3 4 5)"
     ..`@equals` "3 + (4 + 5);"
 
-test "func" ->
+test "func expression" ->
   esl "(lambda (x) (+ x 1))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
 
-test "assign" ->
+test "assignment expression" ->
   esl "(:= f (lambda (x) (+ x 1)))"
     ..`@equals` "f = function (x) {\n    return x + 1;\n};"
 
