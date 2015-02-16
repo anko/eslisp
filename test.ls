@@ -22,6 +22,10 @@ test "empty statement" ->
   esl "()"
     ..`@equals` ";"
 
+test "member expression" ->
+  esl "(. console log)"
+    ..`@equals` "console.log;"
+
 /*
 test "what" ->
   @equals do

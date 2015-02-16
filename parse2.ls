@@ -121,6 +121,25 @@ module.exports = (ast) ->
           right : compile value, this
         equals >> quote
 
+      "." : do
+        dot = ->
+          | arguments.length is 1 # dotting just one thing makes no sense?
+            compile (first arguments), this # eh whatever, just return it
+          | arguments.length is 2
+            type : \MemberExpression
+            computed : false
+            object   : compile arguments.0, this
+            property : compile arguments.1, this
+          | arguments.length > 2
+            [ ...initial, last ] = arguments
+            plus do
+              dot.apply this, initial.map -> compile it, this
+              compile last, this
+          | otherwise =>
+            ... # TODO return (+), as in plus as a function
+
+        dot >> quote
+
   statementify = (es-ast-node) ->
     if es-ast-node.type .match /Expression$/                # if expression
       type : \ExpressionStatement expression : es-ast-node  # wrap it
