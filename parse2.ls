@@ -63,7 +63,6 @@ module.exports = (ast) ->
         | \quote =>
           rest.0
         | \do =>
-        | \if =>
         | \lambda =>
           [ params, ...body ] = rest
           type : \FunctionExpression
@@ -74,6 +73,7 @@ module.exports = (ast) ->
         | otherwise => # must be a function or macro call then
           if find-macro macro-table, head.text
 
+            console.log "Found macro #{head.text}"
             # This is a little subtle: The macro table is passed as `this` in the
             # function application, to avoid shifting parameters when passing
             # them to the macro.
@@ -98,6 +98,12 @@ module.exports = (ast) ->
     contents :
       * type : \atom text : \quote
       * thing
+
+
+  statementify = (es-ast-node) ->
+    if es-ast-node.type .match /Expression$/                # if expression
+      type : \ExpressionStatement expression : es-ast-node  # wrap it
+    else es-ast-node                                        # else OK as-is
 
   root-macro-table =
     parent : null
@@ -144,6 +150,15 @@ module.exports = (ast) ->
 
         declaration >> quote
 
+      "if" : do
+        if-statement = (test, consequent, alternate) ->
+          console.error arguments
+          type : \IfStatement
+          test       : compile test, this
+          consequent : statementify compile consequent, this
+          alternate  : statementify compile alternate, this
+        if-statement >> quote
+
       "." : do
         dot = ->
           | arguments.length is 1 # dotting just one thing makes no sense?
@@ -160,11 +175,6 @@ module.exports = (ast) ->
               compile last, this
 
         dot >> quote
-
-  statementify = (es-ast-node) ->
-    if es-ast-node.type .match /Expression$/                # if expression
-      type : \ExpressionStatement expression : es-ast-node  # wrap it
-    else es-ast-node                                        # else OK as-is
 
   type : \Program
   body : [ statementify compile ast, root-macro-table ]
