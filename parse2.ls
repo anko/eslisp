@@ -157,6 +157,14 @@ module.exports = (ast) ->
           alternate  : statementify compile alternate, this
         if-statement >> quote
 
+      "?:" : do
+        ternary = (test, consequent, alternate) ->
+          type : \ConditionalExpression
+          test       : compile test, this
+          consequent : compile consequent, this
+          alternate  : compile alternate, this
+        ternary >> quote
+
       "." : do
         dot = ->
           | arguments.length is 1 # dotting just one thing makes no sense?

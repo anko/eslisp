@@ -46,6 +46,10 @@ test "if statement" ->
   esl '(if (+ 1 0) ((. console log) "yes") ((. console error) "no"))'
     ..`@equals` "if (1 + 0)\n    console.log(\'yes\');\nelse\n    console.error(\'no\');"
 
+test "ternary expression" ->
+  esl '(?: "something" 0 1)'
+    ..`@equals` "'something' ? 0 : 1;"
+
 /*
 test "what" ->
   @equals do
