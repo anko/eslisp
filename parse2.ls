@@ -158,8 +158,6 @@ module.exports = (ast) ->
             plus do
               dot.apply this, initial.map -> compile it, this
               compile last, this
-          | otherwise =>
-            ... # TODO return (+), as in plus as a function
 
         dot >> quote
 
