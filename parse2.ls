@@ -81,8 +81,14 @@ module.exports = (ast) ->
             console.log "macro result" m
             compile m
           else
-            console.error "function call"
-            ...
+
+            # TODO could do a compile-time check here for whether the callee is
+            # ofa sensible type (e.g. error when calling a string)
+
+            type : \CallExpression
+            callee : compile head, macro-table
+            arguments : rest .map -> compile it, macro-table
+
     | otherwise =>
       ast
 

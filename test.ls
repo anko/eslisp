@@ -26,6 +26,18 @@ test "member expression" ->
   esl "(. console log)"
     ..`@equals` "console.log;"
 
+test "call expression" ->
+  esl "(f)"
+    ..`@equals` "f();"
+
+test "member, then call with arguments" ->
+  esl '((. console log) "hi")'
+    ..`@equals` "console.log('hi');"
+
+test "func with member and call in it" ->
+  esl "(lambda (x) ((. console log) x))"
+    ..`@equals` "(function (x) {\n    return console.log(x);\n});"
+
 /*
 test "what" ->
   @equals do
