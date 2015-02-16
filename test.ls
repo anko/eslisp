@@ -54,6 +54,10 @@ test "multiple statements in program" ->
   esl '((. console log) "hello") ((. console log) "world")'
     ..`@equals` "console.log('hello');\nconsole.log('world');"
 
+test "multiple statements in function" ->
+  esl '(lambda (x) ((. console log) "hello") \
+                   ((. console log) "world"))'
+    ..`@equals` "(function (x) {\n    console.log(\'hello\');\n    return console.log(\'world\');\n});"
 /*
 test "what" ->
   @equals do

@@ -32,17 +32,6 @@ module.exports = (ast) ->
 
     macro-table = contents : {}, parent : parent-macro-table
 
-    compile-function-body = ([...nodes,last-node]) ->
-      nodes .= map -> compile it, macro-table
-      last-node =
-        type : \ReturnStatement
-        argument : compile last-node, macro-table
-      nodes.push last-node
-      #return nodes
-      return
-        type : \BlockStatement
-        body : nodes
-
     switch ast.type
     | \atom =>
       if ast.text.match /\d+(\.\d+)?/ # looks like a number
@@ -64,13 +53,6 @@ module.exports = (ast) ->
         switch head.text
         | \quote =>
           rest.0
-        | \lambda =>
-          [ params, ...body ] = rest
-          type : \FunctionExpression
-          id : null
-          params : params.contents.map -> compile it, macro-table
-          body :
-            compile-function-body body
         | otherwise => # must be a function or macro call then
           if find-macro macro-table, head.text
 
@@ -181,8 +163,26 @@ module.exports = (ast) ->
             plus do
               dot.apply this, initial.map -> compile it, this
               compile last, this
-
         dot >> quote
+
+      \lambda : do
+        compile-function-body = ([...nodes,last-node], macro-table) ->
+          nodes .= map -> compile it, macro-table
+          last-node =
+            type : \ReturnStatement
+            argument : compile last-node, macro-table
+          nodes.push last-node
+          console.error nodes
+          type : \BlockStatement
+          body : nodes.map statementify
+
+        lambda = (params, ...body) ->
+          macro-table = this
+          type : \FunctionExpression
+          id : null
+          params : params.contents.map -> compile it, macro-table
+          body : compile-function-body body, macro-table
+        lambda >> quote
 
   type : \Program
   body : statements.map -> statementify compile it, root-macro-table
