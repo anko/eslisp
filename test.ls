@@ -6,6 +6,10 @@ test = (name, test-func) ->
 
 esl = require \./index.ls
 
+test "plain literal" ->
+  esl "3"
+    ..`@equals` "3;"
+
 test "plain expression" ->
   esl "(+ 3 4 5)"
     ..`@equals` "3 + (4 + 5);"

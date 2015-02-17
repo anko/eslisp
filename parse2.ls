@@ -130,7 +130,12 @@ module.exports = (ast) ->
 
 
   statementify = (es-ast-node) ->
-    if es-ast-node.type .match /Expression$/                # if expression
+
+    is-expression = ->
+      it.type.match /Expression$/
+      or it.type is \Literal
+
+    if es-ast-node |> is-expression
       type : \ExpressionStatement expression : es-ast-node  # wrap it
     else es-ast-node                                        # else OK as-is
 
