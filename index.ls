@@ -1,6 +1,6 @@
 concat  = require \concat-stream
 lex     = require \./lex.ls
-parse   = require \./parse2.ls
+parse   = require \./parse.ls
 compile = (require \escodegen).generate _
 
 print-and-pass-on = -> console.log JSON.stringify it ; return it

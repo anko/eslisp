@@ -1,167 +1,273 @@
 # Takes in an S-expression.
 # Puts out a corresponding SpiderMonkey AST.
 
-{ lists-to-obj, compact, Obj : compact : obj-compact } = require \prelude-ls
-full-compile = (require \escodegen).generate _
-
-quote = (node) ->
-  node
-  /*
-  switch node.type
-  | \atom   => node.text
-  | \string => "\"#{node.text.replace /\"/g, "\\\""}\""
-  | \list   => node.contents .map quote
-  */
-
-# Returns a function that takes an object parameter. That object-parameter
-# should be used to bind the free variables to values, so the function returns
-# a version of the code with the appropriate values compiled in.
-quasiquote-list = (list) ->
-
-  # Keep everything as usual, but keep note of unbound variables.
-
-  # Each free variable is stored as an object with key "name" holding the
-  # variable name and key "nodes" holding a reference to an array of references
-  # to node objects that should have their contents replaced.
-  #
-  # TODO Does "JSONpath" exist (analogously to XPATH) for replacing them
-  # in-structure rather than with a reference? References are a bit fragile.
-  free-variables = []
-  list.map
-
-quasiquote = (node) ->
-  switch node.type
-  | \atom   => fallthrough
-  | \string => quote node
-  | \list   =>
-    [ head, ...rest ] = node.contents
-    if head.type is \atom and head.text is \unquote
-      rest
-    else
-      node.contents .map quasiquote
-
-unquote = (node) ->
-  switch node.type
-  | \atom   =>
-    type : \free-variable
-    text : node.text
-  | \string => fallthrough
-  | \list =>
-    throw Error "Cannot unquote type `#that` (expected atom)"
+{
+  lists-to-obj,
+  compact,
+  Obj : compact : obj-compact
+  first
+  even
+} = require \prelude-ls
+es-generate = (require \escodegen).generate _
 
 find-macro = (macro-table, name) ->
   switch macro-table.contents[name]
-  | null => null
-  | otherwise =>
+  | null => null                          # deliberately masks parent; fail
+  | undefined =>                          # not defined at this level
     if macro-table.parent
-      find-macro macro-table.parent, name
-    else return null
-
-compile = (node, parent-macro-table) ->
-
-  macro-table = contents : {}, parent: parent-macro-table
-
-  ret = switch node.type
-  | \string => node.text
-  | \atom   =>
-    if node.text .match /\d+(\.\d+)?/
-      Number node.text
-    else node.text
-  | \free-variable => that # passthrough; macros handle them
-  | \list =>
-    [ head, ...rest ] = node.contents
-    switch head.type
-    | \atom =>
-      switch head.text
-      | \object => # object constructor
-        # Parse rest as alternating object keys and values
-        unless (rest.length % 2) is 0
-          throw Error "Odd number of arguments to `#that`: expected even"
-        keys = [] ; values = []
-        rest.for-each (x, i) ->
-          (if (i % 2) is 0 then keys else values)
-            ..push compile x, macro-table
-        lists-to-obj keys, values
-      | \array => # array constructor
-        rest.map compile _, macro-table
-      | \quote =>
-        rest.map quote
-      | \quasiquote =>
-        rest.map quasiquote
-      | \macro => # macro definition
-        [ name, params, body ] = rest
-
-        if name.type isnt \atom
-          throw Error "Macro name has bad type #{name.type} (expected atom)"
-        if params.type isnt \list
-          throw Error "Macro param list has bad type #{name.type} (expected list)"
-        if body.type isnt \list
-          throw Error "Macro body has bad type #{name.type} (expected list)"
-
-        name   .= text
-        params .= contents
-        body   .= contents
-
-        console.log "BODY"
-        console.log JSON.stringify body
-        compiled-body = body .map compile _, macro-table
-        console.log "COMPILED"
-        console.log JSON.stringify compiled-body
-
-        fun-expr =
-          type : \FunctionExpression
-          params : params.map ->
-            type : \Identifier
-            name : it.text
-          body : compile body, macro-table
-
-        ast =
-          type : \Program
-          body : [
-            {
-              type : \ExpressionStatement
-              expression :
-                type : \CallExpression
-                callee :
-                  type : \FunctionExpression
-                  params : []
-                  body :
-                    type : \BlockStatement
-                    body : [
-                      { type : \ReturnStatement argument : fun-expr }
-                    ]
-            }
-          ]
-
-        #console.log JSON.stringify ast
-        code = full-compile ast
-        console.log "CODE", code
-        #macro-table.contents[name] = eval code
-
-        null
-      | otherwise =>
-        if find-macro macro-table, head.text
-          that do
-            rest.map compile _, macro-table
-        else
-          throw Error "Macro `#{head.text}` not found."
-          # TODO compile to funcall
-    | \string => fallthrough
-    | \list   => throw Error "Unexpected #that at head of list"
-
-  # Compact returned arrays and objects (remove falsey values).  These could be
-  # added by no-ops like macro definitions.
-
-  # TODO refactor
-
-  #console.log "RETURNING"
-  #console.log ret
-
-  switch typeof! ret
-  | \Array    => compact ret
-  | \Object   => obj-compact ret
-  | otherwise => ret
+      find-macro macro-table.parent, name # ask parent
+    else return null                      # no parent to ask; fail
+  | otherwise => that                     # defined at this level; succeed
 
 module.exports = (ast) ->
+
+  statements = ast.contents
+
+  es-evaluate = (es-ast) ->
+    eval es-generate es-ast
+
+  compile = (ast, parent-macro-table) ->
+
+    console.log ast
+
+    macro-table = contents : {}, parent : parent-macro-table
+
+    define-macro = (
+      macro-args-array,
+      macro-table-for-compiling,
+      macro-table-to-add-to
+    ) ->
+      # To make user-defined macros simpler to write, they encode s-expressions
+      # as nested arrays.  This means we have to take their return values and
+      # convert them to the internal nested-objects form before compiling.
+      to-internal-ast-form = (user-macro-ast-form) ->
+
+        u = user-macro-ast-form
+
+        switch typeof! u
+        | \Array =>
+          type : \list
+          contents : u.map to-internal-ast-form
+        | \Object =>
+          type : \atom
+          text : u.text
+        | \String => fallthrough
+        | \Number =>
+          type : \Literal
+          value : u
+
+      [name, ...function-args] = macro-args-array
+
+      #console.log "funargs"
+      #console.log JSON.stringify function-args
+
+      fun-ast = [ { type : \atom text : \lambda } ] ++ function-args
+
+      #console.log "funast"
+      #console.log JSON.stringify fun-ast
+
+      es-ast-macro-fun = compile do
+        * type : \list
+          contents : fun-ast
+        * macro-table-for-compiling
+
+      console.log "fun-es-ast"
+      console.log JSON.stringify es-ast-macro-fun
+
+      f = eval ("(" + (es-generate es-ast-macro-fun) + ")")
+
+      full-macro = f >> to-internal-ast-form
+
+      console.log "adding macro " name.text, full-macro
+      macro-table-to-add-to.contents[name.text] = full-macro
+
+      # TODO lots of error checking
+
+      return null
+
+    switch ast.type
+    | \atom =>
+      if ast.text.match /\d+(\.\d+)?/ # looks like a number
+        type  : \Literal
+        value : Number ast.text
+        raw   : ast.text
+      else
+        type : \Identifier
+        name : ast.text
+    | \string =>
+      type : \Literal
+      value : ast.text
+      raw : '"' + ast.text + '"'
+    | \list =>
+      if ast.contents.length is 0
+        type : \EmptyStatement
+      else
+        { contents:[ head, ...rest ]:contents } = ast
+        if head.type is \atom and head.text is \macro
+          define-macro rest, macro-table, macro-table.parent
+          return null
+        if find-macro macro-table, head.text
+
+          console.log "Found macro #{head.text}"
+          # This is a little subtle: The macro table is passed as `this` in the
+          # function application, to avoid shifting parameters when passing
+          # them to the macro.
+          m = that.apply macro-table, rest
+
+          console.log "macro result" m
+          compile m, macro-table
+        else
+
+          # TODO could do a compile-time check here for whether the callee is
+          # ofa sensible type (e.g. error when calling a string)
+
+          type : \CallExpression
+          callee : compile head, macro-table
+          arguments : rest .map -> compile it, macro-table
+
+    | otherwise =>
+      ast
+
+
+  statementify = (es-ast-node) ->
+
+    is-expression = ->
+      it.type.match /Expression$/
+      or it.type is \Literal
+
+    if es-ast-node |> is-expression
+      type : \ExpressionStatement expression : es-ast-node  # wrap it
+    else es-ast-node                                        # else OK as-is
+
+  root-macro-table =
+    parent : null
+    contents :
+      "+" : do
+        plus = ->
+          | arguments.length is 1
+            compile (first arguments), this
+          | arguments.length is 2
+            type : \BinaryExpression
+            operator : "+"
+            left  : compile arguments.0, this
+            right : compile arguments.1, this
+          | arguments.length > 2
+            [ head, ...rest ] = arguments
+            plus do
+              compile head, this
+              plus.apply this, rest.map -> compile it, this
+          | otherwise =>
+            ... # TODO return (+), as in plus as a function
+
+        plus
+
+      ":=" : do
+        equals = (name, value) ->
+          type : \AssignmentExpression
+          operator : "="
+          left : compile name, this
+          right : compile value, this
+        equals
+
+      "=" : do
+        declaration = ->
+          if arguments.length isnt 2
+            throw Error "Expected variable declaration to get 2 arguments, \
+                         but got #{arguments.length}."
+          type : \VariableDeclaration
+          kind : "var"
+          declarations : [
+            type : \VariableDeclarator
+            id : compile arguments.0, this
+            init : compile arguments.1, this
+          ]
+
+        declaration
+
+      "if" : do
+        if-statement = (test, consequent, alternate) ->
+          type : \IfStatement
+          test       : compile test, this
+          consequent : statementify compile consequent, this
+          alternate  : statementify compile alternate, this
+        if-statement
+
+      "?:" : do
+        ternary = (test, consequent, alternate) ->
+          type : \ConditionalExpression
+          test       : compile test, this
+          consequent : compile consequent, this
+          alternate  : compile alternate, this
+        ternary
+
+      "." : do
+        dot = ->
+          | arguments.length is 1 # dotting just one thing makes no sense?
+            compile (first arguments), this # eh whatever, just return it
+          | arguments.length is 2
+            type : \MemberExpression
+            computed : false
+            object   : compile arguments.0, this
+            property : compile arguments.1, this
+          | arguments.length > 2
+            [ ...initial, last ] = arguments
+            plus do
+              dot.apply this, initial.map -> compile it, this
+              compile last, this
+        dot
+
+      \lambda : do
+        compile-function-body = ([...nodes,last-node], macro-table) ->
+          nodes .= map -> compile it, macro-table
+          last-node =
+            type : \ReturnStatement
+            argument : compile last-node, macro-table
+          nodes.push last-node
+          console.error nodes
+          type : \BlockStatement
+          body : nodes.map statementify
+
+        lambda = (params, ...body) ->
+          macro-table = this
+          type : \FunctionExpression
+          id : null
+          params : params.contents.map -> compile it, macro-table
+          body : compile-function-body body, macro-table
+        lambda
+
+      \quote : do
+        quote-one = (ast) ->
+          switch ast.type
+          | \atom =>
+            if ast.text.match /\d+(\.\d+)?/ # looks like a number
+              type  : \Literal
+              value : Number ast.text
+              raw   : ast.text
+            else
+              type : \ObjectExpression
+              properties :
+                * type  : \Property
+                  key   : { type : \Literal value : \type }
+                  value : { type : \Literal value : \atom }
+                * type  : \Property
+                  key   : { type : \Literal value : \text }
+                  value : { type : \Literal value : ast.text }
+          | \string =>
+            type : \Literal
+            value : ast.text
+            raw : '"' + ast.text + '"'
+          | \list =>
+            type : \ArrayExpression
+            elements : ast.contents.map quote-one
+
+        quote = (...args) ->
+          macro-table = this
+
+          type : \ArrayExpression
+          elements : args.map quote-one
+
   type : \Program
-  body : compile ast, { parent : null contents : {} }
+  body : statements
+    .map -> compile it, root-macro-table
+    .filter (isnt null) # macro definitions emit nothing, hence this
+    .map statementify
