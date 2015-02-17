@@ -1,13 +1,7 @@
-# Takes in an S-expression.
+# Takes in an S-expression in the internal format.
 # Puts out a corresponding SpiderMonkey AST.
 
-{
-  lists-to-obj,
-  compact,
-  Obj : compact : obj-compact
-  first
-  even
-} = require \prelude-ls
+{ first } = require \prelude-ls
 es-generate = (require \escodegen).generate _
 
 find-macro = (macro-table, name) ->
@@ -23,12 +17,7 @@ module.exports = (ast) ->
 
   statements = ast.contents
 
-  es-evaluate = (es-ast) ->
-    eval es-generate es-ast
-
   compile = (ast, parent-macro-table) ->
-
-    console.log ast
 
     macro-table = contents : {}, parent : parent-macro-table
 
@@ -41,9 +30,7 @@ module.exports = (ast) ->
       # as nested arrays.  This means we have to take their return values and
       # convert them to the internal nested-objects form before compiling.
       to-internal-ast-form = (user-macro-ast-form) ->
-
         u = user-macro-ast-form
-
         switch typeof! u
         | \Array =>
           type : \list
@@ -58,13 +45,7 @@ module.exports = (ast) ->
 
       [name, ...function-args] = macro-args-array
 
-      #console.log "funargs"
-      #console.log JSON.stringify function-args
-
       fun-ast = [ { type : \atom text : \lambda } ] ++ function-args
-
-      #console.log "funast"
-      #console.log JSON.stringify fun-ast
 
       es-ast-macro-fun = compile do
         * type : \list
@@ -125,9 +106,7 @@ module.exports = (ast) ->
           callee : compile head, macro-table
           arguments : rest .map -> compile it, macro-table
 
-    | otherwise =>
-      ast
-
+    | otherwise => ast
 
   statementify = (es-ast-node) ->
 
@@ -142,7 +121,7 @@ module.exports = (ast) ->
   root-macro-table =
     parent : null
     contents :
-      "+" : do
+      \+ : do
         plus = ->
           | arguments.length is 1
             compile (first arguments), this
@@ -161,7 +140,7 @@ module.exports = (ast) ->
 
         plus
 
-      ":=" : do
+      \:= : do
         equals = (name, value) ->
           type : \AssignmentExpression
           operator : "="
@@ -169,7 +148,7 @@ module.exports = (ast) ->
           right : compile value, this
         equals
 
-      "=" : do
+      \= : do
         declaration = ->
           if arguments.length isnt 2
             throw Error "Expected variable declaration to get 2 arguments, \
@@ -184,7 +163,7 @@ module.exports = (ast) ->
 
         declaration
 
-      "if" : do
+      \if : do
         if-statement = (test, consequent, alternate) ->
           type : \IfStatement
           test       : compile test, this
@@ -192,7 +171,7 @@ module.exports = (ast) ->
           alternate  : statementify compile alternate, this
         if-statement
 
-      "?:" : do
+      \?: : do
         ternary = (test, consequent, alternate) ->
           type : \ConditionalExpression
           test       : compile test, this
@@ -200,7 +179,7 @@ module.exports = (ast) ->
           alternate  : compile alternate, this
         ternary
 
-      "." : do
+      \. : do
         dot = ->
           | arguments.length is 1 # dotting just one thing makes no sense?
             compile (first arguments), this # eh whatever, just return it
