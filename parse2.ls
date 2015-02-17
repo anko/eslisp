@@ -32,6 +32,59 @@ module.exports = (ast) ->
 
     macro-table = contents : {}, parent : parent-macro-table
 
+    define-macro = (
+      macro-args-array,
+      macro-table-for-compiling,
+      macro-table-to-add-to
+    ) ->
+      # To make user-defined macros simpler to write, they encode s-expressions
+      # as nested arrays.  This means we have to take their return values and
+      # convert them to the internal nested-objects form before compiling.
+      to-internal-ast-form = (user-macro-ast-form) ->
+
+        u = user-macro-ast-form
+
+        switch typeof! u
+        | \Array =>
+          type : \list
+          contents : u.map to-internal-ast-form
+        | \Object =>
+          type : \atom
+          text : u.text
+        | \String => fallthrough
+        | \Number =>
+          type : \Literal
+          value : u
+
+      [name, ...function-args] = macro-args-array
+
+      #console.log "funargs"
+      #console.log JSON.stringify function-args
+
+      fun-ast = [ { type : \atom text : \lambda } ] ++ function-args
+
+      #console.log "funast"
+      #console.log JSON.stringify fun-ast
+
+      es-ast-macro-fun = compile do
+        * type : \list
+          contents : fun-ast
+        * macro-table-for-compiling
+
+      console.log "fun-es-ast"
+      console.log JSON.stringify es-ast-macro-fun
+
+      f = eval ("(" + (es-generate es-ast-macro-fun) + ")")
+
+      full-macro = f >> to-internal-ast-form
+
+      console.log "adding macro " name.text, full-macro
+      macro-table-to-add-to.contents[name.text] = full-macro
+
+      # TODO lots of error checking
+
+      return null
+
     switch ast.type
     | \atom =>
       if ast.text.match /\d+(\.\d+)?/ # looks like a number
@@ -50,6 +103,9 @@ module.exports = (ast) ->
         type : \EmptyStatement
       else
         { contents:[ head, ...rest ]:contents } = ast
+        if head.type is \atom and head.text is \macro
+          define-macro rest, macro-table, macro-table.parent
+          return null
         if find-macro macro-table, head.text
 
           console.log "Found macro #{head.text}"
@@ -59,7 +115,7 @@ module.exports = (ast) ->
           m = that.apply macro-table, rest
 
           console.log "macro result" m
-          compile m
+          compile m, macro-table
         else
 
           # TODO could do a compile-time check here for whether the callee is
@@ -174,5 +230,39 @@ module.exports = (ast) ->
           body : compile-function-body body, macro-table
         lambda
 
+      \quote : do
+        quote-one = (ast) ->
+          switch ast.type
+          | \atom =>
+            if ast.text.match /\d+(\.\d+)?/ # looks like a number
+              type  : \Literal
+              value : Number ast.text
+              raw   : ast.text
+            else
+              type : \ObjectExpression
+              properties :
+                * type  : \Property
+                  key   : { type : \Literal value : \type }
+                  value : { type : \Literal value : \atom }
+                * type  : \Property
+                  key   : { type : \Literal value : \text }
+                  value : { type : \Literal value : ast.text }
+          | \string =>
+            type : \Literal
+            value : ast.text
+            raw : '"' + ast.text + '"'
+          | \list =>
+            type : \ArrayExpression
+            elements : ast.contents.map quote-one
+
+        quote = (...args) ->
+          macro-table = this
+
+          type : \ArrayExpression
+          elements : args.map quote-one
+
   type : \Program
-  body : statements.map -> statementify compile it, root-macro-table
+  body : statements
+    .map -> compile it, root-macro-table
+    .filter (isnt null) # macro definitions emit nothing, hence this
+    .map statementify

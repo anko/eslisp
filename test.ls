@@ -58,11 +58,29 @@ test "multiple statements in function" ->
   esl '(lambda (x) ((. console log) "hello") \
                    ((. console log) "world"))'
     ..`@equals` "(function (x) {\n    console.log(\'hello\');\n    return console.log(\'world\');\n});"
-/*
-test "what" ->
-  @equals do
-    esl """
-    (macro eight () (+ 3 5))
-    (eight)
-    """
-    "8"
+
+test "quoting a list produces array" ->
+  esl "'(1 2 3)"
+    ..`@equals` "[\n    1,\n    2,\n    3\n];"
+
+test "quoting numbers produces numbers" ->
+  esl "'(1)"
+    ..`@equals` "[1];"
+
+test "quoting strings produces strings" ->
+  esl "'(\"hi\")"
+    ..`@equals` "['hi'];"
+
+test "quoting atoms produces an object representing it" ->
+  esl "'(fun)"
+    ..`@equals` "[{\n        \'type\': \'atom\',\n        \'text\': \'fun\'\n    }];"
+
+test "simple quoting macro" ->
+  esl "(macro random () '((. Math random)))
+       (+ (random) (random))"
+    ..`@equals` "Math.random() + Math.random();"
+
+test "simple non-quoting macro" ->
+  esl "(macro three () (+ 1 2))
+       (three)"
+    ..`@equals` "3;"
