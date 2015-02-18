@@ -200,13 +200,17 @@ root-macro-table = do
     \=== : chained-binary-expr \BinaryExpression \===
     \!== : chained-binary-expr \BinaryExpression \!==
 
-    \:= : do
-      equals = (name, value) ->
-        type : \AssignmentExpression
-        operator : "="
-        left : compile name, this
-        right : compile value, this
-      equals
+    \:=   : chained-binary-expr \AssignmentExpression \=
+    \+=   : chained-binary-expr \AssignmentExpression \+=
+    \-=   : chained-binary-expr \AssignmentExpression \-=
+    \*=   : chained-binary-expr \AssignmentExpression \*=
+    \%=   : chained-binary-expr \AssignmentExpression \%=
+    \>>=  : chained-binary-expr \AssignmentExpression \>>=
+    \<<=  : chained-binary-expr \AssignmentExpression \<<=
+    \>>>= : chained-binary-expr \AssignmentExpression \>>>=
+    \&=   : chained-binary-expr \AssignmentExpression \&=
+    \|=   : chained-binary-expr \AssignmentExpression \|=
+    \^=   : chained-binary-expr \AssignmentExpression \^=
 
     \= : do
       declaration = ->

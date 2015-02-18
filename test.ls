@@ -123,7 +123,7 @@ test "func expression" ->
   esl "(lambda (x) (+ x 1))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
 
-test "assignment expression" ->
+test "assignment expression" -> # += and whatever are same code path
   esl "(:= f (lambda (x) (+ x 1)))"
     ..`@equals` "f = function (x) {\n    return x + 1;\n};"
 
