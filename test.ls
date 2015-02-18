@@ -201,3 +201,8 @@ test "simple non-quoting macro" ->
   esl "(macro three () (+ 1 2))
        (three)"
     ..`@equals` "3;"
+
+test "empty macro" ->
+  esl "(macro nothing () ())
+       (nothing)"
+    ..`@equals` ""

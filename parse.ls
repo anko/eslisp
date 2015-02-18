@@ -87,8 +87,9 @@ compile = (ast, parent-macro-table) ->
         # them to the macro.
         m = that.apply macro-table, rest
 
-        console.log "macro result" m
-        compile m, macro-table
+        console.log "macro result"
+        console.log JSON.stringify m
+        if m? then compile m, macro-table else null
       else
 
         # TODO could do a compile-time check here for whether the callee is
@@ -100,8 +101,9 @@ compile = (ast, parent-macro-table) ->
 
   | otherwise => ast
 
+is-expression = -> it.type.match /Expression$/ or it.type is \Literal
+
 statementify = (es-ast-node) ->
-  is-expression = -> it.type.match /Expression$/ or it.type is \Literal
   if es-ast-node |> is-expression
     type : \ExpressionStatement expression : es-ast-node
   else es-ast-node
@@ -274,11 +276,16 @@ root-macro-table = do
     \lambda : do
       compile-function-body = ([...nodes,last-node], macro-table) ->
         nodes .= map -> compile it, macro-table
-        last-node =
-          type : \ReturnStatement
-          argument : compile last-node, macro-table
+
+        # Automatically return last node if it's an expression
+        last-node = do
+          ast = compile last-node, macro-table
+          if is-expression ast
+            type : \ReturnStatement
+            argument : ast
+          else ast
+
         nodes.push last-node
-        console.error nodes
         type : \BlockStatement
         body : nodes.map statementify
 
