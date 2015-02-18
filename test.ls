@@ -82,6 +82,14 @@ test "unary void" ->
   esl "(void x)"
     ..`@equals` "void x;"
 
+test "chainable instanceof" -> # yes, making that chain is maybe odd
+  esl "(instanceof x y z)"
+    ..`@equals` "x instanceof (y instanceof z);"
+
+test "chainable in" ->
+  esl "(in x y z)"
+    ..`@equals` "x in (y in z);"
+
 test "bitwise &, |, ^ are chainable" ->
   esl "(& 1 2 3) (| 1 2 3) (^ 1 2 3)"
     ..`@equals` "1 & (2 & 3);\n1 | (2 | 3);\n1 ^ (2 ^ 3);"

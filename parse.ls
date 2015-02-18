@@ -179,6 +179,8 @@ root-macro-table = do
     \delete : unary-expr \delete
     \typeof : unary-expr \typeof
     \void   : unary-expr \void
+    \instanceof : chained-binary-expr \BinaryExpression \instanceof
+    \in : chained-binary-expr \BinaryExpression \in
 
     \& : chained-binary-expr \BinaryExpression \&
     \| : chained-binary-expr \BinaryExpression \|
