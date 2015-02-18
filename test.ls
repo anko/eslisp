@@ -42,6 +42,22 @@ test "unary division is invalid" ->
   esl "(/ 2)"
     ..`@throws` Error
 
+test "increment-after expression" ->
+  esl "(_++ x)"
+    ..`@equals` "x++;"
+
+test "increment-before expression" ->
+  esl "(++_ x)"
+    ..`@equals` "++x;"
+
+test "decrement-after expression" ->
+  esl "(_-- x)"
+    ..`@equals` "x--;"
+
+test "decrement-before expression" ->
+  esl "(--_ x)"
+    ..`@equals` "--x;"
+
 test "func expression" ->
   esl "(lambda (x) (+ x 1))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"

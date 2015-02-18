@@ -144,12 +144,29 @@ root-macro-table = do
                                 | _ => n-ary
       ).apply this, arguments
 
+  update-expression = (operator, {type}) ->
+    unless operator in <[ ++ -- ]>
+      throw Error "Illegal update expression operator #operator"
+    is-prefix = ( type is \prefix )
+    (arg) ->
+      if arguments.length isnt 1
+        throw Error "Expected `++` expression to get exactly 1 argument but \
+                     got #{arguments.length}"
+      type : \UpdateExpression
+      operator : operator
+      prefix : is-prefix
+      argument : compile arg, this
+
   parent : null
   contents :
     \+ : n-ary-expr \+
     \- : n-ary-expr \-
     \* : chained-binary-expr \*
     \/ : chained-binary-expr \/
+    \_++ : update-expression \++ type : \suffix
+    \++_ : update-expression \++ type : \prefix
+    \_-- : update-expression \-- type : \suffix
+    \--_ : update-expression \-- type : \prefix
     \:= : do
       equals = (name, value) ->
         type : \AssignmentExpression
