@@ -172,6 +172,9 @@ root-macro-table = do
     \and : chained-binary-expr \LogicalExpression \&&
     \or  : chained-binary-expr \LogicalExpression \||
     \not : unary-expr \!
+    \delete : unary-expr \delete
+    \typeof : unary-expr \typeof
+    \void   : unary-expr \void
     \:= : do
       equals = (name, value) ->
         type : \AssignmentExpression

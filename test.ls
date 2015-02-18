@@ -66,6 +66,18 @@ test "unary logical not" ->
   esl "(not 1)"
     ..`@equals` "!1;"
 
+test "unary delete" ->
+  esl "(delete x)"
+    ..`@equals` "delete x;"
+
+test "unary delete" ->
+  esl "(typeof x)"
+    ..`@equals` "typeof x;"
+
+test "unary void" ->
+  esl "(void x)"
+    ..`@equals` "void x;"
+
 test "func expression" ->
   esl "(lambda (x) (+ x 1))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
