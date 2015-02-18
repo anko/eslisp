@@ -47,16 +47,16 @@ test "increment-after expression" ->
     ..`@equals` "x++;"
 
 test "increment-before expression" ->
-  esl "(++_ x)"
-    ..`@equals` "++x;"
+  esl "(++_ x) (++ x)"
+    ..`@equals` "++x;\n++x;"
 
 test "decrement-after expression" ->
   esl "(_-- x)"
     ..`@equals` "x--;"
 
 test "decrement-before expression" ->
-  esl "(--_ x)"
-    ..`@equals` "--x;"
+  esl "(--_ x) (-- x)"
+    ..`@equals` "--x;\n--x;"
 
 test "func expression" ->
   esl "(lambda (x) (+ x 1))"

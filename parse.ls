@@ -163,10 +163,12 @@ root-macro-table = do
     \- : n-ary-expr \-
     \* : chained-binary-expr \*
     \/ : chained-binary-expr \/
-    \_++ : update-expression \++ type : \suffix
+    \++  : update-expression \++ type : \prefix # Synonym for below
     \++_ : update-expression \++ type : \prefix
-    \_-- : update-expression \-- type : \suffix
+    \_++ : update-expression \++ type : \suffix
+    \--  : update-expression \-- type : \prefix # Synonym for below
     \--_ : update-expression \-- type : \prefix
+    \_-- : update-expression \-- type : \suffix
     \:= : do
       equals = (name, value) ->
         type : \AssignmentExpression
