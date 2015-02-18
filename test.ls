@@ -14,6 +14,10 @@ test "plain expression" ->
   esl "(+ 3 4 5)"
     ..`@equals` "3 + (4 + 5);"
 
+test "unary plus" ->
+  esl "(+ 1)"
+    ..`@equals` "+1;"
+
 test "func expression" ->
   esl "(lambda (x) (+ x 1))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"

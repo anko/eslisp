@@ -129,7 +129,21 @@ root-macro-table = do
 
   parent : null
   contents :
-    \+ : make-binary-exp-macro \+
+    \+ : do
+      n-ary = make-binary-exp-macro \+
+      unary = (arg) ->
+        type : \UnaryExpression
+        operator : \+
+        prefix : true
+        argument :
+          compile arg, this
+
+      ->
+        ( switch arguments.length | 0 => null # TODO
+                                  | 1 => unary
+                                  | _ => n-ary
+        ).apply this, arguments
+
     \:= : do
       equals = (name, value) ->
         type : \AssignmentExpression
