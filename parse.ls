@@ -123,8 +123,8 @@ root-macro-table = do
           compile head, this
           macro.apply this, rest.map -> compile it, this
       | otherwise =>
-        ... # TODO return basically this macro, but as a function
-
+        throw Error "binary expression macro `#symbol` unexpectedly called \
+                     with no arguments"
     macro
 
   parent : null
