@@ -106,28 +106,30 @@ statementify = (es-ast-node) ->
     type : \ExpressionStatement expression : es-ast-node
   else es-ast-node
 
-root-macro-table =
+root-macro-table = do
+
+  make-binary-exp-macro = (symbol) ->
+    macro = ->
+      | arguments.length is 1
+        compile arguments.0, this
+      | arguments.length is 2
+        type : \BinaryExpression
+        operator : symbol
+        left  : compile arguments.0, this
+        right : compile arguments.1, this
+      | arguments.length > 2
+        [ head, ...rest ] = arguments
+        macro do
+          compile head, this
+          macro.apply this, rest.map -> compile it, this
+      | otherwise =>
+        ... # TODO return basically this macro, but as a function
+
+    macro
+
   parent : null
   contents :
-    \+ : do
-      plus = ->
-        | arguments.length is 1
-          compile (first arguments), this
-        | arguments.length is 2
-          type : \BinaryExpression
-          operator : "+"
-          left  : compile arguments.0, this
-          right : compile arguments.1, this
-        | arguments.length > 2
-          [ head, ...rest ] = arguments
-          plus do
-            compile head, this
-            plus.apply this, rest.map -> compile it, this
-        | otherwise =>
-          ... # TODO return (+), as in plus as a function
-
-      plus
-
+    \+ : make-binary-exp-macro \+
     \:= : do
       equals = (name, value) ->
         type : \AssignmentExpression
