@@ -179,6 +179,14 @@ root-macro-table = do
     \typeof : unary-expr \typeof
     \void   : unary-expr \void
 
+    \& : chained-binary-expr \BinaryExpression \&
+    \| : chained-binary-expr \BinaryExpression \|
+    \^ : chained-binary-expr \BinaryExpression \^
+    \>>  : chained-binary-expr \BinaryExpression \>>
+    \<<  : chained-binary-expr \BinaryExpression \<<
+    \>>> : chained-binary-expr \BinaryExpression \>>>
+    \~ : unary-expr \~
+
     \:= : do
       equals = (name, value) ->
         type : \AssignmentExpression

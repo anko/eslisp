@@ -78,6 +78,18 @@ test "unary void" ->
   esl "(void x)"
     ..`@equals` "void x;"
 
+test "bitwise &, |, ^ are chainable" ->
+  esl "(& 1 2 3) (| 1 2 3) (^ 1 2 3)"
+    ..`@equals` "1 & (2 & 3);\n1 | (2 | 3);\n1 ^ (2 ^ 3);"
+
+test "bitwise shifts are chainable" ->
+  esl "(<< 1 2 3) (>> 1 2 3) (>>> 1 2 3)"
+    ..`@equals` "1 << (2 << 3);\n1 >> (2 >> 3);\n1 >>> (2 >>> 3);"
+
+test "unary bitwise not" ->
+  esl "(~ x)"
+    ..`@equals` "~x;"
+
 test "func expression" ->
   esl "(lambda (x) (+ x 1))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
