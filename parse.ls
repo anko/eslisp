@@ -26,6 +26,7 @@ compile = (ast, parent-macro-table) ->
     # as nested arrays.  This means we have to take their return values and
     # convert them to the internal nested-objects form before compiling.
     to-internal-ast-form = (user-macro-ast-form) ->
+
       u = user-macro-ast-form
       switch typeof! u
       | \Array =>
@@ -39,24 +40,20 @@ compile = (ast, parent-macro-table) ->
         type : \Literal
         value : u
 
-    [name, ...function-args] = macro-args-array
-
-    fun-ast = [ { type : \atom text : \lambda } ] ++ function-args
+    [ name, ...function-args ] = macro-args-array
 
     es-ast-macro-fun = compile do
       * type : \list
-        contents : fun-ast
+        contents : [ { type : \atom text : \lambda } ] ++ function-args
       * macro-table-for-compiling
 
-    console.log "fun-es-ast"
-    console.log JSON.stringify es-ast-macro-fun
+    userspace-macro = eval ("(" + (es-generate es-ast-macro-fun) + ")")
+    # need those parentheses to get eval to accept a function expression
 
-    f = eval ("(" + (es-generate es-ast-macro-fun) + ")")
+    compilerspace-macro = userspace-macro >> to-internal-ast-form
 
-    full-macro = f >> to-internal-ast-form
-
-    console.log "adding macro " name.text, full-macro
-    macro-table-to-add-to.contents[name.text] = full-macro
+    console.log "adding macro " name.text, compilerspace-macro
+    macro-table-to-add-to.contents[name.text] = compilerspace-macro
 
     # TODO lots of error checking
 
