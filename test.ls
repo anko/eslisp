@@ -135,6 +135,14 @@ test "empty statement" ->
   esl "()"
     ..`@equals` ";"
 
+test "break and continue statements" ->
+  esl "(break) (continue)"
+    ..`@equals` "break;\ncontinue;"
+
+test "return statement" ->
+  esl "(return \"hello there\")"
+    ..`@equals` "return 'hello there';"
+
 test "member expression" ->
   esl "(. console log)"
     ..`@equals` "console.log;"

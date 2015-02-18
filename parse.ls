@@ -243,6 +243,18 @@ root-macro-table = do
         alternate  : compile alternate, this
       ternary
 
+    \break : ->
+      type : \BreakStatement
+      label : null # TODO?
+    \continue : ->
+      type : \ContinueStatement
+      label : null # TODO?
+
+    \return : (arg) ->
+      type : \ReturnStatement
+      argument :
+        compile arg, this
+
     \. : do
       dot = ->
         | arguments.length is 1 # dotting just one thing makes no sense?
