@@ -274,18 +274,19 @@ root-macro-table = do
       dot
 
     \lambda : do
-      compile-function-body = ([...nodes,last-node], macro-table) ->
-        nodes .= map -> compile it, macro-table
+      compile-function-body = (nodes, macro-table) ->
 
+        nodes = nodes
+          .map -> compile it, macro-table
+          .filter (isnt null) # in case of macros
+
+        last-node = nodes.pop!
         # Automatically return last node if it's an expression
-        last-node = do
-          ast = compile last-node, macro-table
-          if is-expression ast
-            type : \ReturnStatement
-            argument : ast
-          else ast
+        nodes.push if is-expression last-node
+          type : \ReturnStatement
+          argument : last-node
+        else last-node
 
-        nodes.push last-node
         type : \BlockStatement
         body : nodes.map statementify
 

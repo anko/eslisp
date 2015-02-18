@@ -206,3 +206,22 @@ test "empty macro" ->
   esl "(macro nothing () ())
        (nothing)"
     ..`@equals` ""
+
+test "macros mask others defined before with the same name" ->
+  esl "(macro m () ())
+       (macro m () '((. console log) \"hi\"))
+       (m)"
+    ..`@equals` "console.log('hi');"
+
+test "macros can be defined inside function bodies" ->
+  esl "(= f (lambda (x)
+         (macro x () 5)
+         (return (x))))"
+    ..`@equals` "var f = function (x) {\n    return 5;\n};"
+
+test "macros go out of scope at the end of the nesting level" ->
+  esl "(= f (lambda (x)
+         (macro x () 5)
+         (return (x))))
+       (x)"
+    ..`@equals` "var f = function (x) {\n    return 5;\n};\nx();"
