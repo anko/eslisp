@@ -127,17 +127,19 @@ root-macro-table = do
                      with no arguments"
     macro
 
+  make-unary-exp-macro = (symbol) ->
+    (arg) ->
+      type : \UnaryExpression
+      operator : symbol
+      prefix : true
+      argument :
+        compile arg, this
+
   parent : null
   contents :
     \+ : do
       n-ary = make-binary-exp-macro \+
-      unary = (arg) ->
-        type : \UnaryExpression
-        operator : \+
-        prefix : true
-        argument :
-          compile arg, this
-
+      unary = make-unary-exp-macro \+
       ->
         ( switch arguments.length | 0 => null # TODO
                                   | 1 => unary
