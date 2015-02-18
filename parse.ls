@@ -135,17 +135,19 @@ root-macro-table = do
       argument :
         compile arg, this
 
+  n-ary-expr = (operator) ->
+    n-ary = chained-binary-expr operator
+    unary = unary-expr operator
+    ->
+      ( switch arguments.length | 0 => null # TODO
+                                | 1 => unary
+                                | _ => n-ary
+      ).apply this, arguments
+
   parent : null
   contents :
-    \+ : do
-      n-ary = chained-binary-expr \+
-      unary = unary-expr \+
-      ->
-        ( switch arguments.length | 0 => null # TODO
-                                  | 1 => unary
-                                  | _ => n-ary
-        ).apply this, arguments
-
+    \+ : n-ary-expr \+
+    \- : n-ary-expr \-
     \:= : do
       equals = (name, value) ->
         type : \AssignmentExpression

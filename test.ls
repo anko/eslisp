@@ -10,13 +10,21 @@ test "plain literal" ->
   esl "3"
     ..`@equals` "3;"
 
-test "plain expression" ->
+test "n-ary plus" ->
   esl "(+ 3 4 5)"
     ..`@equals` "3 + (4 + 5);"
 
 test "unary plus" ->
   esl "(+ 1)"
     ..`@equals` "+1;"
+
+test "unary minus" ->
+  esl "(- 1)"
+    ..`@equals` "-1;"
+
+test "n-ary minus" ->
+  esl "(- 10 2 1)"
+    ..`@equals` "10 - (2 - 1);"
 
 test "func expression" ->
   esl "(lambda (x) (+ x 1))"
