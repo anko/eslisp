@@ -163,6 +163,7 @@ root-macro-table = do
     \- : n-ary-expr \-
     \* : chained-binary-expr \BinaryExpression \*
     \/ : chained-binary-expr \BinaryExpression \/
+    \% : chained-binary-expr \BinaryExpression \%
 
     \++  : update-expression \++ type : \prefix # Synonym for below
     \++_ : update-expression \++ type : \prefix

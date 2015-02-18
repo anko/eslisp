@@ -42,6 +42,10 @@ test "unary division is invalid" ->
   esl "(/ 2)"
     ..`@throws` Error
 
+test "n-ary modulus" ->
+  esl "(% 1 2 3)"
+    ..`@equals` "1 % (2 % 3);"
+
 test "increment-after expression" ->
   esl "(_++ x)"
     ..`@equals` "x++;"
