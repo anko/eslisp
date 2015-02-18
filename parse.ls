@@ -171,6 +171,7 @@ root-macro-table = do
     \_-- : update-expression \-- type : \suffix
     \and : chained-binary-expr \LogicalExpression \&&
     \or  : chained-binary-expr \LogicalExpression \||
+    \not : unary-expr \!
     \:= : do
       equals = (name, value) ->
         type : \AssignmentExpression
