@@ -148,6 +148,8 @@ root-macro-table = do
   contents :
     \+ : n-ary-expr \+
     \- : n-ary-expr \-
+    \* : chained-binary-expr \*
+    \/ : chained-binary-expr \/
     \:= : do
       equals = (name, value) ->
         type : \AssignmentExpression

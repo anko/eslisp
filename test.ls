@@ -26,6 +26,22 @@ test "n-ary minus" ->
   esl "(- 10 2 1)"
     ..`@equals` "10 - (2 - 1);"
 
+test "n-ary multiplication" ->
+  esl "(* 1 2 3)"
+    ..`@equals` "1 * (2 * 3);"
+
+test "unary multiplication is invalid" ->
+  esl "(* 2)"
+    ..`@throws` Error
+
+test "n-ary division" ->
+  esl "(/ 1 2 3)"
+    ..`@equals` "1 / (2 / 3);"
+
+test "unary division is invalid" ->
+  esl "(/ 2)"
+    ..`@throws` Error
+
 test "func expression" ->
   esl "(lambda (x) (+ x 1))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
