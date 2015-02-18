@@ -108,13 +108,13 @@ statementify = (es-ast-node) ->
 
 root-macro-table = do
 
-  make-binary-exp-macro = (symbol) ->
+  chained-binary-expr = (operator) ->
     macro = ->
       | arguments.length is 1
         compile arguments.0, this
       | arguments.length is 2
         type : \BinaryExpression
-        operator : symbol
+        operator : operator
         left  : compile arguments.0, this
         right : compile arguments.1, this
       | arguments.length > 2
@@ -123,14 +123,14 @@ root-macro-table = do
           compile head, this
           macro.apply this, rest.map -> compile it, this
       | otherwise =>
-        throw Error "binary expression macro `#symbol` unexpectedly called \
+        throw Error "binary expression macro `#operator` unexpectedly called \
                      with no arguments"
     macro
 
-  make-unary-exp-macro = (symbol) ->
+  unary-expr = (operator) ->
     (arg) ->
       type : \UnaryExpression
-      operator : symbol
+      operator : operator
       prefix : true
       argument :
         compile arg, this
@@ -138,8 +138,8 @@ root-macro-table = do
   parent : null
   contents :
     \+ : do
-      n-ary = make-binary-exp-macro \+
-      unary = make-unary-exp-macro \+
+      n-ary = chained-binary-expr \+
+      unary = unary-expr \+
       ->
         ( switch arguments.length | 0 => null # TODO
                                   | 1 => unary
