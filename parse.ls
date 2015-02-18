@@ -187,6 +187,11 @@ root-macro-table = do
     \>>> : chained-binary-expr \BinaryExpression \>>>
     \~ : unary-expr \~
 
+    \==  : chained-binary-expr \BinaryExpression \==
+    \!=  : chained-binary-expr \BinaryExpression \!=
+    \=== : chained-binary-expr \BinaryExpression \===
+    \!== : chained-binary-expr \BinaryExpression \!==
+
     \:= : do
       equals = (name, value) ->
         type : \AssignmentExpression
