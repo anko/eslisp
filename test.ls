@@ -115,6 +115,10 @@ test "strong-disequals expression, chainable" ->
   esl "(!== x y z)"
     ..`@equals` "x !== (y !== z);"
 
+test "comparison expressions, chainable" -> # >, <= and >= are same code path
+  esl "(< x y z)"
+    ..`@equals` "x < (y < z);"
+
 test "func expression" ->
   esl "(lambda (x) (+ x 1))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"

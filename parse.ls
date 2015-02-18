@@ -176,6 +176,11 @@ root-macro-table = do
     \or  : chained-binary-expr \LogicalExpression \||
     \not : unary-expr \!
 
+    \< : chained-binary-expr \BinaryExpression \<
+    \> : chained-binary-expr \BinaryExpression \>
+    \<= : chained-binary-expr \BinaryExpression \<=
+    \>= : chained-binary-expr \BinaryExpression \>=
+
     \delete : unary-expr \delete
     \typeof : unary-expr \typeof
     \void   : unary-expr \void
