@@ -58,6 +58,10 @@ test "decrement-before expression" ->
   esl "(--_ x) (-- x)"
     ..`@equals` "--x;\n--x;"
 
+test "chainable logical expressions" ->
+  esl "(and 1 2 3) (or 1 2 3)"
+    ..`@equals` "1 && (2 && 3);\n1 || (2 || 3);"
+
 test "func expression" ->
   esl "(lambda (x) (+ x 1))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"

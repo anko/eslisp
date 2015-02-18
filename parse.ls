@@ -108,12 +108,12 @@ statementify = (es-ast-node) ->
 
 root-macro-table = do
 
-  chained-binary-expr = (operator) ->
+  chained-binary-expr = (type, operator) ->
     macro = ->
       | arguments.length is 1
         compile arguments.0, this
       | arguments.length is 2
-        type : \BinaryExpression
+        type : type
         operator : operator
         left  : compile arguments.0, this
         right : compile arguments.1, this
@@ -136,7 +136,7 @@ root-macro-table = do
         compile arg, this
 
   n-ary-expr = (operator) ->
-    n-ary = chained-binary-expr operator
+    n-ary = chained-binary-expr \BinaryExpression operator
     unary = unary-expr operator
     ->
       ( switch arguments.length | 0 => null # TODO
@@ -161,14 +161,16 @@ root-macro-table = do
   contents :
     \+ : n-ary-expr \+
     \- : n-ary-expr \-
-    \* : chained-binary-expr \*
-    \/ : chained-binary-expr \/
+    \* : chained-binary-expr \BinaryExpression \*
+    \/ : chained-binary-expr \BinaryExpression \/
     \++  : update-expression \++ type : \prefix # Synonym for below
     \++_ : update-expression \++ type : \prefix
     \_++ : update-expression \++ type : \suffix
     \--  : update-expression \-- type : \prefix # Synonym for below
     \--_ : update-expression \-- type : \prefix
     \_-- : update-expression \-- type : \suffix
+    \and : chained-binary-expr \LogicalExpression \&&
+    \or  : chained-binary-expr \LogicalExpression \||
     \:= : do
       equals = (name, value) ->
         type : \AssignmentExpression
