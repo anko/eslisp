@@ -225,3 +225,10 @@ test "macros go out of scope at the end of the nesting level" ->
          (return (x))))
        (x)"
     ..`@equals` "var f = function (x) {\n    return 5;\n};\nx();"
+
+test "macros can quasiquote to unquote arguments into output" ->
+  esl "(macro rand (upper)
+                  `(* ,upper
+                      ((. Math random))))
+       (rand 5)"
+    ..`@equals` "5 * Math.random();"

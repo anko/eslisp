@@ -52,7 +52,7 @@ compile = (ast, parent-macro-table) ->
 
     compilerspace-macro = userspace-macro >> to-internal-ast-form
 
-    console.log "adding macro " name.text, compilerspace-macro
+    console.log "adding macro " name.text, userspace-macro
     macro-table-to-add-to.contents[name.text] = compilerspace-macro
 
     # TODO lots of error checking
@@ -328,6 +328,76 @@ root-macro-table = do
 
         type : \ArrayExpression
         elements : args.map quote-one
+
+    \quasiquote : do
+
+      compile-qq-body = (ast) ->
+        console.log "qq-compiling" ast
+        switch ast.type
+        | \list =>
+          [ head, ...rest ] = ast.contents
+          if head.type is \atom and rest.length is 1
+            switch head.text
+            | \unquote => # XXX not called
+              console.log "unquoting" rest.0
+              compile rest.0, this
+            | \quasiquote => ... # TODO
+            | otherwise => ...
+          else quote ast
+        | otherwise => quote ast
+
+      qq = ->
+        console.log "handling qq on" JSON.stringify arguments
+        macro-table = this
+        args = Array::slice.call arguments
+        big-arg =
+          type : \list
+          contents : args
+        /*
+        r =
+          type : \ArrayExpression
+          elements : args.map ->
+            ret = qq-body it, macro-table
+            console.log "ret" ret
+            ret
+            */
+        r = compile-qq-body big-arg, macro-table
+        console.log JSON.stringify r
+        r
+        /*
+        [ head, ...rest ] = arguments
+        switch head.type
+        | \atom =>
+          switch head.text
+          | \unquote =>
+            type : \list
+            contents : rest
+          | \quasiquote => # TODO
+          | otherwise =>
+            if rest.type is \list
+              [ rest-head, rest-rest ] = rest
+              if rest-head.type is \atom and rest-head.text is \unquotesplice
+                #(qq rest) ++ compile rest-rest, macro-table
+                ...
+            else rest
+        | \list =>
+          ... # TODO
+          */
+      /*
+      ; from https://github.com/mishoo/SLip/blob/master/lisp/compiler.lisp#L25
+
+      (if (consp x)
+          (if (eq 'qq-unquote (car x))
+              (cadr x)
+              (if (eq 'quasiquote (car x))
+                  (qq (qq (cadr x)))
+                  (if (consp (car x))
+                      (if (eq 'qq-splice (caar x))
+                          (list 'append (cadar x) (qq (cdr x)))
+                          (list 'cons (qq (car x)) (qq (cdr x))))
+                      (list 'cons (qq (car x)) (qq (cdr x))))))
+          (list 'quote x))))
+      */
 
 module.exports = (ast) ->
   statements = ast.contents
