@@ -1,7 +1,7 @@
 # Takes in an S-expression in the internal format.
 # Puts out a corresponding SpiderMonkey AST.
 
-{ first } = require \prelude-ls
+{ first, map, fold } = require \prelude-ls
 es-generate = (require \escodegen).generate _
 
 find-macro = (macro-table, name) ->
@@ -47,10 +47,16 @@ compile = (ast, parent-macro-table) ->
         contents : [ { type : \atom text : \lambda } ] ++ function-args
       * macro-table-for-compiling
 
-    userspace-macro = eval ("(" + (es-generate es-ast-macro-fun) + ")")
+    userspace-macro = do
+      let (evaluate = (code) -> eval es-generate (compile code, macro-table))
+        eval ("(" + (es-generate es-ast-macro-fun) + ")")
     # need those parentheses to get eval to accept a function expression
 
-    compilerspace-macro = userspace-macro >> to-internal-ast-form
+    compilerspace-macro = ->
+      macro-table = this
+      compile do
+        * to-internal-ast-form (userspace-macro.apply null, arguments)
+        * macro-table
 
     console.log "adding macro " name.text, userspace-macro
     macro-table-to-add-to.contents[name.text] = compilerspace-macro
@@ -76,6 +82,8 @@ compile = (ast, parent-macro-table) ->
     if ast.contents.length is 0 then type : \EmptyStatement
     else
       { contents:[ head, ...rest ]:contents } = ast
+      if not head?
+        return null
       if head.type is \atom and head.text is \macro
         define-macro rest, macro-table, macro-table.parent
         return null
@@ -87,9 +95,9 @@ compile = (ast, parent-macro-table) ->
         # them to the macro.
         m = that.apply macro-table, rest
 
-        console.log "macro result"
+        console.log "macro result (of #{head.text})"
         console.log JSON.stringify m
-        if m? then compile m, macro-table else null
+        m
       else
 
         # TODO could do a compile-time check here for whether the callee is
@@ -101,7 +109,8 @@ compile = (ast, parent-macro-table) ->
 
   | otherwise => ast
 
-is-expression = -> it.type.match /Expression$/ or it.type is \Literal
+is-expression = ->
+  it.type.match /Expression$/ or it.type in <[ Literal Identifier ]>
 
 statementify = (es-ast-node) ->
   if es-ast-node |> is-expression
@@ -331,20 +340,51 @@ root-macro-table = do
 
     \quasiquote : do
 
-      compile-qq-body = (ast) ->
-        console.log "qq-compiling" ast
-        switch ast.type
-        | \list =>
-          [ head, ...rest ] = ast.contents
-          if head.type is \atom and rest.length is 1
-            switch head.text
-            | \unquote => # XXX not called
-              console.log "unquoting" rest.0
-              compile rest.0, this
-            | \quasiquote => ... # TODO
-            | otherwise => ...
-          else quote ast
-        | otherwise => quote ast
+      qq-body = (ast, macro-table) ->
+        console.log "qq-comp" ast
+
+        recurse-on = (ast-list) ->
+
+          rest-done = ast-list.contents
+          |> map -> qq-body it, macro-table
+          |> map ->
+            console.log "qq'd recurse target"
+            console.log it
+            it
+          #|> map (.elements)
+          #|> fold (++), []
+
+          #finished-list = [ quote head ] ++ rest-done
+          finished-list = rest-done
+          out =
+            type : \ArrayExpression
+            elements : finished-list
+          console.log "plain-recurse output"
+          console.log JSON.stringify out
+          console.log "corresponding input"
+          console.log JSON.stringify ast-list
+          out
+
+        result =
+          switch ast.type
+          | \list =>
+            [head, ...rest] = ast.contents
+            if not head? # empty list
+              quote []
+            else if head.type is \atom
+              switch head.text
+              | \unquote =>
+                if rest.length isnt 1
+                  throw Error "Expected 1 argument to unquote but got #{rest.length}"
+                compile rest.0, macro-table
+              | otherwise => recurse-on ast
+            else # head wasn't an atom
+              recurse-on ast
+          | otherwise => quote-one ast
+
+        console.log "qq-body result for" ast
+        console.log JSON.stringify result
+        result
 
       qq = ->
         console.log "handling qq on" JSON.stringify arguments
@@ -353,51 +393,10 @@ root-macro-table = do
         big-arg =
           type : \list
           contents : args
-        /*
-        r =
-          type : \ArrayExpression
-          elements : args.map ->
-            ret = qq-body it, macro-table
-            console.log "ret" ret
-            ret
-            */
-        r = compile-qq-body big-arg, macro-table
+        r = qq-body big-arg, macro-table
+        console.log "qq came up with"
         console.log JSON.stringify r
         r
-        /*
-        [ head, ...rest ] = arguments
-        switch head.type
-        | \atom =>
-          switch head.text
-          | \unquote =>
-            type : \list
-            contents : rest
-          | \quasiquote => # TODO
-          | otherwise =>
-            if rest.type is \list
-              [ rest-head, rest-rest ] = rest
-              if rest-head.type is \atom and rest-head.text is \unquotesplice
-                #(qq rest) ++ compile rest-rest, macro-table
-                ...
-            else rest
-        | \list =>
-          ... # TODO
-          */
-      /*
-      ; from https://github.com/mishoo/SLip/blob/master/lisp/compiler.lisp#L25
-
-      (if (consp x)
-          (if (eq 'qq-unquote (car x))
-              (cadr x)
-              (if (eq 'quasiquote (car x))
-                  (qq (qq (cadr x)))
-                  (if (consp (car x))
-                      (if (eq 'qq-splice (caar x))
-                          (list 'append (cadar x) (qq (cdr x)))
-                          (list 'cons (qq (car x)) (qq (cdr x))))
-                      (list 'cons (qq (car x)) (qq (cdr x))))))
-          (list 'quote x))))
-      */
 
 module.exports = (ast) ->
   statements = ast.contents

@@ -203,7 +203,7 @@ test "simple non-quoting macro" ->
     ..`@equals` "3;"
 
 test "empty macro" ->
-  esl "(macro nothing () ())
+  esl "(macro nothing () `())
        (nothing)"
     ..`@equals` ""
 
@@ -226,9 +226,32 @@ test "macros go out of scope at the end of the nesting level" ->
        (x)"
     ..`@equals` "var f = function (x) {\n    return 5;\n};\nx();"
 
+test "quasiquote is like quote if no unquotes contained" ->
+  esl "(macro rand ()
+                  `(* 5
+                      ((. Math random))))
+       (rand)"
+    ..`@equals` "5 * Math.random();"
+
 test "macros can quasiquote to unquote arguments into output" ->
   esl "(macro rand (upper)
                   `(* ,upper
                       ((. Math random))))
        (rand 5)"
     ..`@equals` "5 * Math.random();"
+
+test "macros can unquote modified arguments too" ->
+  esl "(macro rand (upper)
+                  (= x (* 2
+                          (evaluate upper)))
+                  `(* ,x
+                      ((. Math random))))
+       (rand 5)"
+    ..`@equals` "10 * Math.random();"
+
+
+test "macros can evaluate arguments and operate on them further" ->
+  esl "(macro increment (x)
+                  (+ 1 (evaluate x)))
+       (increment 1)"
+    ..`@equals` "2;"
