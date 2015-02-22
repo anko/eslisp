@@ -16,6 +16,6 @@
     "concat-stream": "^1.4.7",
     "escodegen": "^1.4.1",
     "prelude-ls": "^1.1.1",
-    "s-expression": "^2.5.1"
+    "s-expression": "anko/s-expression#80fd2035e7964d05797b1a12ee38724cd354a105"
   }
 }

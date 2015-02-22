@@ -14,6 +14,10 @@ test "n-ary plus" ->
   esl "(+ 3 4 5)"
     ..`@equals` "3 + (4 + 5);"
 
+test "plus nests" ->
+  esl "(+ 1 (+ 2 3))"
+    ..`@equals` "1 + (2 + 3);"
+
 test "unary plus" ->
   esl "(+ 1)"
     ..`@equals` "+1;"
@@ -231,6 +235,11 @@ test "macros go out of scope at the end of the nesting level" ->
        (x)"
     ..`@equals` "var f = function (x) {\n    return 5;\n};\nx();"
 
+test "dead simple quasiquote" ->
+  esl "(macro q () `(+ 2 3))
+       (q)"
+    ..`@equals` "2 + 3;"
+
 test "quasiquote is like quote if no unquotes contained" ->
   esl "(macro rand ()
                   `(* 5
@@ -260,3 +269,9 @@ test "macros can evaluate arguments and operate on them further" ->
                   (+ 1 (evaluate x)))
        (increment 1)"
     ..`@equals` "2;"
+
+test "macros can splice arrays into quasiquoted lists" ->
+  esl "(macro sum (xs)
+        `(+ ,@xs))
+       (sum (1 2 3))"
+    ..`@equals` "1 + (2 + 3);"

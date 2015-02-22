@@ -50,8 +50,16 @@ compile = (ast, parent-macro-table) ->
         eval ("(" + (es-generate es-ast-macro-fun) + ")")
     # need those parentheses to get eval to accept a function expression
 
+    console.log userspace-macro.to-string!
+
     compilerspace-macro = (compile, ...args) ->
-      compile to-internal-ast-form (userspace-macro.apply null args)
+      userspace-macro-result = userspace-macro.apply null args
+      console.log "userspace-macro-result"
+      console.log JSON.stringify userspace-macro-result
+      internal-ast-form = to-internal-ast-form userspace-macro-result
+      console.log "internal-ast-form"
+      console.log JSON.stringify internal-ast-form
+      compile internal-ast-form
 
     macro-table-to-add-to.contents[name.text] = compilerspace-macro
 
@@ -213,6 +221,10 @@ root-macro-table = do
     \|=   : chained-binary-expr \AssignmentExpression \|=
     \^=   : chained-binary-expr \AssignmentExpression \^=
 
+    \array : (compile, ...elements) ->
+      type : \ArrayExpression
+      elements : elements.map compile
+
     \= : do
       declaration = (compile, ...args) ->
         if args.length isnt 2
@@ -330,30 +342,70 @@ root-macro-table = do
 
         recurse-on = (ast-list) ->
           type : \ArrayExpression
-          elements : ast-list.contents |> map qq-body compile, _
+          elements : ast-list.contents |> map qq-body compile, _ |> fold (++), []
 
         switch ast.type
         | \list =>
           [head, ...rest] = ast.contents
           if not head? # empty list
-            quote []
+            [ quote [] ]
           else if head.type is \atom
             switch head.text
             | \unquote =>
               if rest.length isnt 1
-                throw Error "Expected 1 argument to unquote but got #{rest.length}"
+                throw Error "Expected 1 argument to unquote but got
+                             #{rest.length}"
+              [ compile rest.0 ]
+            | \unquoteSplicing =>
+              if rest.length isnt 1
+                throw Error "Expected 1 argument to unquoteSplicing but got
+                             #{rest.length}"
               compile rest.0
-            | otherwise => recurse-on ast
+            | otherwise => [ recurse-on ast ]
           else # head wasn't an atom
-            recurse-on ast
-        | otherwise => quote-one ast
+            [ recurse-on ast ]
+        | otherwise => [ quote-one ast ]
 
       qq = (compile, ...args) ->
-        macro-table = this
+        compileds = args
+        |> map qq-body compile, _
+        |> ->
+          console.log "yup"
+          console.log JSON.stringify it
+          it
+        |> fold (++), []
+
+        console.log JSON.stringify compileds
+
+        /*
         big-arg =
           type : \list
           contents : args
         qq-body compile, big-arg
+        */
+
+        r =
+          type : \CallExpression
+          callee :
+            type : \MemberExpression
+            object :
+              type : \MemberExpression
+              object :
+                type : \Identifier
+                name : \Array
+              property :
+                type : \Identifier
+                name : \prototype
+            property :
+              type : \Identifer
+              name : \concat
+          arguments : compileds
+                      |> map ->
+                        type : \ArrayExpression
+                        elements : [ it ]
+        console.log JSON.stringify r
+        r
+
 
 module.exports = (ast) ->
   statements = ast.contents
