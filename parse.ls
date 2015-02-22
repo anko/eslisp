@@ -29,19 +29,12 @@ compile = (ast, parent-macro-table) ->
     # as nested arrays.  This means we have to take their return values and
     # convert them to the internal nested-objects form before compiling.
     to-internal-ast-form = (user-macro-ast-form) ->
-
       u = user-macro-ast-form
       switch typeof! u
-      | \Array =>
-        type : \list
-        contents : u.map to-internal-ast-form
-      | \Object =>
-        type : \atom
-        text : u.text
+      | \Array  => type : \list contents : u.map to-internal-ast-form
+      | \Object => type : \atom text : u.text
       | \String => fallthrough
-      | \Number =>
-        type : \Literal
-        value : u
+      | \Number => type : \Literal value : u
       | \Undefined => fallthrough
       | \Null      => null
       | otherwise =>
