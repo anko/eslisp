@@ -54,11 +54,8 @@ compile = (ast, parent-macro-table) ->
         eval ("(" + (es-generate es-ast-macro-fun) + ")")
     # need those parentheses to get eval to accept a function expression
 
-    compilerspace-macro = ->
-      macro-table = this
-      compile do
-        * to-internal-ast-form (userspace-macro.apply null, arguments)
-        * macro-table
+    compilerspace-macro = (compile, ...args) ->
+      compile to-internal-ast-form (userspace-macro.apply null args)
 
     macro-table-to-add-to.contents[name.text] = compilerspace-macro
 
@@ -95,7 +92,12 @@ compile = (ast, parent-macro-table) ->
         # This is a little subtle: The macro table is passed as `this` in the
         # function application, to avoid shifting parameters when passing them
         # to the macro.
-        that.apply macro-table, rest
+        args = rest
+          ..unshift (compile _, macro-table)
+        r = that.apply null, args
+        #console.log "macro #{head.text} returned"
+        #console.log JSON.stringify r
+        #r
 
       else
 
@@ -119,53 +121,51 @@ statementify = (es-ast-node) ->
 root-macro-table = do
 
   chained-binary-expr = (type, operator) ->
-    macro = ->
-      | arguments.length is 1
-        compile arguments.0, this
-      | arguments.length is 2
+    macro = (compile, ...args) ->
+      | args.length is 1 => compile args.0
+      | args.length is 2
         type : type
         operator : operator
-        left  : compile arguments.0, this
-        right : compile arguments.1, this
+        left  : compile args.0
+        right : compile args.1
       | arguments.length > 2
-        [ head, ...rest ] = arguments
+        [ head, ...rest ] = args
         macro do
-          compile head, this
-          macro.apply this, rest.map -> compile it, this
+          compile
+          macro compile, compile head
+          macro.apply null ([ compile ] ++ rest)
       | otherwise =>
         throw Error "binary expression macro `#operator` unexpectedly called \
                      with no arguments"
-    macro
 
   unary-expr = (operator) ->
-    (arg) ->
+    (compile, arg) ->
       type : \UnaryExpression
       operator : operator
       prefix : true
-      argument :
-        compile arg, this
+      argument : compile arg
 
   n-ary-expr = (operator) ->
     n-ary = chained-binary-expr \BinaryExpression operator
     unary = unary-expr operator
-    ->
-      ( switch arguments.length | 0 => null # TODO
-                                | 1 => unary
-                                | _ => n-ary
-      ).apply this, arguments
+    (compile, ...args) ->
+      ( switch args.length | 0 => null
+                           | 1 => unary
+                           | _ => n-ary
+      ).apply null arguments
 
   update-expression = (operator, {type}) ->
     unless operator in <[ ++ -- ]>
       throw Error "Illegal update expression operator #operator"
     is-prefix = ( type is \prefix )
-    (arg) ->
-      if arguments.length isnt 1
+    (compile, ...arg) ->
+      if arg.length isnt 1
         throw Error "Expected `++` expression to get exactly 1 argument but \
                      got #{arguments.length}"
       type : \UpdateExpression
       operator : operator
       prefix : is-prefix
-      argument : compile arg, this
+      argument : compile arg.0
 
   parent : null
   contents :
@@ -223,34 +223,34 @@ root-macro-table = do
     \^=   : chained-binary-expr \AssignmentExpression \^=
 
     \= : do
-      declaration = ->
-        if arguments.length isnt 2
+      declaration = (compile, ...args) ->
+        if args.length isnt 2
           throw Error "Expected variable declaration to get 2 arguments, \
                        but got #{arguments.length}."
         type : \VariableDeclaration
         kind : "var"
         declarations : [
           type : \VariableDeclarator
-          id : compile arguments.0, this
-          init : compile arguments.1, this
+          id : compile args.0
+          init : compile args.1
         ]
 
       declaration
 
     \if : do
-      if-statement = (test, consequent, alternate) ->
+      if-statement = (compile, test, consequent, alternate) ->
         type : \IfStatement
-        test       : compile test, this
-        consequent : statementify compile consequent, this
-        alternate  : statementify compile alternate, this
+        test       : compile test
+        consequent : statementify compile consequent
+        alternate  : statementify compile alternate
       if-statement
 
     \?: : do
-      ternary = (test, consequent, alternate) ->
+      ternary = (compile, test, consequent, alternate) ->
         type : \ConditionalExpression
-        test       : compile test, this
-        consequent : compile consequent, this
-        alternate  : compile alternate, this
+        test       : compile test
+        consequent : compile consequent
+        alternate  : compile alternate
       ternary
 
     \break : ->
@@ -260,32 +260,31 @@ root-macro-table = do
       type : \ContinueStatement
       label : null # TODO?
 
-    \return : (arg) ->
+    \return : (compile, arg) ->
       type : \ReturnStatement
-      argument :
-        compile arg, this
+      argument : compile arg
 
     \. : do
-      dot = ->
-        | arguments.length is 1 # dotting just one thing makes no sense?
-          compile (first arguments), this # eh whatever, just return it
-        | arguments.length is 2
+      dot = (compile, ...args)->
+        | args.length is 1  # dotting just one thing makes no sense?
+          compile first arg # eh whatever, just return it
+        | args.length is 2
           type : \MemberExpression
           computed : false
-          object   : compile arguments.0, this
-          property : compile arguments.1, this
-        | arguments.length > 2
-          [ ...initial, last ] = arguments
-          plus do
-            dot.apply this, initial.map -> compile it, this
-            compile last, this
+          object   : compile args.0
+          property : compile args.1
+        | args.length > 2
+          [ ...initial, last ] = args
+          dot do
+            dot.apply null, ([ compile ] ++ initial.map compile)
+            compile last
       dot
 
     \lambda : do
-      compile-function-body = (nodes, macro-table) ->
+      compile-function-body = (compile, nodes) ->
 
         nodes = nodes
-          .map -> compile it, macro-table
+          .map compile
           .filter (isnt null) # in case of macros
 
         last-node = nodes.pop!
@@ -298,12 +297,11 @@ root-macro-table = do
         type : \BlockStatement
         body : nodes.map statementify
 
-      lambda = (params, ...body) ->
-        macro-table = this
+      lambda = (compile, params, ...body) ->
         type : \FunctionExpression
         id : null
-        params : params.contents.map -> compile it, macro-table
-        body : compile-function-body body, macro-table
+        params : params.contents.map compile
+        body : compile-function-body compile, body
       lambda
 
     \quote : do
@@ -331,19 +329,17 @@ root-macro-table = do
           type : \ArrayExpression
           elements : ast.contents.map quote-one
 
-      quote = (...args) ->
-        macro-table = this
-
+      quote = (compile, ...args) ->
         type : \ArrayExpression
         elements : args.map quote-one
 
     \quasiquote : do
 
-      qq-body = (ast, macro-table) ->
+      qq-body = (compile, ast) ->
 
         recurse-on = (ast-list) ->
           type : \ArrayExpression
-          elements : ast-list.contents |> map qq-body _, macro-table
+          elements : ast-list.contents |> map qq-body compile, _
 
         switch ast.type
         | \list =>
@@ -355,19 +351,18 @@ root-macro-table = do
             | \unquote =>
               if rest.length isnt 1
                 throw Error "Expected 1 argument to unquote but got #{rest.length}"
-              compile rest.0, macro-table
+              compile rest.0
             | otherwise => recurse-on ast
           else # head wasn't an atom
             recurse-on ast
         | otherwise => quote-one ast
 
-      qq = ->
+      qq = (compile, ...args) ->
         macro-table = this
-        args = Array::slice.call arguments
         big-arg =
           type : \list
           contents : args
-        qq-body big-arg, macro-table
+        qq-body compile, big-arg
 
 module.exports = (ast) ->
   statements = ast.contents

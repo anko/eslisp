@@ -205,7 +205,7 @@ test "simple non-quoting macro" ->
 test "empty macro" ->
   esl "(macro nothing () `())
        (nothing)"
-    ..`@equals` ""
+    ..`@equals` ";"
 
 test "macros mask others defined before with the same name" ->
   esl "(macro m () ())
