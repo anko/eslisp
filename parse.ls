@@ -1,9 +1,9 @@
-# Takes in an S-expression in the internal format.
-# Puts out a corresponding SpiderMonkey AST.
-
 { first, map, fold } = require \prelude-ls
 es-generate = (require \escodegen).generate _
 
+# Recursively search a macro table and its parents for a macro with a given
+# name.  Returns `null` if unsuccessful; a macro representing the function if
+# successful.
 find-macro = (macro-table, name) ->
   switch macro-table.contents[name]
   | null => null                          # deliberately masks parent; fail
@@ -13,6 +13,8 @@ find-macro = (macro-table, name) ->
     else return null                      # no parent to ask; fail
   | otherwise => that                     # defined at this level; succeed
 
+# Takes in an S-expression in the internal format.
+# Puts out a corresponding SpiderMonkey AST.
 compile = (ast, parent-macro-table) ->
 
   macro-table = contents : {}, parent : parent-macro-table
@@ -58,7 +60,6 @@ compile = (ast, parent-macro-table) ->
         * to-internal-ast-form (userspace-macro.apply null, arguments)
         * macro-table
 
-    console.log "adding macro " name.text, userspace-macro
     macro-table-to-add-to.contents[name.text] = compilerspace-macro
 
     # TODO lots of error checking
@@ -82,26 +83,24 @@ compile = (ast, parent-macro-table) ->
     if ast.contents.length is 0 then type : \EmptyStatement
     else
       { contents:[ head, ...rest ]:contents } = ast
+
       if not head?
         return null
-      if head.type is \atom and head.text is \macro
+
+      else if head.type is \atom and head.text is \macro
         define-macro rest, macro-table, macro-table.parent
         return null
-      if find-macro macro-table, head.text
 
-        console.log "Found macro #{head.text}"
+      else if find-macro macro-table, head.text
         # This is a little subtle: The macro table is passed as `this` in the
-        # function application, to avoid shifting parameters when passing
-        # them to the macro.
-        m = that.apply macro-table, rest
+        # function application, to avoid shifting parameters when passing them
+        # to the macro.
+        that.apply macro-table, rest
 
-        console.log "macro result (of #{head.text})"
-        console.log JSON.stringify m
-        m
       else
 
         # TODO could do a compile-time check here for whether the callee is
-        # ofa sensible type (e.g. error when calling a string)
+        # of a sensible type (e.g. error when calling a string)
 
         type : \CallExpression
         callee : compile head, macro-table
@@ -341,62 +340,34 @@ root-macro-table = do
     \quasiquote : do
 
       qq-body = (ast, macro-table) ->
-        console.log "qq-comp" ast
 
         recurse-on = (ast-list) ->
+          type : \ArrayExpression
+          elements : ast-list.contents |> map qq-body _, macro-table
 
-          rest-done = ast-list.contents
-          |> map -> qq-body it, macro-table
-          |> map ->
-            console.log "qq'd recurse target"
-            console.log it
-            it
-          #|> map (.elements)
-          #|> fold (++), []
-
-          #finished-list = [ quote head ] ++ rest-done
-          finished-list = rest-done
-          out =
-            type : \ArrayExpression
-            elements : finished-list
-          console.log "plain-recurse output"
-          console.log JSON.stringify out
-          console.log "corresponding input"
-          console.log JSON.stringify ast-list
-          out
-
-        result =
-          switch ast.type
-          | \list =>
-            [head, ...rest] = ast.contents
-            if not head? # empty list
-              quote []
-            else if head.type is \atom
-              switch head.text
-              | \unquote =>
-                if rest.length isnt 1
-                  throw Error "Expected 1 argument to unquote but got #{rest.length}"
-                compile rest.0, macro-table
-              | otherwise => recurse-on ast
-            else # head wasn't an atom
-              recurse-on ast
-          | otherwise => quote-one ast
-
-        console.log "qq-body result for" ast
-        console.log JSON.stringify result
-        result
+        switch ast.type
+        | \list =>
+          [head, ...rest] = ast.contents
+          if not head? # empty list
+            quote []
+          else if head.type is \atom
+            switch head.text
+            | \unquote =>
+              if rest.length isnt 1
+                throw Error "Expected 1 argument to unquote but got #{rest.length}"
+              compile rest.0, macro-table
+            | otherwise => recurse-on ast
+          else # head wasn't an atom
+            recurse-on ast
+        | otherwise => quote-one ast
 
       qq = ->
-        console.log "handling qq on" JSON.stringify arguments
         macro-table = this
         args = Array::slice.call arguments
         big-arg =
           type : \list
           contents : args
-        r = qq-body big-arg, macro-table
-        console.log "qq came up with"
-        console.log JSON.stringify r
-        r
+        qq-body big-arg, macro-table
 
 module.exports = (ast) ->
   statements = ast.contents
