@@ -86,9 +86,6 @@ compile = (ast, parent-macro-table) ->
         return null
 
       else if find-macro macro-table, head.text
-        # This is a little subtle: The macro table is passed as `this` in the
-        # function application, to avoid shifting parameters when passing them
-        # to the macro.
         args = rest
           ..unshift (compile _, macro-table)
         that.apply null, args
