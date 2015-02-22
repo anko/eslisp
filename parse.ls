@@ -20,10 +20,11 @@ compile = (ast, parent-macro-table) ->
   macro-table = contents : {}, parent : parent-macro-table
 
   define-macro = (
-    macro-args-array,
+    [ name, ...function-args ],
     macro-table-for-compiling,
     macro-table-to-add-to
   ) ->
+
     # To make user-defined macros simpler to write, they encode s-expressions
     # as nested arrays.  This means we have to take their return values and
     # convert them to the internal nested-objects form before compiling.
@@ -41,8 +42,10 @@ compile = (ast, parent-macro-table) ->
       | \Number =>
         type : \Literal
         value : u
-
-    [ name, ...function-args ] = macro-args-array
+      | \Undefined => fallthrough
+      | \Null      => null
+      | otherwise =>
+        throw Error "Unexpected return type #that from macro #{name.text}"
 
     es-ast-macro-fun = compile do
       * type : \list
@@ -63,6 +66,7 @@ compile = (ast, parent-macro-table) ->
 
     return null
 
+  if ast is null then return null
   switch ast.type
   | \atom =>
     if ast.text.match /\d+(\.\d+)?/ # looks like a number
@@ -94,10 +98,7 @@ compile = (ast, parent-macro-table) ->
         # to the macro.
         args = rest
           ..unshift (compile _, macro-table)
-        r = that.apply null, args
-        #console.log "macro #{head.text} returned"
-        #console.log JSON.stringify r
-        #r
+        that.apply null, args
 
       else
 

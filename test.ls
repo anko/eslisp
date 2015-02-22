@@ -207,6 +207,11 @@ test "empty macro" ->
        (nothing)"
     ..`@equals` ";"
 
+test "null-returning macro" ->
+  esl "(macro nothing () undefined)
+       (nothing)"
+    ..`@equals` ""
+
 test "macros mask others defined before with the same name" ->
   esl "(macro m () ())
        (macro m () '((. console log) \"hi\"))
