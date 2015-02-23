@@ -270,8 +270,13 @@ test "macros can evaluate arguments and operate on them further" ->
        (increment 1)"
     ..`@equals` "2;"
 
+test "macros can unquote arrays into quasiquoted lists (non-splicing)" ->
+  esl "(macro what (x)
+                  `(,x))
+       (what (+ 2 3))"
+    ..`@equals` "(2 + 3)();"
+
 test "macros can splice arrays into quasiquoted lists" ->
-  esl "(macro sum (xs)
-        `(+ ,@xs))
-       (sum (1 2 3))"
+  esl "(macro sumOf (xs) `(+ ,@xs))
+       (sumOf (1 2 3))"
     ..`@equals` "1 + (2 + 3);"

@@ -32,13 +32,24 @@ compile = (ast, parent-macro-table) ->
       u = user-macro-ast-form
       switch typeof! u
       | \Array  => type : \list contents : u.map to-internal-ast-form
-      | \Object => type : \atom text : u.text
+      | \Object =>
+        u
+        # TODO handle actual objects, not just stuff that's implicitly an atom
       | \String => fallthrough
       | \Number => type : \Literal value : u
       | \Undefined => fallthrough
       | \Null      => null
       | otherwise =>
         throw Error "Unexpected return type #that from macro #{name.text}"
+
+    # Inverse of the above (used when passing values to macros)
+    to-macro-ast-form = (compiler-macro-ast-form) ->
+      u = compiler-macro-ast-form
+      switch u.type
+      | \list => u.contents .map to-macro-ast-form
+      | \atom => u
+      | \string => u.text
+      | otherwise => u
 
     es-ast-macro-fun = compile do
       * type : \list
@@ -53,6 +64,9 @@ compile = (ast, parent-macro-table) ->
     console.log userspace-macro.to-string!
 
     compilerspace-macro = (compile, ...args) ->
+
+      args = args.map to-macro-ast-form
+
       userspace-macro-result = userspace-macro.apply null args
       console.log "userspace-macro-result"
       console.log JSON.stringify userspace-macro-result
@@ -360,6 +374,8 @@ root-macro-table = do
               if rest.length isnt 1
                 throw Error "Expected 1 argument to unquoteSplicing but got
                              #{rest.length}"
+              console.log "unquotesplicing"
+              console.log JSON.stringify rest.0
               compile rest.0
             | otherwise => [ recurse-on ast ]
           else # head wasn't an atom
@@ -367,22 +383,22 @@ root-macro-table = do
         | otherwise => [ quote-one ast ]
 
       qq = (compile, ...args) ->
+        console.log "args"
+        console.log JSON.stringify args
         compileds = args
         |> map qq-body compile, _
         |> ->
-          console.log "yup"
+          console.log "after qqbody"
           console.log JSON.stringify it
           it
-        |> fold (++), []
+        |> map ->
+          if typeof! it is \Array
+            type : \ArrayExpression
+            elements : it
+          else it
 
+        console.log "compileds"
         console.log JSON.stringify compileds
-
-        /*
-        big-arg =
-          type : \list
-          contents : args
-        qq-body compile, big-arg
-        */
 
         r =
           type : \CallExpression
@@ -400,9 +416,7 @@ root-macro-table = do
               type : \Identifer
               name : \concat
           arguments : compileds
-                      |> map ->
-                        type : \ArrayExpression
-                        elements : [ it ]
+        console.log "final"
         console.log JSON.stringify r
         r
 
