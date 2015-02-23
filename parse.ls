@@ -1,4 +1,4 @@
-{ first, map, fold } = require \prelude-ls
+{ first, map, fold, zip } = require \prelude-ls
 es-generate = (require \escodegen).generate _
 
 # Recursively search a macro table and its parents for a macro with a given
@@ -230,6 +230,24 @@ root-macro-table = do
     \array : (compile, ...elements) ->
       type : \ArrayExpression
       elements : elements.map compile
+
+    \object : (compile, ...args) ->
+
+      if args.length % 2 isnt 0
+        throw Error "Expected even number of arguments to object macro, but \
+                     got #{args.length}"
+
+      keys-values = do # [ [k1, v1], [k2, v2] , ... ]
+        keys = [] ; values = []
+        args.for-each (a, i) -> (if i % 2 then values else keys).push a
+        zip keys, values
+
+      type : \ObjectExpression
+      properties :
+        keys-values.map ([k, v]) ->
+          type : \Property kind : \init
+          value : compile v
+          key : compile k
 
     \= : do
       declaration = (compile, ...args) ->

@@ -280,3 +280,11 @@ test "macros can splice arrays into quasiquoted lists" ->
   esl "(macro sumOf (xs) `(+ ,@xs))
        (sumOf (1 2 3))"
     ..`@equals` "1 + (2 + 3);"
+
+test "array macro produces array expression" ->
+  esl "(array 1 2 3)"
+    ..`@equals` "[\n    1,\n    2,\n    3\n];"
+
+test "object macro produces object expression" ->
+  esl "(object a 1 b 2)"
+    ..`@equals` "({\n    a: 1,\n    b: 2\n});"
