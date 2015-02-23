@@ -61,18 +61,10 @@ compile = (ast, parent-macro-table) ->
         eval ("(" + (es-generate es-ast-macro-fun) + ")")
     # need those parentheses to get eval to accept a function expression
 
-    console.log userspace-macro.to-string!
-
     compilerspace-macro = (compile, ...args) ->
-
-      args = args.map to-macro-ast-form
-
+      args .= map to-macro-ast-form
       userspace-macro-result = userspace-macro.apply null args
-      console.log "userspace-macro-result"
-      console.log JSON.stringify userspace-macro-result
       internal-ast-form = to-internal-ast-form userspace-macro-result
-      console.log "internal-ast-form"
-      console.log JSON.stringify internal-ast-form
       compile internal-ast-form
 
     macro-table-to-add-to.contents[name.text] = compilerspace-macro
@@ -352,17 +344,21 @@ root-macro-table = do
 
     \quasiquote : do
 
+      # Compile an internal-form AST node which is part of the body of a
+      # quasiquote.  This means we have to resolve lists which first atom is
+      # unquote or unquoteSplicing into either an array of values or an
+      # identifier to the array of values.
       qq-body = (compile, ast) ->
-
         recurse-on = (ast-list) ->
           type : \ArrayExpression
-          elements : ast-list.contents |> map qq-body compile, _ |> fold (++), []
+          elements : ast-list.contents
+                     |> map qq-body compile, _
+                     |> fold (++), []
 
         switch ast.type
         | \list =>
           [head, ...rest] = ast.contents
-          if not head? # empty list
-            [ quote [] ]
+          if not head? then [ quote [] ] # empty list
           else if head.type is \atom
             switch head.text
             | \unquote =>
@@ -374,8 +370,8 @@ root-macro-table = do
               if rest.length isnt 1
                 throw Error "Expected 1 argument to unquoteSplicing but got
                              #{rest.length}"
-              console.log "unquotesplicing"
-              console.log JSON.stringify rest.0
+              # Just return a compiled version of the argument just like that.
+              # This will hopefully be an array anyway.
               compile rest.0
             | otherwise => [ recurse-on ast ]
           else # head wasn't an atom
@@ -383,43 +379,48 @@ root-macro-table = do
         | otherwise => [ quote-one ast ]
 
       qq = (compile, ...args) ->
-        console.log "args"
-        console.log JSON.stringify args
-        compileds = args
-        |> map qq-body compile, _
-        |> ->
-          console.log "after qqbody"
-          console.log JSON.stringify it
-          it
-        |> map ->
-          if typeof! it is \Array
-            type : \ArrayExpression
-            elements : it
-          else it
 
-        console.log "compileds"
-        console.log JSON.stringify compileds
+        # Each argument (in args) is an atom passed to the quasiquote macro.
 
-        r =
-          type : \CallExpression
-          callee :
+        concattable-args = args
+
+          # Each argument is resolved by quasiquote's rules.
+          |> map qq-body compile, _
+
+          # Each quasiquote-body resolution produces SpiderMonkey AST compiled
+          # values, but if there are many of them, it'll produce an array.
+          # We'll convert these into ArrayExpressions so the results are
+          # effectively still compiled values.
+          |> map ->
+            if typeof! it is \Array
+              type : \ArrayExpression
+              elements : it
+            else it
+
+        # Now each should be an array (or a literal that was
+        # `unquote-splicing`ed) so they can be assumed to be good for
+        # `Array::concat`.
+
+        # We then construct a call to Array::concat with each of the now
+        # quasiquote-resolved and compiled things as arguments.  That makes
+        # this macro produce a concatenation of the quasiquote-resolved
+        # arguments.
+
+        type : \CallExpression
+        callee :
+          type : \MemberExpression
+          object :
             type : \MemberExpression
             object :
-              type : \MemberExpression
-              object :
-                type : \Identifier
-                name : \Array
-              property :
-                type : \Identifier
-                name : \prototype
+              type : \Identifier
+              name : \Array
             property :
-              type : \Identifer
-              name : \concat
-          arguments : compileds
-        console.log "final"
-        console.log JSON.stringify r
-        r
-
+              type : \Identifier
+              name : \prototype
+          property :
+            type : \Identifer
+            name : \concat
+        arguments : concattable-args
 
 module.exports = (ast) ->
   statements = ast.contents
