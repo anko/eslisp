@@ -13,7 +13,65 @@ find-macro = (macro-table, name) ->
     else return null                      # no parent to ask; fail
   | otherwise => that                     # defined at this level; succeed
 
-# Takes in an S-expression in the internal format.
+looks-like-number = (atom-text) ->
+  atom-text.match /\d+(\.\d+)?/
+
+# internal compiler-form → SpiderMonkey AST form
+compiler-form-to-sm-form = (ast) ->
+  switch ast.type
+  | \atom =>
+    if ast.text |> looks-like-number
+      type  : \Literal
+      value : Number ast.text
+      raw   : ast.text
+    else
+      type : \ObjectExpression
+      properties :
+        * type  : \Property
+          key   : { type : \Literal value : \type }
+          value : { type : \Literal value : \atom }
+        * type  : \Property
+          key   : { type : \Literal value : \text }
+          value : { type : \Literal value : ast.text }
+  | \string =>
+    type : \Literal
+    value : ast.text
+    raw : '"' + ast.text + '"'
+  | \list =>
+    type : \ArrayExpression
+    elements : ast.contents.map compiler-form-to-sm-form
+
+# macro function form → internal compiler-form
+#
+# To make user-defined macros simpler to write, they encode s-expressions
+# as nested arrays.  This means we have to take their return values and
+# convert them to the internal nested-objects form before compiling.
+macro-form-to-compiler-form = (ast) ->
+  switch typeof! ast
+  # Arrays represent lists
+  | \Array  => type : \list contents : ast.map macro-form-to-compiler-form
+  # Objects represent atoms
+  | \Object => ast
+  | \String => fallthrough
+  | \Number => type : \Literal value : ast
+  # Undefined and null represent nothing
+  | \Undefined => fallthrough
+  | \Null      => null
+  # Everything else is an error
+  | otherwise =>
+    throw Error "Unexpected return type #that"
+
+# internal compiler-form → macro function form
+#
+# Inverse of the above (used when passing values to macros)
+compiler-form-to-macro-form = (ast) ->
+  switch ast.type
+  | \list => ast.contents .map compiler-form-to-macro-form
+  | \atom => ast
+  | \string => ast.text
+  | otherwise => ast
+
+# Takes in an S-expression in the compiler format.
 # Puts out a corresponding SpiderMonkey AST.
 compile = (ast, parent-macro-table) ->
 
@@ -24,33 +82,6 @@ compile = (ast, parent-macro-table) ->
     macro-table-for-compiling,
     macro-table-to-add-to
   ) ->
-
-    # To make user-defined macros simpler to write, they encode s-expressions
-    # as nested arrays.  This means we have to take their return values and
-    # convert them to the internal nested-objects form before compiling.
-    to-internal-ast-form = (user-macro-ast-form) ->
-      u = user-macro-ast-form
-      switch typeof! u
-      | \Array  => type : \list contents : u.map to-internal-ast-form
-      | \Object =>
-        u
-        # TODO handle actual objects, not just stuff that's implicitly an atom
-      | \String => fallthrough
-      | \Number => type : \Literal value : u
-      | \Undefined => fallthrough
-      | \Null      => null
-      | otherwise =>
-        throw Error "Unexpected return type #that from macro #{name.text}"
-
-    # Inverse of the above (used when passing values to macros)
-    to-macro-ast-form = (compiler-macro-ast-form) ->
-      u = compiler-macro-ast-form
-      switch u.type
-      | \list => u.contents .map to-macro-ast-form
-      | \atom => u
-      | \string => u.text
-      | otherwise => u
-
     es-ast-macro-fun = compile do
       * type : \list
         contents : [ { type : \atom text : \lambda } ] ++ function-args
@@ -62,9 +93,9 @@ compile = (ast, parent-macro-table) ->
     # need those parentheses to get eval to accept a function expression
 
     compilerspace-macro = (compile, ...args) ->
-      args .= map to-macro-ast-form
+      args .= map compiler-form-to-macro-form
       userspace-macro-result = userspace-macro.apply null args
-      internal-ast-form = to-internal-ast-form userspace-macro-result
+      internal-ast-form = macro-form-to-compiler-form userspace-macro-result
       compile internal-ast-form
 
     macro-table-to-add-to.contents[name.text] = compilerspace-macro
@@ -76,7 +107,7 @@ compile = (ast, parent-macro-table) ->
   if ast is null then return null
   switch ast.type
   | \atom =>
-    if ast.text.match /\d+(\.\d+)?/ # looks like a number
+    if ast.text |> looks-like-number
       type  : \Literal
       value : Number ast.text
       raw   : ast.text
@@ -332,33 +363,9 @@ root-macro-table = do
       lambda
 
     \quote : do
-      quote-one = (ast) ->
-        switch ast.type
-        | \atom =>
-          if ast.text.match /\d+(\.\d+)?/ # looks like a number
-            type  : \Literal
-            value : Number ast.text
-            raw   : ast.text
-          else
-            type : \ObjectExpression
-            properties :
-              * type  : \Property
-                key   : { type : \Literal value : \type }
-                value : { type : \Literal value : \atom }
-              * type  : \Property
-                key   : { type : \Literal value : \text }
-                value : { type : \Literal value : ast.text }
-        | \string =>
-          type : \Literal
-          value : ast.text
-          raw : '"' + ast.text + '"'
-        | \list =>
-          type : \ArrayExpression
-          elements : ast.contents.map quote-one
-
       quote = (compile, ...args) ->
         type : \ArrayExpression
-        elements : args.map quote-one
+        elements : args.map compiler-form-to-sm-form
 
     \quasiquote : do
 
@@ -394,7 +401,7 @@ root-macro-table = do
             | otherwise => [ recurse-on ast ]
           else # head wasn't an atom
             [ recurse-on ast ]
-        | otherwise => [ quote-one ast ]
+        | otherwise => [ compiler-form-to-sm-form ast ]
 
       qq = (compile, ...args) ->
 
