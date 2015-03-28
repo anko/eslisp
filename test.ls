@@ -303,3 +303,19 @@ test "macro producing a function" ->
                       `(lambda (x) (+ x ,n)))
        (increase 3)"
     ..`@equals` "(function (x) {\n    return x + 3;\n});"
+
+test "property access (dotting) chains identifiers" ->
+  esl "(. a b c)"
+    ..`@equals` "a.b.c;"
+
+test "property access (dotting) chains literals" ->
+  esl "(. a 1 2)"
+    ..`@equals` "a[1][2];"
+
+test "property access (dotting) chains mixed literals and identifiers" ->
+  esl "(. a b 2 a)"
+    ..`@equals` "a.b[2].a;"
+
+test "property access (dotting) treats stringa as literals, not identifiers" ->
+  esl "(. a \"hi\")"
+    ..`@equals` "a['hi'];"

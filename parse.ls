@@ -323,21 +323,30 @@ root-macro-table = do
       argument : compile arg
 
     \. : do
-      dot = (compile, ...args)->
-        | args.length is 1  # dotting just one thing makes no sense?
-          compile first arg # eh whatever, just return it
+
+      is-computed-property = (ast-node) ->
+        switch ast-node.type
+        | \MemberExpression =>
+          is-computed-property ast-node.object
+        | \Identifier => false
+        | otherwise => true
+
+      dot = (compile, ...args) ->
+        | args.length is 1 => compile args.0
         | args.length is 2
+          property-compiled = compile args.1
           type : \MemberExpression
-          computed : false
+          computed : is-computed-property property-compiled
           object   : compile args.0
-          property : compile args.1
-        | args.length > 2
+          property : property-compiled
+        | arguments.length > 2
           [ ...initial, last ] = args
           dot do
-            dot.apply null, ([ compile ] ++ initial.map compile)
-            compile last
-      dot
-
+            compile
+            dot.apply null ([ compile ] ++ initial)
+            dot compile, compile last
+        | otherwise =>
+          throw Error "dot called with no arguments"
     \lambda : do
       compile-function-body = (compile, nodes) ->
 
