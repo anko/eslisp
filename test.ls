@@ -304,6 +304,14 @@ test "macro producing a function" ->
        (increase 3)"
     ..`@equals` "(function (x) {\n    return x + 3;\n});"
 
+test "macros can operate on their arguments variable" ->
+  esl "(macro lambdaBackwards ()
+        (= body (. arguments 0))
+        (= args ((. Array prototype slice call) arguments 1))
+        `(lambda ,@args ,body))
+       (lambdaBackwards (+ x 1) (x))"
+    ..`@equals` "(function (x) {\n    return x + 1;\n});"
+
 test "property access (dotting) chains identifiers" ->
   esl "(. a b c)"
     ..`@equals` "a.b.c;"
