@@ -123,9 +123,13 @@ test "comparison expressions, chainable" -> # >, <= and >= are same code path
   esl "(< x y z)"
     ..`@equals` "x < (y < z);"
 
-test "func expression" ->
+test "lambda (function) expression" ->
   esl "(lambda (x) (+ x 1))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
+
+test "lambda with no arguments" ->
+  esl "(lambda () 1)"
+    ..`@equals` "(function () {\n    return 1;\n});"
 
 test "assignment expression" -> # += and whatever are same code path
   esl "(:= f (lambda (x) (+ x 1)))"
@@ -293,3 +297,9 @@ test "macro producing an object won't get confused for atom" ->
   esl "(macro obj () '(object a 1))
        (obj)"
     ..`@equals` "({ a: 1 });"
+
+test "macro producing a function" ->
+  esl "(macro increase (n)
+                      `(lambda (x) (+ x ,n)))
+       (increase 3)"
+    ..`@equals` "(function (x) {\n    return x + 3;\n});"
