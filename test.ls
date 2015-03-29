@@ -211,6 +211,11 @@ test "simple non-quoting macro" ->
     ..`@equals` "3;"
 
 test "empty macro" ->
+  esl "(macro nothing () '())
+       (nothing)"
+    ..`@equals` ";"
+
+test "empty macro using quasiquote" ->
   esl "(macro nothing () `())
        (nothing)"
     ..`@equals` ";"

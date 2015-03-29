@@ -373,8 +373,12 @@ root-macro-table = do
 
     \quote : do
       quote = (compile, ...args) ->
-        type : \ArrayExpression
-        elements : args.map compiler-form-to-sm-form
+        if args.length > 1
+          throw Error "Attempted to quote >1 values, not inside list"
+        if args.0
+          args.0 |> compiler-form-to-sm-form
+        else
+          compiler-form-to-sm-form type : \list contents : []
 
     \quasiquote : do
 
@@ -400,7 +404,7 @@ root-macro-table = do
                 throw Error "Expected 1 argument to unquote but got
                              #{rest.length}"
               [ compile rest.0 ]
-            | \unquoteSplicing =>
+            | \unquote-splicing =>
               if rest.length isnt 1
                 throw Error "Expected 1 argument to unquoteSplicing but got
                              #{rest.length}"
@@ -415,46 +419,53 @@ root-macro-table = do
       qq = (compile, ...args) ->
 
         # Each argument (in args) is an atom passed to the quasiquote macro.
+        if args.length > 1
+          throw Error "Attempted to quasiquote >1 values, not inside list"
 
-        concattable-args = args
+        arg = args.0
 
-          # Each argument is resolved by quasiquote's rules.
-          |> map qq-body compile, _
+        switch arg.type
+        | \list
+          concattable-args = arg.contents
 
-          # Each quasiquote-body resolution produces SpiderMonkey AST compiled
-          # values, but if there are many of them, it'll produce an array.
-          # We'll convert these into ArrayExpressions so the results are
-          # effectively still compiled values.
-          |> map ->
-            if typeof! it is \Array
-              type : \ArrayExpression
-              elements : it
-            else it
+            # Each argument is resolved by quasiquote's rules.
+            |> map qq-body compile, _
 
-        # Now each should be an array (or a literal that was
-        # `unquote-splicing`ed) so they can be assumed to be good for
-        # `Array::concat`.
+            # Each quasiquote-body resolution produces SpiderMonkey AST compiled
+            # values, but if there are many of them, it'll produce an array.
+            # We'll convert these into ArrayExpressions so the results are
+            # effectively still compiled values.
+            |> map ->
+              if typeof! it is \Array
+                type : \ArrayExpression
+                elements : it
+              else it
 
-        # We then construct a call to Array::concat with each of the now
-        # quasiquote-resolved and compiled things as arguments.  That makes
-        # this macro produce a concatenation of the quasiquote-resolved
-        # arguments.
+          # Now each should be an array (or a literal that was
+          # `unquote-splicing`ed) so they can be assumed to be good for
+          # `Array::concat`.
 
-        type : \CallExpression
-        callee :
-          type : \MemberExpression
-          object :
+          # We then construct a call to Array::concat with each of the now
+          # quasiquote-resolved and compiled things as arguments.  That makes
+          # this macro produce a concatenation of the quasiquote-resolved
+          # arguments.
+
+          type : \CallExpression
+          callee :
             type : \MemberExpression
             object :
-              type : \Identifier
-              name : \Array
+              type : \MemberExpression
+              object :
+                type : \Identifier
+                name : \Array
+              property :
+                type : \Identifier
+                name : \prototype
             property :
-              type : \Identifier
-              name : \prototype
-          property :
-            type : \Identifer
-            name : \concat
-        arguments : concattable-args
+              type : \Identifer
+              name : \concat
+          arguments : concattable-args
+        | otherwise => quote compile, arg
 
 module.exports = (ast) ->
   statements = ast.contents
