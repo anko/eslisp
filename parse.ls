@@ -393,6 +393,13 @@ root-macro-table = do
                      |> map qq-body compile, _
                      |> fold (++), []
 
+        unquote = ->
+          # Unquoting a list should compile to whatever the list
+          [ compile it ]
+        unquote-splicing = ->
+          # The returned thing should be an array anyway.
+          compile it
+
         switch ast.type
         | \list =>
           [head, ...rest] = ast.contents
@@ -403,14 +410,12 @@ root-macro-table = do
               if rest.length isnt 1
                 throw Error "Expected 1 argument to unquote but got
                              #{rest.length}"
-              [ compile rest.0 ]
+              unquote rest.0
             | \unquote-splicing =>
               if rest.length isnt 1
                 throw Error "Expected 1 argument to unquoteSplicing but got
                              #{rest.length}"
-              # Just return a compiled version of the argument just like that.
-              # This will hopefully be an array anyway.
-              compile rest.0
+              unquote-splicing rest.0
             | otherwise => [ recurse-on ast ]
           else # head wasn't an atom
             [ recurse-on ast ]
