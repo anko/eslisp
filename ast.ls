@@ -11,8 +11,6 @@ class string
     return @content-text if not it?
     @content-text := it
 
-  as-internal : ->
-    { type : \string, text : @content-text }
   as-sm : ->
     type : \Literal
     value : @content-text
@@ -31,8 +29,6 @@ class atom
     return @content-text if not it?
     @content-text := it
 
-  as-internal : ->
-    { type : \atom, text : @content-text }
   as-sm : ->
     if @content-text |> looks-like-number
       type  : \Literal
@@ -73,8 +69,6 @@ class list
     return @content if not it?
     @content := it
 
-  as-internal : ->
-    { type : \list, contents : @content.map (.as-internal!) }
   as-sm : ->
     type : \CallExpression
     callee :
@@ -109,9 +103,7 @@ class list
 
       # TODO error checking
 
-      name .= as-internal!text
-
-      #console.log ((list ([ atom \lambda ] ++ function-args)).as-internal!)
+      name .= text!
 
       es-ast-macro-fun = list ([ atom \lambda ] ++ function-args)
         .compile macro-table
@@ -153,7 +145,6 @@ class list
       console.log userspace-macro.to-string!
 
       compilerspace-macro = (compile, ...args) ->
-        #args .= map (.as-internal!)
         args .= map ->
           if it instanceof list
             it.contents!
@@ -174,13 +165,13 @@ class list
 
     return null unless head
 
-    if head.as-internal!type is \atom
-    and head.as-internal!text is \macro then
+    if head instanceof atom
+    and head.text! is \macro then
       define-macro rest, macro-table
       return null
 
-    else if head.as-internal!type is \atom
-    and find-macro macro-table, head.as-internal!text then
+    else if head instanceof atom
+    and find-macro macro-table, head.text! then
       args = rest
         ..unshift ->
           if it.compile?
