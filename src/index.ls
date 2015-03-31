@@ -1,6 +1,6 @@
 concat  = require \concat-stream
-lex     = require \./lex.ls
-parse   = require \./parse.ls
+lex     = require \./lex
+parse   = require \./parse
 compile = (require \escodegen).generate _
 
 module.exports = (input) ->

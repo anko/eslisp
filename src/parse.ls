@@ -1,5 +1,5 @@
 { first, map, fold, zip } = require \prelude-ls
-{ atom, list, string } = require \./ast.ls
+{ atom, list, string } = require \./ast
 
 is-expression = ->
   it.type?match /Expression$/ or it.type in <[ Literal Identifier ]>
