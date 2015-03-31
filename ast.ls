@@ -40,17 +40,6 @@ class atom
         type : \Identifier
         name : \atom
       arguments : [ { type : \Literal, value : @content-text, raw : "\"#{@content-text}\"" } ]
-
-      /*
-      type : \ObjectExpression
-      properties :
-        * type  : \Property
-          key   : { type : \Literal value : \type }
-          value : { type : \Literal value : \atom }
-        * type  : \Property
-          key   : { type : \Literal value : \text }
-          value : { type : \Literal value : @content-text }
-          */
   as-macro-form : -> { type : \atom, text : @content-text }
 
   compile : ->
@@ -77,10 +66,6 @@ class list
     arguments : [
         type : \ArrayExpression elements : @content.map (.as-sm!)
     ]
-    /*
-    type : \ArrayExpression
-    elements : @content.map (.as-sm!)
-    */
   as-macro-form : -> @content.map (.as-macro-form!)
 
   compile : (parent-macro-table) ->
@@ -116,9 +101,9 @@ class list
 
       # macro function form → internal compiler-form
       #
-      # To make user-defined macros simpler to write, they encode s-expressions
-      # as nested arrays.  This means we have to take their return values and
-      # convert them to the internal nested-objects form before compiling.
+      # To make user-defined macros simpler to write, they may return just
+      # plain JS values, which we'll read back here as AST nodes.  This makes
+      # macros easier to write and a little more tolerant of silliness.
       convert = (ast) ->
         if ast instanceof [ string, atom ] then return ast
         if ast instanceof list then return list ast.contents!map convert

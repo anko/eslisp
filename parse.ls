@@ -1,5 +1,4 @@
 { first, map, fold, zip } = require \prelude-ls
-
 { atom, list, string } = require \./ast.ls
 
 is-expression = ->
@@ -238,10 +237,10 @@ root-macro-table = do
 
     \quasiquote : do
 
-      # Compile an internal-form AST node which is part of the body of a
-      # quasiquote.  This means we have to resolve lists which first atom is
-      # unquote or unquoteSplicing into either an array of values or an
-      # identifier to the array of values.
+      # Compile an AST node which is part of the body of a quasiquote.  This
+      # means we have to resolve lists which first atom is `unquote` or
+      # `unquote-splicing` into either an array of values or an identifier to
+      # an array of values.
       qq-body = (compile, ast) ->
         recurse-on = (ast-list) ->
           type : \ArrayExpression
@@ -293,10 +292,10 @@ root-macro-table = do
             # Each argument is resolved by quasiquote's rules.
             |> map qq-body compile, _
 
-            # Each quasiquote-body resolution produces SpiderMonkey AST compiled
-            # values, but if there are many of them, it'll produce an array.
-            # We'll convert these into ArrayExpressions so the results are
-            # effectively still compiled values.
+            # Each quasiquote-body resolution produces SpiderMonkey AST
+            # compiled values, but if there are many of them, it'll produce an
+            # array.  We'll convert these into ArrayExpressions so the results
+            # are effectively still compiled values.
             |> map ->
               if typeof! it is \Array
                 type : \ArrayExpression
@@ -341,13 +340,5 @@ module.exports = (ast) ->
   type : \Program
   body : statements
     .map (.compile root-macro-table)
-    .filter (isnt null) # macro definitions emit nothing, hence this
-    .map statementify
-/*
-module.exports = (ast) ->
-  statements = ast.contents
-  type : \Program
-  body : statements
-    .map -> compile it, root-macro-table
     .filter (isnt null) # macro definitions emit nothing, hence this
     .map statementify
