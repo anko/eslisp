@@ -1,106 +1,9 @@
 { first, map, fold, zip } = require \prelude-ls
-es-generate = (require \escodegen).generate _
 
-{
-  internal-to-sm : compiler-form-to-sm-form
-  macro-to-internal : macro-form-to-compiler-form
-  internal-to-macro : compiler-form-to-macro-form
-} = require \./astConvert.ls
-
-console.log require \./astConvert.ls
-
-# Recursively search a macro table and its parents for a macro with a given
-# name.  Returns `null` if unsuccessful; a macro representing the function if
-# successful.
-find-macro = (macro-table, name) ->
-  switch macro-table.contents[name]
-  | null => null                          # deliberately masks parent; fail
-  | undefined =>                          # not defined at this level
-    if macro-table.parent
-      find-macro macro-table.parent, name # ask parent
-    else return null                      # no parent to ask; fail
-  | otherwise => that                     # defined at this level; succeed
-
-looks-like-number = (atom-text) ->
-  atom-text.match /\d+(\.\d+)?/
-
-# Takes in an S-expression in the compiler format.
-# Puts out a corresponding SpiderMonkey AST.
-compile = (ast, parent-macro-table) ->
-
-  macro-table = contents : {}, parent : parent-macro-table
-
-  define-macro = (
-    [ name, ...function-args ],
-    macro-table-for-compiling,
-    macro-table-to-add-to
-  ) ->
-    es-ast-macro-fun = compile do
-      * type : \list
-        contents : [ { type : \atom text : \lambda } ] ++ function-args
-      * macro-table-for-compiling
-
-    userspace-macro = do
-      let (evaluate = (code) -> eval es-generate (compile code, macro-table))
-        eval ("(" + (es-generate es-ast-macro-fun) + ")")
-    # need those parentheses to get eval to accept a function expression
-
-    compilerspace-macro = (compile, ...args) ->
-      args .= map compiler-form-to-macro-form
-      userspace-macro-result = userspace-macro.apply null args
-      internal-ast-form = macro-form-to-compiler-form userspace-macro-result
-      compile internal-ast-form
-
-    macro-table-to-add-to.contents[name.text] = compilerspace-macro
-
-    # TODO lots of error checking
-
-    return null
-
-  if ast is null then return null
-  switch ast.type
-  | \atom =>
-    if ast.text |> looks-like-number
-      type  : \Literal
-      value : Number ast.text
-      raw   : ast.text
-    else
-      type : \Identifier
-      name : ast.text
-  | \string =>
-    type : \Literal
-    value : ast.text
-    raw : '"' + ast.text + '"'
-  | \list =>
-    if ast.contents.length is 0 then type : \EmptyStatement
-    else
-      { contents:[ head, ...rest ]:contents } = ast
-
-      if not head?
-        return null
-
-      else if head.type is \atom and head.text is \macro
-        define-macro rest, macro-table, macro-table.parent
-        return null
-
-      else if find-macro macro-table, head.text
-        args = rest
-          ..unshift (compile _, macro-table)
-        that.apply null, args
-
-      else
-
-        # TODO could do a compile-time check here for whether the callee is
-        # of a sensible type (e.g. error when calling a string)
-
-        type : \CallExpression
-        callee : compile head, macro-table
-        arguments : rest .map -> compile it, macro-table
-
-  | otherwise => ast
+{ atom, list, string } = require \./ast.ls
 
 is-expression = ->
-  it.type.match /Expression$/ or it.type in <[ Literal Identifier ]>
+  it.type?match /Expression$/ or it.type in <[ Literal Identifier ]>
 
 statementify = (es-ast-node) ->
   if es-ast-node |> is-expression
@@ -320,7 +223,7 @@ root-macro-table = do
       lambda = (compile, params, ...body) ->
         type : \FunctionExpression
         id : null
-        params : params.contents.map compile
+        params : params.contents!map compile
         body : compile-function-body compile, body
       lambda
 
@@ -329,9 +232,9 @@ root-macro-table = do
         if args.length > 1
           throw Error "Attempted to quote >1 values, not inside list"
         if args.0
-          args.0 |> compiler-form-to-sm-form
+          args.0.as-sm!
         else
-          compiler-form-to-sm-form type : \list contents : []
+          list!as-sm!
 
     \quasiquote : do
 
@@ -342,7 +245,7 @@ root-macro-table = do
       qq-body = (compile, ast) ->
         recurse-on = (ast-list) ->
           type : \ArrayExpression
-          elements : ast-list.contents
+          elements : ast-list.contents!
                      |> map qq-body compile, _
                      |> fold (++), []
 
@@ -353,12 +256,12 @@ root-macro-table = do
           # The returned thing should be an array anyway.
           compile it
 
-        switch ast.type
-        | \list =>
-          [head, ...rest] = ast.contents
-          if not head? then [ quote [] ] # empty list
-          else if head.type is \atom
-            switch head.text
+        if ast instanceof list
+          console.log "list ast" JSON.stringify ast
+          [head, ...rest] = ast.contents!
+          if not head? then [ quote compile, list [] ] # empty list
+          else if head instanceof atom
+            switch head.text!
             | \unquote =>
               if rest.length isnt 1
                 throw Error "Expected 1 argument to unquote but got
@@ -372,7 +275,9 @@ root-macro-table = do
             | otherwise => [ recurse-on ast ]
           else # head wasn't an atom
             [ recurse-on ast ]
-        | otherwise => [ compiler-form-to-sm-form ast ]
+        else
+          console.log "ast is", ast
+          [ ast.as-sm! ]
 
       qq = (compile, ...args) ->
 
@@ -382,9 +287,8 @@ root-macro-table = do
 
         arg = args.0
 
-        switch arg.type
-        | \list
-          concattable-args = arg.contents
+        if arg instanceof list
+          concattable-args = arg.contents!
 
             # Each argument is resolved by quasiquote's rules.
             |> map qq-body compile, _
@@ -423,8 +327,23 @@ root-macro-table = do
               type : \Identifer
               name : \concat
           arguments : concattable-args
-        | otherwise => quote compile, arg
+        else quote compile, arg
 
+module.exports = (ast) ->
+
+  convert = ->
+    switch it.type
+    | \string => string it.text
+    | \atom   => atom it.text
+    | \list   => list it.contents.map convert
+
+  statements = ast.contents.map convert
+  type : \Program
+  body : statements
+    .map (.compile root-macro-table)
+    .filter (isnt null) # macro definitions emit nothing, hence this
+    .map statementify
+/*
 module.exports = (ast) ->
   statements = ast.contents
   type : \Program
