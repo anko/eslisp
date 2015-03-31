@@ -332,3 +332,9 @@ test "property access (dotting) chains mixed literals and identifiers" ->
 test "property access (dotting) treats stringa as literals, not identifiers" ->
   esl "(. a \"hi\")"
     ..`@equals` "a['hi'];"
+
+test "macro deliberately breaking hygiene for lambda argument anaphora" ->
+  esl "(macro : (body)
+       `(lambda (it) ,body))
+        (: (. it x))"
+    ..`@equals` "(function (it) {\n    return it.x;\n});"
