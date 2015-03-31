@@ -256,7 +256,6 @@ root-macro-table = do
           compile it
 
         if ast instanceof list
-          console.log "list ast" JSON.stringify ast
           [head, ...rest] = ast.contents!
           if not head? then [ quote compile, list [] ] # empty list
           else if head instanceof atom
@@ -274,9 +273,7 @@ root-macro-table = do
             | otherwise => [ recurse-on ast ]
           else # head wasn't an atom
             [ recurse-on ast ]
-        else
-          console.log "ast is", ast
-          [ ast.as-sm! ]
+        else [ ast.as-sm! ]
 
       qq = (compile, ...args) ->
 

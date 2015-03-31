@@ -107,7 +107,6 @@ class list
       convert = (ast) ->
         if ast instanceof [ string, atom ] then return ast
         if ast instanceof list then return list ast.contents!map convert
-        #console.log ast
         switch typeof! ast
         # Arrays represent lists
         | \Array  => list ast.map convert
@@ -127,15 +126,12 @@ class list
         | otherwise =>
           throw Error "Unexpected return type #that"
 
-      console.log userspace-macro.to-string!
-
       compilerspace-macro = (compile, ...args) ->
         args .= map ->
           if it instanceof list
             it.contents!
           else it
         userspace-macro-result = userspace-macro.apply null, args
-        console.log JSON.stringify userspace-macro-result
         internal-ast-form = convert userspace-macro-result
         if internal-ast-form is null
           return null
