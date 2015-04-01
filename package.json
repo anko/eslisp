@@ -14,6 +14,10 @@
   "bin": {
     "eslc": "./bin/eslc"
   },
+  "files": [
+    "lib",
+    "bin"
+  ],
   "author": "Anko <an@cyan.io> (http://an.cyan.io)",
   "license": "ISC",
   "devDependencies": {
