@@ -3,20 +3,15 @@ concat = require \concat-stream
 spawn = (require \child_process).spawn
 esl = require \./index
 require! <[ async fs path ]>
-args = (require \nomnom)
-  .script \eslc
-  .nocolors true
-  .option \path do
-    position : 0
-    help : "source file (if absent, stdin is read)"
-  .option \version do
-    flag : true
-    help : "print version, exit"
-    abbr : \v
-  .parse!
 
+print-usage = ->
+  console.log do
+    "Usage: eslc [-h] [-v] [FILE]\n" +
+    "  FILE           file to read (stdin by default)\n" +
+    "  -v, --version  print version, exit\n" +
+    "  -h, --help     print usage, exit"
 
-if args.version
+print-version = ->
   try
     console.log (JSON.parse fs.read-file-sync \../package.json .version)
     process.exit 0
@@ -25,13 +20,29 @@ if args.version
     console.error "Unknown version; error reading or parsing package.json"
     process.exit 1
 
+target-path = null
+
+process.argv
+  .slice 2 # chop "node scriptname"
+  .for-each ->
+    switch it
+    | \-v => fallthrough
+    | \--version => print-version! ; process.exit!
+    | \-h => fallthrough
+    | \--help => print-usage! ; process.exit!
+    | otherwise =>
+      if target-path
+        console.error "Too many arguments (expected 0 or 1 files)"
+        process.exit 2
+      else
+        target-path := it
+
 show-that = -> console.log esl it
 
-if args.path
-  e, esl-code <- fs.read-file args.path, encoding : \utf8
+if target-path
+  e, esl-code <- fs.read-file target-path, encoding : \utf8
   if e then throw e
   show-that esl-code
 else
   process.stdin .pipe concat (esl-code) ->
-    if e then throw e
     show-that esl-code
