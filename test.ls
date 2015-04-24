@@ -362,3 +362,11 @@ test "macro deliberately breaking hygiene for lambda argument anaphora" ->
        `(lambda (it) ,body))
         (: (. it x))"
     ..`@equals` "(function (it) {\n    return it.x;\n});"
+
+test "macros creates block invoked as function, return val forms macros" ->
+  esl ("(macros
+         (= x 0)
+         (object plusPrev (lambda (n) (+= x (evaluate n)) x)
+                 timesPrev (lambda (n) (*= x (evaluate n)) x)))" + # defines two macros
+       "(plusPrev 2) (timesPrev 2)")
+   ..`@equals` "2;\n4;"
