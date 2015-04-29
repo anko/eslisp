@@ -13,7 +13,7 @@ print-usage = ->
 
 print-version = ->
   try
-    console.log (JSON.parse fs.read-file-sync \../package.json .version)
+    console.log (require \../package.json .version)
     process.exit 0
   catch e
     console.error e
