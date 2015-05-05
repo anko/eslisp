@@ -4,7 +4,7 @@ test = (name, test-func) ->
     test-func.call t  # Make `this` refer to tape's asserts
     t.end!            # Automatically end tests
 
-esl = require \./lib/index
+esl = require \./src/index.ls
 
 test "plain literal" ->
   esl "3"
