@@ -180,6 +180,25 @@ test "while loop" ->
                      ((. console log) "still ok"))'
     ..`@equals` "while (--n) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
+test "for loop" ->
+  esl '(for (= x 1) (< x 10) (++ x) ((. console log) "ok")
+                                    ((. console log) "still ok"))'
+    ..`@equals` "for (var x = 1; x < 10; ++x) {\n    console.log('ok');\n    console.log('still ok');\n}"
+
+test "for loop with no body" ->
+  esl '(for (= x 1) (< x 10) (++ x))'
+    ..`@equals` "for (var x = 1; x < 10; ++x) {\n}"
+
+test "for loop with null update" ->
+  esl '(for (= x 1) (< x 10) () ((. console log) "ok")
+                                ((. console log) "still ok"))'
+    ..`@equals` "for (var x = 1; x < 10; ;) {\n    console.log('ok');\n    console.log('still ok');\n}"
+
+test "for loop with null init, update and test" ->
+  esl '(for () () () ((. console log) "ok")
+                     ((. console log) "still ok"))'
+    ..`@equals` "for (;; ;; ;) {\n    console.log('ok');\n    console.log('still ok');\n}"
+
 test "multiple statements in program" ->
   esl '((. console log) "hello") ((. console log) "world")'
     ..`@equals` "console.log('hello');\nconsole.log('world');"

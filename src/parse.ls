@@ -169,6 +169,15 @@ root-macro-table = do
         type : \BlockStatement
         body : body.map compile .filter (isnt null) .map statementify
 
+    \for : (compile, init, test, update, ...body) ->
+      type : \ForStatement
+      init : compile init
+      test : compile test
+      update : compile update
+      body :
+        type : \BlockStatement
+        body : body.map compile .filter (isnt null) .map statementify
+
     \break : ->
       type : \BreakStatement
       label : null # TODO?
