@@ -150,21 +150,17 @@ root-macro-table = do
 
       declaration
 
-    \if : do
-      if-statement = (compile, test, consequent, alternate) ->
-        type : \IfStatement
-        test       : compile test
-        consequent : statementify compile consequent
-        alternate  : statementify compile alternate
-      if-statement
+    \if : (compile, test, consequent, alternate) ->
+      type : \IfStatement
+      test       : compile test
+      consequent : statementify compile consequent
+      alternate  : statementify compile alternate
 
-    \?: : do
-      ternary = (compile, test, consequent, alternate) ->
-        type : \ConditionalExpression
-        test       : compile test
-        consequent : compile consequent
-        alternate  : compile alternate
-      ternary
+    \?: : (compile, test, consequent, alternate) ->
+      type : \ConditionalExpression
+      test       : compile test
+      consequent : compile consequent
+      alternate  : compile alternate
 
     \break : ->
       type : \BreakStatement
