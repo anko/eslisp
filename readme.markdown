@@ -48,6 +48,22 @@ probably change.)
 
 * * *
 
+Loops are what you'd expect.
+
+<!-- !test in while loop -->
+
+    (= n 10)
+    (while (-- n) ((. console log) n))
+
+<!-- !test out while loop -->
+
+    var n = 10;
+    while (--n) {
+        console.log(n);
+    }
+
+* * *
+
 Macros are functions that run at compile-time.  User-defined macros are treated
 equivalently to predefined ones.  They can [`quasiquote`][9] (`` ` ``) and
 `unquote` (`,`) values into their outputs, or `evaluate` their arguments to
