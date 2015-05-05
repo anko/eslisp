@@ -175,6 +175,11 @@ test "ternary expression" ->
   esl '(?: "something" 0 1)'
     ..`@equals` "'something' ? 0 : 1;"
 
+test "while loop" ->
+  esl '(while (-- n) ((. console log) "ok")
+                     ((. console log) "still ok"))'
+    ..`@equals` "while (--n) {\n    console.log('ok');\n    console.log('still ok');\n}"
+
 test "multiple statements in program" ->
   esl '((. console log) "hello") ((. console log) "world")'
     ..`@equals` "console.log('hello');\nconsole.log('world');"

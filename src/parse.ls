@@ -162,6 +162,13 @@ root-macro-table = do
       consequent : compile consequent
       alternate  : compile alternate
 
+    \while : (compile, test, ...body) ->
+      type : \WhileStatement
+      test : compile test
+      body :
+        type : \BlockStatement
+        body : body.map compile .filter (isnt null) .map statementify
+
     \break : ->
       type : \BreakStatement
       label : null # TODO?
