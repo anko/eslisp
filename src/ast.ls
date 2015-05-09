@@ -84,20 +84,21 @@ class list
         else return null                      # no parent to ask; fail
       | otherwise => that                     # defined at this level; succeed
 
-    define-macro = ([ name, ...function-args ], macro-table) !->
+    compile-to-function = (function-args) ->
 
-      # TODO error checking
+      # function-args is the forms that go after the `lambda` keyword, so
+      # including parameter list and function body.
 
-      name .= text!
-
-      es-ast-macro-fun = list ([ atom \lambda ] ++ function-args)
+      es-ast = list ([ atom \lambda ] ++ function-args)
         .compile macro-table
 
-      userspace-macro = do
+      userspace-function = do
         let (evaluate = -> it |> (.compile macro-table) |> es-generate |> eval)
-          eval "(#{es-generate es-ast-macro-fun})"
+          eval "(#{es-generate es-ast})"
           # Yep, we need those parentheses, to get `eval` to accept a function
           # expression.
+
+    import-macro = (name, func, macro-table) ->
 
       # macro function form → internal compiler-form
       #
@@ -131,7 +132,7 @@ class list
           if it instanceof list
             it.contents!
           else it
-        userspace-macro-result = userspace-macro.apply null, args
+        userspace-macro-result = func.apply null, args
         internal-ast-form = convert userspace-macro-result
         if internal-ast-form is null
           return null
@@ -139,6 +140,15 @@ class list
           return compile internal-ast-form
 
       macro-table.parent.contents[name] = compilerspace-macro
+    define-macro = ([ name, ...function-args ], macro-table) !->
+
+      # TODO error checking
+
+      name .= text!
+
+      userspace-macro = compile-to-function function-args, macro-table
+
+      import-macro name, userspace-macro, macro-table
 
     return type : \EmptyStatement if @content.length is 0
 
