@@ -66,10 +66,11 @@ Loops are what you'd expect.
 
 * * *
 
-Macros are functions that run at compile-time.  User-defined macros are treated
-equivalently to predefined ones.  They can [`quasiquote`][8] (`` ` ``) and
-`unquote` (`,`) values into their outputs, or `evaluate` their arguments to
-perform arbitrary computations.
+Macros are functions that run at compile-time.  Whatever they return becomes
+part of the compiled code.  User-defined macros are treated equivalently to
+predefined ones.  They can [`quasiquote`][8] (`` ` ``) and `unquote` (`,`)
+values into their outputs, or `evaluate` their arguments to perform arbitrary
+computations on them first.
 
 <!-- !test in macro and call -->
 
@@ -83,6 +84,30 @@ perform arbitrary computations.
 
     console.log(40 + 2);
     console.log(42);
+
+If you want macros that can share state between each other, create a `macros`
+block and return an object.  Each key-value pair of the object is interned as a
+macro.
+
+<!-- !test in macros block -->
+
+    (macros (= x 0)
+            (object increment (lambda () (++ x))
+                    decrement (lambda () (-- x))
+                    get       (lambda () x)))
+
+    (increment)
+    (increment)
+    (increment)
+
+    (decrement)
+
+<!-- !test out macros block -->
+
+    1;
+    2;
+    3;
+    2;
 
 * * *
 
