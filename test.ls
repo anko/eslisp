@@ -10,6 +10,10 @@ test "nothing" ->
   esl ""
     .. `@equals` ""
 
+test "plain comment" ->
+  esl "\n; nothing\n"
+    ..`@equals` ""
+
 test "plain literal" ->
   esl "3"
     ..`@equals` "3;"
