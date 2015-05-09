@@ -330,6 +330,10 @@ test "object macro produces object expression" ->
   esl "(object a 1 b 2)"
     ..`@equals` "({\n    a: 1,\n    b: 2\n});"
 
+test "object macro can be passed strings as keys too" ->
+  esl '(object "a" 1 "b" 2)'
+    ..`@equals` "({\n    'a': 1,\n    'b': 2\n});"
+
 test "macro producing an object won't get confused for atom" ->
   esl "(macro obj () '(object a 1))
        (obj)"
