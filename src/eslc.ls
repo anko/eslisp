@@ -7,7 +7,7 @@ require! <[ async fs path ]>
 print-usage = ->
   console.log do
     "Usage: eslc [-h] [-v] [FILE]\n" +
-    "  FILE           file to read (stdin by default)\n" +
+    "  FILE           file to read (stdin if omitted)\n" +
     "  -v, --version  print version, exit\n" +
     "  -h, --help     print usage, exit"
 
