@@ -150,6 +150,34 @@ class list
 
       import-macro name, userspace-macro, macro-table
 
+    macros-block = (body, macro-table) ->
+
+      # Compile the body as if it were a function with no parameters
+      body-as-function = compile-to-function do
+        ([list [] ] ++ body) # prepend empty parameter list
+        macro-table
+
+      # Run it
+      ret = body-as-function!
+
+      # Check that return type is object
+
+      if typeof! ret isnt \Object
+        throw Error "Non-object return from `macros`! (got `#{typeof! ret}`)"
+      # Check that object keys make sense (no whitespace)
+      # Check that object values are functions
+      # Import object as new macros
+      for name, func of ret
+
+        # sanity: no space or parens in macro name
+        if name.match /[\s()]/ isnt null
+          throw Error "`macros` return has illegal characters in return name"
+        if typeof func isnt \function
+          throw Error """`macros` return object value wasn't a function
+                         (got `#{typeof! func}`)"""
+
+        import-macro name, func, macro-table
+
     return type : \EmptyStatement if @content.length is 0
 
     [ head, ...rest ] = @content
@@ -159,6 +187,11 @@ class list
     if head instanceof atom
     and head.text! is \macro then
       define-macro rest, macro-table
+      return null
+
+    else if head instanceof atom
+    and head.text! is \macros then
+      macros-block rest, macro-table
       return null
 
     else if head instanceof atom
