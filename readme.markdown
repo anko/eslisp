@@ -1,24 +1,33 @@
 # eslisp [![](https://img.shields.io/badge/api-unstable-red.svg?style=flat-square)][1]
 
-An [s-expression][2] syntax for [ECMAScript][3], with [macros][4], because
-[lisp is pretty amazing][5].
+An [s-expression][2] syntax for [ECMAScript][3], with actually good
+[macros][4].  Minimum [magic][5] or [sugar][6].
 
-Deliberately small and close to plain ES, with little [sugar][6].  Intended as
-a tool for writing JavaScript which is extensible with macros.  This is an
-experiment, but would be neat if it became an Actual Thing.
+Why:
 
-**Still in development**.  No API stability guarantees until v1.0.0, following
-[semver][7].  Still missing comment support, a good mechanism for defining
-macros separately from using them, quasiquote nesting, some JS language
-features, and a good tutorial.
+-   **Syntax should be changeable**.  S-expressions are a minimal homoiconic
+    representation of an [Abstract Syntax Tree][7] and [lisp macros rock][8]
+    for good reason.  Let's use what works.
+
+-   **Syntactic features should be modular**.  For example, getting an
+    [anaphoric conditional][9] should be a matter of `npm install esl-aif`.
+
+-   **[Hack value][10]**.  Code that writes code is the coolest thing since
+    mint ice cream.  [Conditional compilation][11]!  [DLSs][12]!
+    [Anaphora][13]!  [*So cool*][14].
+
+-   **Existing [JavaScript lisps][15] are lacking in parts**.  Few have proper
+    quasiquoting, which makes them feel pointless.  Those that do emulate
+    existing lisps strongly, resulting in needlessly complex syntax,
+    [featuritis][16] and stuff that feels foreign to JavaScript programmers.
 
 ## Examples
 
 <!-- !test program ./bin/eslc | head -c -1 -->
 
-As you'd expect from lisp, nested parentheses represent macro- or
-function-calls.  Here `.` is a compiler-defined macro representing property
-access, so `(. console log)` becomes `console.log`, and
+Nested parentheses represent macro- or function-calls.  Here `.` is a
+compiler-defined macro representing property access, so `(. console log)`
+becomes `console.log`, and
 
 <!-- !test in initial -->
 
@@ -50,7 +59,7 @@ probably change.)
 
 * * *
 
-Loops are what you'd expect.
+Loops are as you'd expect.
 
 <!-- !test in while loop -->
 
@@ -68,7 +77,7 @@ Loops are what you'd expect.
 
 Macros are functions that run at compile-time.  Whatever they return becomes
 part of the compiled code.  User-defined macros are treated equivalently to
-predefined ones.  They can [`quasiquote`][8] (`` ` ``) and `unquote` (`,`)
+predefined ones.  They can [`quasiquote`][17] (`` ` ``) and `unquote` (`,`)
 values into their outputs, or `evaluate` their arguments to perform arbitrary
 computations on them first.
 
@@ -113,23 +122,6 @@ macro.
 
 See the unit tests for more.
 
-## Why
-
--   **To learn how lisp works**; a [Rite of the Rewrite][9], sans low-level
-    tedium.  (The code generation stack just feeds [escodegen][10] with
-    [SpiderMonkey AST][11].)
-
--   **To improve on [JavaScript lisp implementations][12]' macro systems**.
-    Few have proper quasiquoting macro systems, which makes them feel
-    pointless.  Those that do are reimplementations of existing lisps (e.g.
-    Clojure), resulting in needlessly complex language-semantic mappings.  It
-    should be "just JavaScript" (as [CoffeeScript][13] likes to say), but with
-    S-expressions and macros.
-
--   **Because macros**.  Code that writes code is the coolest thing since mint
-    ice cream.  [Conditional compilation][14]!  [DLSs][15]!  [Anaphora][16]!
-    [*So cool*][17].
-
 ## Try it
 
 Clone this repo and `npm install` to get the compiler in `bin/eslc`.
@@ -138,29 +130,37 @@ Pipe eslisp to it. Receive ECMAScript.
 
     echo '((. console log) "Yo!")' | ./bin/eslc
 
-If you want `eslc` in your [`$PATH`][18], install with `npm install --global`.
-To remove it cleanly, `npm uninstall --global`.
+If you want `eslc` in your [`$PATH`][18], `npm install --global`.  To remove it
+cleanly, `npm uninstall --global`.
+
+## How does it work
+
+It has a table of predefined macros to turn S-expressions into [SpiderMonkey
+AST][19] and feeds that to [escodegen][20].  Some of those macros allow
+defining more macros.  Apart from some little details, that's pretty much it.
 
 ## License
 
-[ISC][19].
+[ISC][21].
 
 [1]: http://semver.org/
 [2]: https://en.wikipedia.org/wiki/S-expression
 [3]: http://en.wikipedia.org/wiki/ECMAScript
 [4]: http://stackoverflow.com/questions/267862/what-makes-lisp-macros-so-special
-[5]: http://blog.rongarret.info/2015/05/why-lisp.html
+[5]: http://www.catb.org/jargon/html/M/magic.html
 [6]: http://en.wikipedia.org/wiki/Syntactic_sugar
-[7]: http://semver.org/
-[8]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
-[9]: http://web.mit.edu/daveg/Info/loginataka
-[10]: https://github.com/estools/escodegen
-[11]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[12]: http://ceaude.twoticketsplease.de/js-lisps.html
-[13]: http://coffeescript.org/
-[14]: http://en.wikipedia.org/wiki/Conditional_compilation
-[15]: http://en.wikipedia.org/wiki/Domain-specific_language
-[16]: http://en.wikipedia.org/wiki/Anaphoric_macro
-[17]: http://c2.com/cgi/wiki?LispMacro
+[7]: http://en.wikipedia.org/wiki/Abstract_syntax_tree
+[8]: http://blog.rongarret.info/2015/05/why-lisp.html
+[9]: https://en.wikipedia.org/wiki/Anaphoric_macro
+[10]: http://www.catb.org/jargon/html/H/hack-value.html
+[11]: http://en.wikipedia.org/wiki/Conditional_compilation
+[12]: http://en.wikipedia.org/wiki/Domain-specific_language
+[13]: http://en.wikipedia.org/wiki/Anaphoric_macro
+[14]: http://c2.com/cgi/wiki?LispMacro
+[15]: http://ceaude.twoticketsplease.de/js-lisps.html
+[16]: http://en.wikipedia.org/wiki/Feature_creep
+[17]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
 [18]: http://en.wikipedia.org/wiki/PATH_(variable)
-[19]: http://opensource.org/licenses/ISC
+[19]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[20]: https://github.com/estools/escodegen
+[21]: http://opensource.org/licenses/ISC
