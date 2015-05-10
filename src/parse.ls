@@ -150,6 +150,31 @@ root-macro-table = do
 
       declaration
 
+    \switch : (compile, discriminant, ...cases) ->
+
+      if cases.length % 2 isnt 0
+        throw Error "Switch conditional without a matching consequent"
+
+      tests-consequents = do # [ [t1, c1], [t2, c2] , ... ]
+        tests = [] ; consequents = []
+        cases.for-each (a, i) -> (if i % 2 then consequents else tests).push a
+        zip tests, consequents
+
+      type : \SwitchStatement
+      discriminant : compile discriminant
+      cases : tests-consequents
+        .map ([t, c]) ->
+          type       : \SwitchCase
+          test       : do
+            t = compile t
+            if t.type is \Identifier and t.name is \default
+              null # emit "default:" switchcase label
+            else t
+          consequent : c.content
+            .map compile
+            .filter (isnt null) # in case of macros
+            .map statementify
+
     \if : (compile, test, consequent, alternate) ->
       type : \IfStatement
       test       : compile test

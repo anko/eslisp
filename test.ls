@@ -179,6 +179,22 @@ test "func with member and call in it" ->
   esl "(lambda (x) ((. console log) x))"
     ..`@equals` "(function (x) {\n    return console.log(x);\n});"
 
+test "switch statement" ->
+  esl '''
+      (switch (y)
+              (== x 5) (((. console log) "hi") (break))
+              default  ((return false)))
+      '''
+    ..`@equals` """
+                switch (y()) {
+                case x == 5:
+                    console.log('hi');
+                    break;
+                default:
+                    return false;
+                }
+                """
+
 test "if statement" ->
   esl '(if (+ 1 0) ((. console log) "yes") ((. console error) "no"))'
     ..`@equals` "if (1 + 0)\n    console.log(\'yes\');\nelse\n    console.error(\'no\');"
