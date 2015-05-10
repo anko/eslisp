@@ -9,7 +9,7 @@ module.exports = (input) ->
   # Ignore first line if it starts with a shebang
   if input.match /^(#!.*\n)/ then input .= slice that.1.length
 
-  "(#input)" # Implicit list around everything
+  "(#input\n)" # Implicit list of everything (trailing \n terminating comments)
   |> lex
   |> parse
   |> compile
