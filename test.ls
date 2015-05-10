@@ -14,6 +14,10 @@ test "plain comment" ->
   esl "\n; nothing\n"
     ..`@equals` ""
 
+test "first-line shebang" ->
+  esl "#!something goes here\n(hello)\n"
+    ..`@equals` "hello();"
+
 test "plain literal" ->
   esl "3"
     ..`@equals` "3;"
