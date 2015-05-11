@@ -193,14 +193,17 @@ class list
 
     else if head instanceof atom
     and find-macro macro-table, head.text!
-      args = rest
-      env =
-        compile : ->
+
+      env = do
+        compile = ->
           if it.compile?
             it.compile macro-table
           else it
-      args.unshift env
-      return that.apply null, args
+        evaluate = -> it |> compile |> es-generate |> eval
+
+        { compile, evaluate }
+
+      return that.apply null, ([ env ] ++ rest)
 
     else
       # TODO compile-time check if callee has sensible type
