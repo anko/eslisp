@@ -15,7 +15,6 @@ class string
     type : \Literal
     value : @content-text
     raw : "\"#{@content-text}\""
-  as-macro-form : -> @content-text
 
   compile : ->
     type : \Literal
@@ -40,7 +39,6 @@ class atom
         type : \Identifier
         name : \atom
       arguments : [ { type : \Literal, value : @content-text, raw : "\"#{@content-text}\"" } ]
-  as-macro-form : -> { type : \atom, text : @content-text }
 
   compile : ->
     if @content-text |> looks-like-number
@@ -66,7 +64,6 @@ class list
     arguments : [
         type : \ArrayExpression elements : @content.map (.as-sm!)
     ]
-  as-macro-form : -> @content.map (.as-macro-form!)
 
   compile : (parent-macro-table) ->
 
