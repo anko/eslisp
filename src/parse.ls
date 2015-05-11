@@ -12,25 +12,25 @@ statementify = (es-ast-node) ->
 root-macro-table = do
 
   chained-binary-expr = (type, operator) ->
-    macro = (compile, ...args) ->
-      | args.length is 1 => compile args.0
+    macro = (env, ...args) ->
+      | args.length is 1 => env.compile args.0
       | args.length is 2
         type : type
         operator : operator
-        left  : compile args.0
-        right : compile args.1
+        left  : env.compile args.0
+        right : env.compile args.1
       | arguments.length > 2
         [ head, ...rest ] = args
         macro do
-          compile
-          macro compile, compile head
-          macro.apply null ([ compile ] ++ rest)
+          env
+          macro env, env.compile head
+          macro.apply null ([ env ] ++ rest)
       | otherwise =>
         throw Error "binary expression macro `#operator` unexpectedly called \
                      with no arguments"
 
   unary-expr = (operator) ->
-    (compile, arg) ->
+    ({ compile }, arg) ->
       type : \UnaryExpression
       operator : operator
       prefix : true
@@ -39,7 +39,7 @@ root-macro-table = do
   n-ary-expr = (operator) ->
     n-ary = chained-binary-expr \BinaryExpression operator
     unary = unary-expr operator
-    (compile, ...args) ->
+    ({compile}, ...args) ->
       ( switch args.length | 0 => null
                            | 1 => unary
                            | _ => n-ary
@@ -49,7 +49,7 @@ root-macro-table = do
     unless operator in <[ ++ -- ]>
       throw Error "Illegal update expression operator #operator"
     is-prefix = ( type is \prefix )
-    (compile, ...arg) ->
+    ({ compile }, ...arg) ->
       if arg.length isnt 1
         throw Error "Expected `++` expression to get exactly 1 argument but \
                      got #{arguments.length}"
@@ -113,11 +113,11 @@ root-macro-table = do
     \|=   : chained-binary-expr \AssignmentExpression \|=
     \^=   : chained-binary-expr \AssignmentExpression \^=
 
-    \array : (compile, ...elements) ->
+    \array : ({ compile }, ...elements) ->
       type : \ArrayExpression
       elements : elements.map compile
 
-    \object : (compile, ...args) ->
+    \object : ({ compile }, ...args) ->
 
       if args.length % 2 isnt 0
         throw Error "Expected even number of arguments to object macro, but \
@@ -136,7 +136,7 @@ root-macro-table = do
           key : compile k
 
     \= : do
-      declaration = (compile, ...args) ->
+      declaration = ({compile}, ...args) ->
         if args.length isnt 2
           throw Error "Expected variable declaration to get 2 arguments, \
                        but got #{arguments.length}."
@@ -150,7 +150,7 @@ root-macro-table = do
 
       declaration
 
-    \switch : (compile, discriminant, ...cases) ->
+    \switch : ({compile}, discriminant, ...cases) ->
 
       if cases.length % 2 isnt 0
         throw Error "Switch conditional without a matching consequent"
@@ -175,26 +175,26 @@ root-macro-table = do
             .filter (isnt null) # in case of macros
             .map statementify
 
-    \if : (compile, test, consequent, alternate) ->
+    \if : ({compile}, test, consequent, alternate) ->
       type : \IfStatement
       test       : compile test
       consequent : statementify compile consequent
       alternate  : statementify compile alternate
 
-    \?: : (compile, test, consequent, alternate) ->
+    \?: : ({compile}, test, consequent, alternate) ->
       type : \ConditionalExpression
       test       : compile test
       consequent : compile consequent
       alternate  : compile alternate
 
-    \while : (compile, test, ...body) ->
+    \while : ({compile}, test, ...body) ->
       type : \WhileStatement
       test : compile test
       body :
         type : \BlockStatement
         body : body.map compile .filter (isnt null) .map statementify
 
-    \for : (compile, init, test, update, ...body) ->
+    \for : ({compile}, init, test, update, ...body) ->
       type : \ForStatement
       init : compile init
       test : compile test
@@ -210,7 +210,7 @@ root-macro-table = do
       type : \ContinueStatement
       label : null # TODO?
 
-    \return : (compile, arg) ->
+    \return : ({compile}, arg) ->
       type : \ReturnStatement
       argument : compile arg
 
@@ -223,7 +223,7 @@ root-macro-table = do
         | \Identifier => false
         | otherwise => true
 
-      dot = (compile, ...args) ->
+      dot = ({compile}:env, ...args) ->
         | args.length is 1 => compile args.0
         | args.length is 2
           property-compiled = compile args.1
@@ -234,9 +234,9 @@ root-macro-table = do
         | arguments.length > 2
           [ ...initial, last ] = args
           dot do
-            compile
-            dot.apply null ([ compile ] ++ initial)
-            dot compile, compile last
+            env
+            dot.apply null ([ env ] ++ initial)
+            dot env, compile last
         | otherwise =>
           throw Error "dot called with no arguments"
     \lambda : do
@@ -256,7 +256,7 @@ root-macro-table = do
         type : \BlockStatement
         body : nodes.map statementify
 
-      lambda = (compile, params, ...body) ->
+      lambda = ({compile}, params, ...body) ->
         type : \FunctionExpression
         id : null
         params : params.contents!map compile
@@ -264,7 +264,7 @@ root-macro-table = do
       lambda
 
     \quote : do
-      quote = (compile, ...args) ->
+      quote = ({compile}, ...args) ->
         if args.length > 1
           throw Error "Attempted to quote >1 values, not inside list"
         if args.0
@@ -312,7 +312,7 @@ root-macro-table = do
             [ recurse-on ast ]
         else [ ast.as-sm! ]
 
-      qq = (compile, ...args) ->
+      qq = ({compile}, ...args) ->
 
         # Each argument (in args) is an atom passed to the quasiquote macro.
         if args.length > 1

@@ -124,7 +124,7 @@ class list
         | otherwise =>
           throw Error "Unexpected return type #that"
 
-      compilerspace-macro = (compile, ...args) ->
+      compilerspace-macro = ({compile}, ...args) ->
         args .= map ->
           if it instanceof list
             it.contents!
@@ -192,13 +192,15 @@ class list
       return null
 
     else if head instanceof atom
-    and find-macro macro-table, head.text! then
+    and find-macro macro-table, head.text!
       args = rest
-        ..unshift ->
+      env =
+        compile : ->
           if it.compile?
             it.compile macro-table
           else it
-      return that.apply null, rest
+      args.unshift env
+      return that.apply null, args
 
     else
       # TODO compile-time check if callee has sensible type
