@@ -58,6 +58,61 @@ root-macro-table = do
       prefix : is-prefix
       argument : compile arg.0
 
+  compile-to-function = (env, function-args) ->
+
+    # function-args is the forms that go after the `lambda` keyword, so
+    # including parameter list and function body.
+
+    es-ast = env.compile list ([ atom \lambda ] ++ function-args)
+
+    userspace-function = do
+      let (evaluate = -> it |> env.compile |> env.compile-to-js |> eval)
+        eval "(#{env.compile-to-js es-ast})"
+
+  import-macro = (env, name, func) ->
+
+    # macro function form → internal compiler-form
+    #
+    # To make user-defined macros simpler to write, they may return just plain
+    # JS values, which we'll read back here as AST nodes.  This makes macros
+    # easier to write and a little more tolerant of silliness.
+    convert = (ast) ->
+      if ast instanceof [ string, atom ] then return ast
+      if ast instanceof list then return list ast.contents!map convert
+      switch typeof! ast
+      # Arrays represent lists
+      | \Array  => list ast.map convert
+      # Objects are turned into lists too
+      | \Object =>
+        [ keys, values ] = obj-to-lists ast
+        keys   .= map convert
+        values .= map convert
+        keys-values = zip keys, values
+        list ([ \object ] ++ keys-values)
+      | \String => string ast
+      | \Number => atom ("" + ast)
+      # Undefined and null represent nothing
+      | \Undefined => fallthrough
+      | \Null      => null
+      # Everything else is an error
+      | otherwise =>
+        throw Error "Unexpected return type #that"
+
+    compilerspace-macro = ({compile}, ...args) ->
+      args .= map ->
+        if it instanceof list
+          it.contents!
+        else it
+      userspace-macro-result = func.apply null, args
+
+      internal-ast-form = convert userspace-macro-result
+      if internal-ast-form is null
+        return null
+      else
+        return compile internal-ast-form
+
+    env.macro-table.parent.contents[name] = compilerspace-macro
+
   parent : null
   contents :
     \+ : n-ary-expr \+
@@ -262,6 +317,40 @@ root-macro-table = do
         params : params.contents!map compile
         body : compile-function-body compile, body
       lambda
+
+    \macro : (env, name, ...function-args) ->
+
+      # TODO error checking
+
+      userspace-macro = compile-to-function env, function-args
+
+      name .= text!
+      import-macro env, name, userspace-macro
+      return null
+
+    \macros : (env, ...body) ->
+
+      # Compile the body as if it were a function with no parameters
+      body-as-function = compile-to-function do
+        env
+        ([list [] ] ++ body) # prepend empty parameter list
+
+      # Run it
+      ret = body-as-function!
+
+      if typeof! ret isnt \Object
+        throw Error "Non-object return from `macros`! (got `#{typeof! ret}`)"
+
+      for name, func of ret
+        # sanity: no space or parens in macro name
+        if name.match /[\s()]/ isnt null
+          throw Error "`macros` return has illegal characters in return name"
+        if typeof func isnt \function
+          throw Error """`macros` return object value wasn't a function
+                         (got `#{typeof! func}`)"""
+
+        import-macro env, name, func
+      return null
 
     \quote : do
       quote = ({compile}, ...args) ->
