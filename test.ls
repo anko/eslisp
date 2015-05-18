@@ -22,6 +22,10 @@ test "plain literal" ->
   esl "3"
     ..`@equals` "3;"
 
+test "plain somewhat number-looking variable" ->
+  esl "3asd5"
+    ..`@equals` "3asd5;"
+
 test "n-ary plus" ->
   esl "(+ 3 4 5)"
     ..`@equals` "3 + (4 + 5);"

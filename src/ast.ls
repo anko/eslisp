@@ -2,7 +2,7 @@
 es-generate = (require \escodegen).generate _
 
 looks-like-number = (atom-text) ->
-  atom-text.match /\d+(\.\d+)?/
+  atom-text.match /^\d+(\.\d+)?$/
 
 class string
   (@content-text) ~>
