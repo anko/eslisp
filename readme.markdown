@@ -94,6 +94,37 @@ computations on them first.
     console.log(40 + 2);
     console.log(42);
 
+You can even return multiple statements from a macro (with the `multireturn`
+function, which is only defined inside macros).
+
+<!-- !test in multiple-return macro -->
+
+    (macro what (varName)
+     (multireturn `((. console log) ((. JSON stringify) ,varName))
+                  `(++ ,varName)))
+    (what ever)
+
+<!-- !test out multiple-return macro -->
+
+    console.log(JSON.stringify(ever));
+    ++ever;
+
+Returning `null` from a macro just means nothing.  This is handy for
+compilation side-effects or conditional compilation.
+
+<!-- !test in nothing-returning macro -->
+
+    (macro debug (statement)
+     ; Only return statement if `DEBUG` environment variable is set
+     (?: (. process env DEBUG) statement null))
+
+    (debug ((. console log) "debug output"))
+    (yep)
+
+<!-- !test out nothing-returning macro -->
+
+    yep();
+
 If you want macros that can share state between each other, create a `macros`
 block and return an object.  Each key-value pair of the object is interned as a
 macro.
