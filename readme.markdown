@@ -86,7 +86,7 @@ computations on them first.
     (macro m (x) `(+ ,x 2))
     ((. console log) (m 40))
 
-    (macro m2 (x) (+ (evaluate x) 2))
+    (macro m2 (x) `,(+ (evaluate x) 2))
     ((. console log) (m2 40))
 
 <!-- !test out macro and call -->
