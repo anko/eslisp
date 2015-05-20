@@ -177,6 +177,10 @@ root-macro-table = do
     \|=   : chained-binary-expr \AssignmentExpression \|=
     \^=   : chained-binary-expr \AssignmentExpression \^=
 
+    \seq : ({ compile }, ...expressions) ->
+      type : \SequenceExpression
+      expressions : expressions .map compile
+
     \array : ({ compile }, ...elements) ->
       type : \ArrayExpression
       elements : elements.map compile
