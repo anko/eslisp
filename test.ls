@@ -262,7 +262,7 @@ test "simple quoting macro" ->
     ..`@equals` "Math.random() + Math.random();"
 
 test "simple non-quoting macro" ->
-  esl "(macro three () (+ 1 2))
+  esl "(macro three () `,(+ 1 2))
        (three)"
     ..`@equals` "3;"
 

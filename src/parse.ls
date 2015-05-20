@@ -410,45 +410,49 @@ root-macro-table = do
         arg = args.0
 
         if arg instanceof list
-          concattable-args = arg.contents!
+          if arg.contents!0 instanceof atom and arg.contents!0.text! is \unquote
+            rest = arg.contents!slice 1 .0
+            compile rest
+          else
+            concattable-args = arg.contents!
 
-            # Each argument is resolved by quasiquote's rules.
-            |> map qq-body compile, _
+              # Each argument is resolved by quasiquote's rules.
+              |> map qq-body compile, _
 
-            # Each quasiquote-body resolution produces SpiderMonkey AST
-            # compiled values, but if there are many of them, it'll produce an
-            # array.  We'll convert these into ArrayExpressions so the results
-            # are effectively still compiled values.
-            |> map ->
-              if typeof! it is \Array
-                type : \ArrayExpression
-                elements : it
-              else it
+              # Each quasiquote-body resolution produces SpiderMonkey AST
+              # compiled values, but if there are many of them, it'll produce an
+              # array.  We'll convert these into ArrayExpressions so the results
+              # are effectively still compiled values.
+              |> map ->
+                if typeof! it is \Array
+                  type : \ArrayExpression
+                  elements : it
+                else it
 
-          # Now each should be an array (or a literal that was
-          # `unquote-splicing`ed) so they can be assumed to be good for
-          # `Array::concat`.
+            # Now each should be an array (or a literal that was
+            # `unquote-splicing`ed) so they can be assumed to be good for
+            # `Array::concat`.
 
-          # We then construct a call to Array::concat with each of the now
-          # quasiquote-resolved and compiled things as arguments.  That makes
-          # this macro produce a concatenation of the quasiquote-resolved
-          # arguments.
+            # We then construct a call to Array::concat with each of the now
+            # quasiquote-resolved and compiled things as arguments.  That makes
+            # this macro produce a concatenation of the quasiquote-resolved
+            # arguments.
 
-          type : \CallExpression
-          callee :
-            type : \MemberExpression
-            object :
+            type : \CallExpression
+            callee :
               type : \MemberExpression
               object :
-                type : \Identifier
-                name : \Array
+                type : \MemberExpression
+                object :
+                  type : \Identifier
+                  name : \Array
+                property :
+                  type : \Identifier
+                  name : \prototype
               property :
-                type : \Identifier
-                name : \prototype
-            property :
-              type : \Identifer
-              name : \concat
-          arguments : concattable-args
+                type : \Identifer
+                name : \concat
+            arguments : concattable-args
         else quote compile, arg
 
 module.exports = (ast) ->
