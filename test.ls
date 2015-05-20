@@ -406,3 +406,8 @@ test "macros creates block invoked as function, return val forms macros" ->
                  timesPrev (lambda (n) (*= x (evaluate n)) x)))" + # defines two macros
        "(plusPrev 2) (timesPrev 2)")
    ..`@equals` "2;\n4;"
+
+test "macro can return multiple statements with `multireturn`" ->
+  esl "(macro declareTwo () (multireturn '(= x 0) '(= y 1)))
+       (declareTwo)"
+   ..`@equals` "var x = 0;\nvar y = 1;"

@@ -1,4 +1,4 @@
-{ first, map, fold, zip } = require \prelude-ls
+{ first, map, fold, zip, concat-map } = require \prelude-ls
 { atom, list, string } = require \./ast
 
 is-expression = ->
@@ -58,6 +58,12 @@ root-macro-table = do
       prefix : is-prefix
       argument : compile arg.0
 
+  # This is only used to let macros return multiple statements, in a way
+  # detectable as different from other return types with an
+  # `instanceof`-check.
+  class multiple-statements
+    (@statements) ~>
+
   compile-to-function = (env, function-args) ->
 
     # function-args is the forms that go after the `lambda` keyword, so
@@ -67,7 +73,8 @@ root-macro-table = do
 
     userspace-function = do
       let (evaluate = -> it |> env.compile |> env.compile-to-js |> eval)
-        eval "(#{env.compile-to-js es-ast})"
+        let (multireturn = (...args) -> multiple-statements args)
+          eval "(#{env.compile-to-js es-ast})"
 
   import-macro = (env, name, func) ->
 
@@ -79,6 +86,7 @@ root-macro-table = do
     convert = (ast) ->
       if ast instanceof [ string, atom ] then return ast
       if ast instanceof list then return list ast.contents!map convert
+      if ast instanceof multiple-statements then return ast.statements.map convert
       switch typeof! ast
       # Arrays represent lists
       | \Array  => list ast.map convert
@@ -98,7 +106,7 @@ root-macro-table = do
       | otherwise =>
         throw Error "Unexpected return type #that"
 
-    compilerspace-macro = ({compile}, ...args) ->
+    compilerspace-macro = ({compile, compile-many}, ...args) ->
       args .= map ->
         if it instanceof list
           it.contents!
@@ -106,10 +114,11 @@ root-macro-table = do
       userspace-macro-result = func.apply null, args
 
       internal-ast-form = convert userspace-macro-result
-      if internal-ast-form is null
-        return null
-      else
-        return compile internal-ast-form
+
+      return switch
+      | internal-ast-form is null => null
+      | typeof! internal-ast-form is \Array => compile-many internal-ast-form
+      | otherwise => compile internal-ast-form
 
     env.macro-table.parent.contents[name] = compilerspace-macro
 
@@ -205,7 +214,7 @@ root-macro-table = do
 
       declaration
 
-    \switch : ({compile}, discriminant, ...cases) ->
+    \switch : ({compile, compile-many}, discriminant, ...cases) ->
 
       if cases.length % 2 isnt 0
         throw Error "Switch conditional without a matching consequent"
@@ -225,10 +234,7 @@ root-macro-table = do
             if t.type is \Identifier and t.name is \default
               null # emit "default:" switchcase label
             else t
-          consequent : c.content
-            .map compile
-            .filter (isnt null) # in case of macros
-            .map statementify
+          consequent : compile-many c.content .map statementify
 
     \if : ({compile}, test, consequent, alternate) ->
       type : \IfStatement
@@ -242,21 +248,21 @@ root-macro-table = do
       consequent : compile consequent
       alternate  : compile alternate
 
-    \while : ({compile}, test, ...body) ->
+    \while : ({compile, compile-many}, test, ...body) ->
       type : \WhileStatement
       test : compile test
       body :
         type : \BlockStatement
-        body : body.map compile .filter (isnt null) .map statementify
+        body : compile-many body .map statementify
 
-    \for : ({compile}, init, test, update, ...body) ->
+    \for : ({compile, compile-many}, init, test, update, ...body) ->
       type : \ForStatement
       init : compile init
       test : compile test
       update : compile update
       body :
         type : \BlockStatement
-        body : body.map compile .filter (isnt null) .map statementify
+        body : compile-many body .map statementify
 
     \break : ->
       type : \BreakStatement
@@ -295,11 +301,9 @@ root-macro-table = do
         | otherwise =>
           throw Error "dot called with no arguments"
     \lambda : do
-      compile-function-body = (compile, nodes) ->
+      compile-function-body = (compile-many, nodes) ->
 
-        nodes = nodes
-          .map compile
-          .filter (isnt null) # in case of macros
+        nodes = compile-many nodes
 
         last-node = nodes.pop!
         # Automatically return last node if it's an expression
@@ -311,11 +315,11 @@ root-macro-table = do
         type : \BlockStatement
         body : nodes.map statementify
 
-      lambda = ({compile}, params, ...body) ->
+      lambda = ({compile, compile-many}, params, ...body) ->
         type : \FunctionExpression
         id : null
         params : params.contents!map compile
-        body : compile-function-body compile, body
+        body : compile-function-body compile-many, body
       lambda
 
     \macro : (env, name, ...function-args) ->
@@ -409,7 +413,7 @@ root-macro-table = do
 
         arg = args.0
 
-        if arg instanceof list
+        if arg instanceof list and arg.contents!length
           if arg.contents!0 instanceof atom and arg.contents!0.text! is \unquote
             rest = arg.contents!slice 1 .0
             compile rest
@@ -466,6 +470,6 @@ module.exports = (ast) ->
   statements = ast.contents.map convert
   type : \Program
   body : statements
-    .map (.compile root-macro-table)
-    .filter (isnt null) # macro definitions emit nothing, hence this
-    .map statementify
+    |> concat-map (.compile root-macro-table)
+    |> (.filter (isnt null)) # macro definitions emit nothing, hence this
+    |> (.map statementify)

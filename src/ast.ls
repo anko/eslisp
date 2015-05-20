@@ -1,4 +1,4 @@
-{ obj-to-lists, zip } = require \prelude-ls
+{ obj-to-lists, zip, concat-map } = require \prelude-ls
 es-generate = (require \escodegen).generate _
 
 looks-like-number = (atom-text) ->
@@ -95,9 +95,10 @@ class list
           if it.compile?
             it.compile macro-table
           else it
+        compile-many = -> it |> concat-map compile |> (.filter (isnt null))
         compile-to-js = -> es-generate it
 
-        { compile, compile-to-js, macro-table }
+        { compile, compile-many, compile-to-js, macro-table }
 
       that.apply null, ([ env ] ++ rest)
 
