@@ -397,6 +397,10 @@ test "property access (dotting) treats stringa as literals, not identifiers" ->
   esl "(. a \"hi\")"
     ..`@equals` "a['hi'];"
 
+test "computed member expression (\"square brackets\")" ->
+  esl "(get a b 5)"
+    ..`@equals` "a[b][5];"
+
 test "macro deliberately breaking hygiene for lambda argument anaphora" ->
   esl "(macro : (body)
        `(lambda (it) ,body))

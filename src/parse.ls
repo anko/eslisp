@@ -304,6 +304,26 @@ root-macro-table = do
             dot env, compile last
         | otherwise =>
           throw Error "dot called with no arguments"
+
+    \get : do
+      get = ({compile}:env, ...args) ->
+        | args.length is 1 => compile args.0
+        | args.length is 2
+          property-compiled = compile args.1
+          type : \MemberExpression
+          computed : true # `get` is always computed
+          object   : compile args.0
+          property : property-compiled
+        | arguments.length > 2
+          [ ...initial, last ] = args
+          get do
+            env
+            get.apply null ([ env ] ++ initial)
+            get env, compile last
+        | otherwise =>
+          throw Error "dot called with no arguments"
+
+
     \lambda : do
       compile-function-body = (compile-many, nodes) ->
 
