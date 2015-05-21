@@ -343,7 +343,9 @@ root-macro-table = do
         type : \FunctionExpression
         id : null
         params : params.contents!map compile
-        body : compile-function-body compile-many, body
+        body :
+          type : \BlockStatement
+          body : compile-many body .map statementify
       lambda
 
     \macro : (env, name, ...function-args) ->

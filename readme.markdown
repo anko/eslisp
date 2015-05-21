@@ -45,13 +45,11 @@ becomes
 
 * * *
 
-The function-constructing macro is called `lambda` and implicitly returns the
-last thing in its body if it's an expression.  (Both of these things will
-probably change.)
+The function-constructing macro is called `lambda`.
 
 <!-- !test in func and call -->
 
-    (= f (lambda (x) (+ x 2)))
+    (= f (lambda (x) (return (+ x 2))))
     (f 40)
 
 <!-- !test out func and call -->
@@ -87,10 +85,10 @@ computations on them first.
 
 <!-- !test in macro and call -->
 
-    (macro m (x) `(+ ,x 2))
+    (macro m (x) (return `(+ ,x 2)))
     ((. console log) (m 40))
 
-    (macro m2 (x) `,(+ (evaluate x) 2))
+    (macro m2 (x) (return `,(+ (evaluate x) 2)))
     ((. console log) (m2 40))
 
 <!-- !test out macro and call -->
@@ -104,8 +102,8 @@ function, which is only defined inside macros).
 <!-- !test in multiple-return macro -->
 
     (macro what (varName)
-     (multireturn `((. console log) ((. JSON stringify) ,varName))
-                  `(++ ,varName)))
+     (return (multireturn `((. console log) ((. JSON stringify) ,varName))
+                  `(++ ,varName))))
     (what ever)
 
 <!-- !test out multiple-return macro -->
@@ -136,9 +134,9 @@ macro.
 <!-- !test in macros block -->
 
     (macros (= x 0)
-            (object increment (lambda () (++ x))
-                    decrement (lambda () (-- x))
-                    get       (lambda () x)))
+            (return (object increment (lambda () (return (++ x)))
+                            decrement (lambda () (return (-- x)))
+                            get       (lambda () (return x)))))
 
     (increment)
     (increment)
