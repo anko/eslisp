@@ -366,19 +366,23 @@ root-macro-table = do
       # Run it
       ret = body-as-function!
 
-      if typeof! ret isnt \Object
+      switch typeof! ret
+      | \Undefined => fallthrough
+      | \Null =>
+        return null
+      | \Object
+        for name, func of ret
+          # sanity: no space or parens in macro name
+          if name.match /[\s()]/ isnt null
+            throw Error "`macros` return has illegal characters in return name"
+          if typeof func isnt \function
+            throw Error """`macros` return object value wasn't a function
+                           (got `#{typeof! func}`)"""
+
+          import-macro env, name, func
+        return null
+      | otherwise
         throw Error "Non-object return from `macros`! (got `#{typeof! ret}`)"
-
-      for name, func of ret
-        # sanity: no space or parens in macro name
-        if name.match /[\s()]/ isnt null
-          throw Error "`macros` return has illegal characters in return name"
-        if typeof func isnt \function
-          throw Error """`macros` return object value wasn't a function
-                         (got `#{typeof! func}`)"""
-
-        import-macro env, name, func
-      return null
 
     \quote : do
       quote = ({compile}, ...args) ->

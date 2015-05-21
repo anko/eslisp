@@ -407,6 +407,10 @@ test "macro deliberately breaking hygiene for lambda argument anaphora" ->
         (: (. it x))"
     ..`@equals` "(function (it) {\n    return it.x;\n});"
 
+test "empty macros block produces no output" ->
+  esl "(macros)"
+   ..`@equals` ""
+
 test "macros creates block invoked as function, return val forms macros" ->
   esl ("(macros
          (= x 0)
