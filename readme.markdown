@@ -1,7 +1,7 @@
 # eslisp [![](https://img.shields.io/badge/api-unstable-red.svg?style=flat-square)][1]
 
-An [s-expression][2] syntax for [ECMAScript][3], with actually good
-[macros][4].  Minimum [magic][5] or [sugar][6].
+An [s-expression][2] syntax for [ECMAScript][3], with good [macros][4] that
+compile to JavaScript.  Minimum [magic][5] and [sugar][6].
 
 Why:
 
