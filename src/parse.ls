@@ -72,9 +72,15 @@ root-macro-table = do
     es-ast = env.compile list ([ atom \lambda ] ++ function-args)
 
     userspace-function = do
-      let (evaluate = -> it |> env.compile |> env.compile-to-js |> eval)
-        let (multi = (...args) -> multiple-statements args)
-          eval "(#{env.compile-to-js es-ast})"
+      evaluate = -> it |> env.compile |> env.compile-to-js |> eval
+      multi    = (...args) -> multiple-statements args
+      is-atom  = (instanceof atom)
+      is-string  = (instanceof string)
+      text-of  = ->
+        if it instanceof [ atom, string ] then it.text!
+        else throw Error "Attempting to get text of non-atom non-string thing \
+                          #{JSON.stringify it}"
+      eval "(#{env.compile-to-js es-ast})"
 
   import-macro = (env, name, func) ->
 

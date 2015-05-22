@@ -424,3 +424,14 @@ test "macro can return multiple statements with `multi`" ->
   esl "(macro declareTwo () (return (multi '(= x 0) '(= y 1))))
        (declareTwo)"
    ..`@equals` "var x = 0;\nvar y = 1;"
+
+test "macro can ask for atom/string argument type and get text" ->
+  esl '''
+      (macro stringy (x)
+       (switch true
+        (isAtom x)   ((return `,(+ "atom:" (textOf x))))
+        (isString x) ((return `,(textOf x)))))
+      (stringy a)
+      (stringy "b")
+      '''
+   ..`@equals` "'atom:a';\n'b';"
