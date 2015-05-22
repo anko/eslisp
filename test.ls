@@ -420,7 +420,7 @@ test "macros creates block invoked as function, return val forms macros" ->
        """
    ..`@equals` "2;\n4;"
 
-test "macro can return multiple statements with `multireturn`" ->
-  esl "(macro declareTwo () (return (multireturn '(= x 0) '(= y 1))))
+test "macro can return multiple statements with `multi`" ->
+  esl "(macro declareTwo () (return (multi '(= x 0) '(= y 1))))
        (declareTwo)"
    ..`@equals` "var x = 0;\nvar y = 1;"

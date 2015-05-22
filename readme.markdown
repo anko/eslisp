@@ -96,13 +96,13 @@ computations on them first.
     console.log(40 + 2);
     console.log(42);
 
-You can even return multiple statements from a macro (with the `multireturn`
+You can even return multiple statements from a macro (with the `multi`
 function, which is only defined inside macros).
 
 <!-- !test in multiple-return macro -->
 
     (macro what (varName)
-     (return (multireturn `((. console log) ((. JSON stringify) ,varName))
+     (return (multi `((. console log) ((. JSON stringify) ,varName))
                   `(++ ,varName))))
     (what ever)
 

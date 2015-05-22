@@ -73,7 +73,7 @@ root-macro-table = do
 
     userspace-function = do
       let (evaluate = -> it |> env.compile |> env.compile-to-js |> eval)
-        let (multireturn = (...args) -> multiple-statements args)
+        let (multi = (...args) -> multiple-statements args)
           eval "(#{env.compile-to-js es-ast})"
 
   import-macro = (env, name, func) ->
