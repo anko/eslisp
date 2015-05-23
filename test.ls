@@ -246,6 +246,10 @@ test "multiple statements in function" ->
                    ((. console log) "world"))'
     ..`@equals` "(function (x) {\n    console.log(\'hello\');\n    console.log(\'world\');\n});"
 
+test "new statement" ->
+  esl '(new Error "hi") (new x)'
+    ..`@equals` "new Error('hi');\nnew x();"
+
 test "throw statement" ->
   esl '(throw e)'
     ..`@equals` "throw e;"

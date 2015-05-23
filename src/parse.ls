@@ -369,6 +369,16 @@ root-macro-table = do
           body : compile-many body .map statementify
       func
 
+    \new : ({compile}, ...args) ->
+      [ newTarget, ...newArgs ] = args
+
+      if not newTarget? then throw Error "No target for `new`"
+      # `newArgs` can be empty though
+
+      type : \NewExpression
+      callee : compile newTarget
+      arguments : newArgs .map compile
+
     \throw : ({compile}, ...args) ->
 
       if args.length isnt 1
