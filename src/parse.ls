@@ -65,6 +65,34 @@ root-macro-table = do
   class multiple-statements
     (@statements) ~>
 
+  # macro function form → internal compiler-form
+  #
+  # To make user-defined macros simpler to write, they may return just plain
+  # JS values, which we'll read back here as AST nodes.  This makes macros
+  # easier to write and a little more tolerant of silliness.
+  convert = (ast) ->
+    if ast instanceof [ string, atom ] then return ast
+    if ast instanceof list then return list ast.contents!map convert
+    if ast instanceof multiple-statements then return ast.statements.map convert
+    switch typeof! ast
+    # Arrays represent lists
+    | \Array  => list ast.map convert
+    # Objects are turned into lists too
+    | \Object =>
+      [ keys, values ] = obj-to-lists ast
+      keys   .= map convert
+      values .= map convert
+      keys-values = zip keys, values
+      list ([ \object ] ++ keys-values)
+    | \String => string ast
+    | \Number => atom ("" + ast)
+    # Undefined and null represent nothing
+    | \Undefined => fallthrough
+    | \Null      => null
+    # Everything else is an error
+    | otherwise =>
+      throw Error "Unexpected return type #that"
+
   compile-to-function = (env, function-args) ->
 
     # function-args is the forms that go after the `lambda` keyword, so
@@ -93,37 +121,11 @@ root-macro-table = do
         # RFC4122 v4 UUIDs are based on random bits.  Hyphens become underscores
         # to make the UUID a valid JS identifier.
 
+      is-expr = -> it |> convert |> env.compile |> is-expression
+
       eval "(#{env.compile-to-js es-ast})"
 
   import-macro = (env, name, func) ->
-
-    # macro function form → internal compiler-form
-    #
-    # To make user-defined macros simpler to write, they may return just plain
-    # JS values, which we'll read back here as AST nodes.  This makes macros
-    # easier to write and a little more tolerant of silliness.
-    convert = (ast) ->
-      if ast instanceof [ string, atom ] then return ast
-      if ast instanceof list then return list ast.contents!map convert
-      if ast instanceof multiple-statements then return ast.statements.map convert
-      switch typeof! ast
-      # Arrays represent lists
-      | \Array  => list ast.map convert
-      # Objects are turned into lists too
-      | \Object =>
-        [ keys, values ] = obj-to-lists ast
-        keys   .= map convert
-        values .= map convert
-        keys-values = zip keys, values
-        list ([ \object ] ++ keys-values)
-      | \String => string ast
-      | \Number => atom ("" + ast)
-      # Undefined and null represent nothing
-      | \Undefined => fallthrough
-      | \Null      => null
-      # Everything else is an error
-      | otherwise =>
-        throw Error "Unexpected return type #that"
 
     compilerspace-macro = ({compile, compile-many}, ...args) ->
       args .= map ->

@@ -455,3 +455,33 @@ test "macro can generate symbol with unique name" ->
   identifiers = lines.map (.match /var (.*) = null;/ .1)
     ..every -> it?                         # all matched
     (unique identifiers) `@deep-equals` .. # all were unique
+
+test "macro can create implicit last-expr returning lambda shorthand" ->
+  code = esl '''
+    (macro fn ()
+     (= args ((. Array prototype slice call) arguments))
+     (= fnArgs (. args  0))
+     (= fnBody ((. args slice) 1))
+
+     (= last ((. fnBody pop)))
+
+     (= lastConverted
+      (?: (isExpr last)
+          `(return ,last)
+          last))
+
+     ((. fnBody push) lastConverted)
+
+     (return `(lambda ,fnArgs ,@fnBody)))
+
+    (fn (x) (+ x 1))
+    (fn (x) (= x 1))
+    '''
+    ..`@equals` """
+      (function (x) {
+          return x + 1;
+      });
+      (function (x) {
+          var x = 1;
+      });
+      """
