@@ -1,13 +1,14 @@
 # eslisp [![](https://img.shields.io/badge/api-unstable-red.svg?style=flat-square)][1]
 
 Unopinionated "small core" [s-expression][2] syntax for [ECMAScript][3], with
-[macros][4].  Minimum [magic][5] or [sugar][6].
+[macros][4].  Minimum [magic][5] or [sugar][6].  Extension-friendly.
 
 Philosophy:
 
--   **Just plain S-expr JS with macros**.  The language core should as far as
-    reasonable match the output JS one-to-one.  Syntactic sugar should be
-    optional and provided by macros that are separately maintained.
+-   **Just plain JS, just with macros and macro-friendly syntax**.  The
+    language core should as far as reasonable match the output JS one-to-one.
+    Syntactic sugar should be optional and provided by macros that are
+    separately maintained.
 
 -   **Macros front and center**.  S-expressions are a minimal homoiconic
     representation of an [Abstract Syntax Tree][7] and [lisp macros rock][8]
