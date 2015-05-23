@@ -73,6 +73,11 @@ root-macro-table = do
     es-ast = env.compile list ([ atom \lambda ] ++ function-args)
 
     userspace-function = do
+
+      # These functions are deliberately defined in the closure here, such that
+      # they're in scope during the `eval` and hence available in the compiled
+      # macro function.
+
       evaluate = -> it |> env.compile |> env.compile-to-js |> eval
       multi    = (...args) -> multiple-statements args
       is-atom  = (instanceof atom)
