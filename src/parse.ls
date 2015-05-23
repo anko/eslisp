@@ -95,10 +95,10 @@ root-macro-table = do
 
   compile-to-function = (env, function-args) ->
 
-    # function-args is the forms that go after the `lambda` keyword, so
+    # function-args is the forms that go after the `function` keyword, so
     # including parameter list and function body.
 
-    es-ast = env.compile list ([ atom \lambda ] ++ function-args)
+    es-ast = env.compile list ([ atom \function ] ++ function-args)
 
     userspace-function = do
 
@@ -345,7 +345,7 @@ root-macro-table = do
           throw Error "dot called with no arguments"
 
 
-    \lambda : do
+    \function : do
       compile-function-body = (compile-many, nodes) ->
 
         nodes = compile-many nodes
@@ -360,14 +360,14 @@ root-macro-table = do
         type : \BlockStatement
         body : nodes.map statementify
 
-      lambda = ({compile, compile-many}, params, ...body) ->
+      func = ({compile, compile-many}, params, ...body) ->
         type : \FunctionExpression
         id : null
         params : params.contents!map compile
         body :
           type : \BlockStatement
           body : compile-many body .map statementify
-      lambda
+      func
 
     \macro : (env, name, ...function-args) ->
 

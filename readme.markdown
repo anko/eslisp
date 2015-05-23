@@ -46,11 +46,12 @@ becomes
 
 * * *
 
-The function-constructing macro is called `lambda`.
+The function-constructing macro takes a list of arguments first.  The rest are
+treated like the statements in the function body.
 
 <!-- !test in func and call -->
 
-    (= f (lambda (x) (return (+ x 2))))
+    (= f (function (x) (return (+ x 2))))
     (f 40)
 
 <!-- !test out func and call -->
@@ -135,9 +136,9 @@ macro.
 <!-- !test in macros block -->
 
     (macros (= x 0)
-            (return (object increment (lambda () (return (++ x)))
-                            decrement (lambda () (return (-- x)))
-                            get       (lambda () (return x)))))
+            (return (object increment (function () (return (++ x)))
+                            decrement (function () (return (-- x)))
+                            get       (function () (return x)))))
 
     (increment)
     (increment)

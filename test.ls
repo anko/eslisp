@@ -145,20 +145,20 @@ test "sequence expression (comma-separated expressions)" ->
   esl "(seq x y z)"
     ..`@equals` "x, y, z;"
 
-test "lambda (function) expression" ->
-  esl "(lambda (x) (return (+ x 1)))"
+test "function expression" ->
+  esl "(function (x) (return (+ x 1)))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
 
-test "lambda with no arguments" ->
-  esl "(lambda () (return 1))"
+test "function with no arguments" ->
+  esl "(function () (return 1))"
     ..`@equals` "(function () {\n    return 1;\n});"
 
 test "assignment expression" -> # += and whatever are same code path
-  esl "(:= f (lambda (x) (return (+ x 1))))"
+  esl "(:= f (function (x) (return (+ x 1))))"
     ..`@equals` "f = function (x) {\n    return x + 1;\n};"
 
 test "variable declaration statement" ->
-  esl "(= f (lambda (x) (return (+ x 1))))"
+  esl "(= f (function (x) (return (+ x 1))))"
     ..`@equals` "var f = function (x) {\n    return x + 1;\n};"
 
 test "empty statement" ->
@@ -186,7 +186,7 @@ test "member, then call with arguments" ->
     ..`@equals` "console.log('hi');"
 
 test "func with member and call in it" ->
-  esl "(lambda (x) ((. console log) x))"
+  esl "(function (x) ((. console log) x))"
     ..`@equals` "(function (x) {\n    console.log(x);\n});"
 
 test "switch statement" ->
@@ -242,7 +242,7 @@ test "multiple statements in program" ->
     ..`@equals` "console.log('hello');\nconsole.log('world');"
 
 test "multiple statements in function" ->
-  esl '(lambda (x) ((. console log) "hello") \
+  esl '(function (x) ((. console log) "hello") \
                    ((. console log) "world"))'
     ..`@equals` "(function (x) {\n    console.log(\'hello\');\n    console.log(\'world\');\n});"
 
@@ -294,13 +294,13 @@ test "macros mask others defined before with the same name" ->
     ..`@equals` "console.log('hi');"
 
 test "macros can be defined inside function bodies" ->
-  esl "(= f (lambda (x)
+  esl "(= f (function (x)
          (macro x () (return 5))
          (return (x))))"
     ..`@equals` "var f = function (x) {\n    return 5;\n};"
 
 test "macros go out of scope at the end of the nesting level" ->
-  esl "(= f (lambda (x)
+  esl "(= f (function (x)
          (macro x () (return 5))
          (return (x))))
        (x)"
@@ -370,16 +370,16 @@ test "macro producing an object won't get confused for atom" ->
 
 test "macro producing a function" ->
   esl "(macro increase (n)
-                      (return `(lambda (x) (return (+ x ,n)))))
+                      (return `(function (x) (return (+ x ,n)))))
        (increase 3)"
     ..`@equals` "(function (x) {\n    return x + 3;\n});"
 
 test "macros can operate on their arguments variable" ->
-  esl "(macro lambdaBackwards ()
+  esl "(macro functionBackwards ()
         (= body (. arguments 0))
         (= args ((. Array prototype slice call) arguments 1))
-        (return `(lambda ,@args ,body)))
-       (lambdaBackwards (return (+ x 1)) (x))"
+        (return `(function ,@args ,body)))
+       (functionBackwards (return (+ x 1)) (x))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
 
 test "property access (dotting) chains identifiers" ->
@@ -402,9 +402,9 @@ test "computed member expression (\"square brackets\")" ->
   esl "(get a b 5)"
     ..`@equals` "a[b][5];"
 
-test "macro deliberately breaking hygiene for lambda argument anaphora" ->
+test "macro deliberately breaking hygiene for function argument anaphora" ->
   esl "(macro : (body)
-       (return `(lambda (it) ,body)))
+       (return `(function (it) ,body)))
         (: (return (. it x)))"
     ..`@equals` "(function (it) {\n    return it.x;\n});"
 
@@ -416,8 +416,8 @@ test "macros creates block invoked as function, return val forms macros" ->
   esl """
       (macros
         (= x 0)
-        (return (object plusPrev  (lambda (n) (return (+= x (evaluate n)) x))
-                        timesPrev (lambda (n) (return (*= x (evaluate n)) x)))))
+        (return (object plusPrev  (function (n) (return (+= x (evaluate n)) x))
+                        timesPrev (function (n) (return (*= x (evaluate n)) x)))))
       (plusPrev 2) (timesPrev 2)
        """
    ..`@equals` "2;\n4;"
@@ -456,7 +456,7 @@ test "macro can generate symbol with unique name" ->
     ..every -> it?                         # all matched
     (unique identifiers) `@deep-equals` .. # all were unique
 
-test "macro can create implicit last-expr returning lambda shorthand" ->
+test "macro can create implicit last-expr returning function shorthand" ->
   code = esl '''
     (macro fn ()
      (= args ((. Array prototype slice call) arguments))
@@ -472,7 +472,7 @@ test "macro can create implicit last-expr returning lambda shorthand" ->
 
      ((. fnBody push) lastConverted)
 
-     (return `(lambda ,fnArgs ,@fnBody)))
+     (return `(function ,fnArgs ,@fnBody)))
 
     (fn (x) (+ x 1))
     (fn (x) (= x 1))
