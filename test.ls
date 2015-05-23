@@ -246,6 +246,10 @@ test "multiple statements in function" ->
                    ((. console log) "world"))'
     ..`@equals` "(function (x) {\n    console.log(\'hello\');\n    console.log(\'world\');\n});"
 
+test "throw statement" ->
+  esl '(throw e)'
+    ..`@equals` "throw e;"
+
 #test "quoting a list produces array" ->
 #  esl "'(1 2 3)"
 #    ..`@equals` "[\n    1,\n    2,\n    3\n];"

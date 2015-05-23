@@ -369,6 +369,14 @@ root-macro-table = do
           body : compile-many body .map statementify
       func
 
+    \throw : ({compile}, ...args) ->
+
+      if args.length isnt 1
+        throw Error "Expected 1 argument to `throws`; got #{args.length}"
+
+      type : \ThrowStatement
+      argument : compile args.0
+
     \macro : (env, name, ...function-args) ->
 
       # TODO error checking
