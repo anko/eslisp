@@ -1,5 +1,6 @@
 { first, map, fold, zip, concat-map } = require \prelude-ls
 { atom, list, string } = require \./ast
+uuid = require \uuid .v4
 
 is-expression = ->
   it.type?match /Expression$/ or it.type in <[ Literal Identifier ]>
@@ -80,6 +81,13 @@ root-macro-table = do
         if it instanceof [ atom, string ] then it.text!
         else throw Error "Attempting to get text of non-atom non-string thing \
                           #{JSON.stringify it}"
+      gensym = ->
+        if arguments.length
+          throw Error "Got #that arguments to `gensym`; expected none."
+        atom "$#{uuid!.replace /-/g, \_}"
+        # RFC4122 v4 UUIDs are based on random bits.  Hyphens become underscores
+        # to make the UUID a valid JS identifier.
+
       eval "(#{env.compile-to-js es-ast})"
 
   import-macro = (env, name, func) ->

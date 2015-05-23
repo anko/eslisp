@@ -6,6 +6,8 @@ test = (name, test-func) ->
 
 esl = require \./src/index.ls
 
+{ unique } = require \prelude-ls
+
 test "nothing" ->
   esl ""
     .. `@equals` ""
@@ -435,3 +437,21 @@ test "macro can ask for atom/string argument type and get text" ->
       (stringy "b")
       '''
    ..`@equals` "'atom:a';\n'b';"
+
+test "macro can generate symbol with unique name" ->
+  code = esl '''
+    (macro declare ()
+     (return `(= ,(gensym) null)))
+    (declare)
+    (declare)
+    (declare)
+    '''
+
+  # The exact symbols generated are irrelevant here.  If they're unique,
+  # they're OK.
+
+  lines = code.split "\n"
+    ..length `@equals` 3
+  identifiers = lines.map (.match /var (.*) = null;/ .1)
+    ..every -> it?                         # all matched
+    (unique identifiers) `@deep-equals` .. # all were unique
