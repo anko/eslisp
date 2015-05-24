@@ -263,6 +263,10 @@ test "new statement" ->
   esl '(new Error "hi") (new x)'
     ..`@equals` "new Error('hi');\nnew x();"
 
+test "debugger statement" ->
+  esl '(debugger)'
+    ..`@equals` "debugger;"
+
 test "throw statement" ->
   esl '(throw e)'
     ..`@equals` "throw e;"

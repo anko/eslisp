@@ -394,6 +394,11 @@ root-macro-table = do
       callee : compile newTarget
       arguments : newArgs .map compile
 
+    \debugger : (_, ...args) ->
+      if args.length
+        throw Error "Expected no arguments to `debugger` statement"
+      type : \DebuggerStatement
+
     \throw : ({compile}, ...args) ->
 
       if args.length isnt 1
