@@ -1,9 +1,34 @@
 # eslisp [![](https://img.shields.io/badge/api-unstable-red.svg?style=flat-square)][1]
 
-Unopinionated "small core" [s-expression][2] syntax for [ECMAScript][3], with
-[macros][4].  Minimum [magic][5] or [sugar][6].  Extension-friendly.
+[S-expression][2] syntax for [ECMAScript][3], with [macros][4].  Unopinionated,
+with minimum [magic][5] or [sugar][6].  Intended as an extensible base for
+further syntax abstractions.
 
-Philosophy:
+<!-- !test program ./bin/eslc | head -c -1 -->
+
+<!-- !test in fib -->
+
+    (= fib             ; Fibonacci number sequence
+       (function (x)
+        (switch x
+         (0 (return 1))
+         (1 (return 1))
+         (default (return (+ (fib x) (fib (- x 1))))))))
+
+<!-- !test out fib -->
+
+    var fib = function (x) {
+        switch (x) {
+        case 0:
+            return 1;
+        case 1:
+            return 1;
+        default:
+            return fib(x) + fib(x - 1);
+        }
+    };
+
+## Philosophy
 
 -   **Just plain JS, just with macros and macro-friendly syntax**.  The
     language core should as far as reasonable match the output JS one-to-one.
@@ -27,8 +52,6 @@ the coolest thing since mint ice cream.  [Conditional compilation][12]!
 [DLSs][13]!  [Anaphora][14]!  [*So cool*][15].
 
 ## Examples
-
-<!-- !test program ./bin/eslc | head -c -1 -->
 
 Nested parentheses represent macro- or function-calls.  Here `.` is a
 compiler-defined macro representing property access, so `(. console log)`
