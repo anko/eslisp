@@ -85,11 +85,11 @@ test "decrement-before expression" ->
     ..`@equals` "--x;\n--x;"
 
 test "chainable logical expressions" ->
-  esl "(and 1 2 3) (or 1 2 3)"
+  esl "(&& 1 2 3) (|| 1 2 3)"
     ..`@equals` "1 && (2 && 3);\n1 || (2 || 3);"
 
 test "unary logical not" ->
-  esl "(not 1)"
+  esl "(! 1)"
     ..`@equals` "!1;"
 
 test "unary delete" ->

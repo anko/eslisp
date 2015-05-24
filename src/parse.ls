@@ -158,9 +158,9 @@ root-macro-table = do
     \--_ : update-expression \-- type : \prefix
     \_-- : update-expression \-- type : \suffix
 
-    \and : chained-binary-expr \LogicalExpression \&&
-    \or  : chained-binary-expr \LogicalExpression \||
-    \not : unary-expr \!
+    \&& : chained-binary-expr \LogicalExpression \&&
+    \|| : chained-binary-expr \LogicalExpression \||
+    \!  : unary-expr \!
 
     \< : chained-binary-expr \BinaryExpression \<
     \> : chained-binary-expr \BinaryExpression \>
