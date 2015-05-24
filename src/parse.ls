@@ -280,6 +280,13 @@ root-macro-table = do
         type : \BlockStatement
         body : compile-many body .map statementify
 
+    \dowhile : ({compile, compile-many}, test, ...body) ->
+      type : \DoWhileStatement
+      test : compile test
+      body :
+        type : \BlockStatement
+        body : compile-many body .map statementify
+
     \for : ({compile, compile-many}, init, test, update, ...body) ->
       type : \ForStatement
       init : compile init

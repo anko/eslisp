@@ -218,6 +218,11 @@ test "while loop" ->
                      ((. console log) "still ok"))'
     ..`@equals` "while (--n) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
+test "do/while loop" ->
+  esl '(dowhile (-- n) ((. console log) "ok")
+                     ((. console log) "still ok"))'
+    ..`@equals` "do {\n    console.log('ok');\n    console.log('still ok');\n} while (--n);"
+
 test "for loop" ->
   esl '(for (= x 1) (< x 10) (++ x) ((. console log) "ok")
                                     ((. console log) "still ok"))'
