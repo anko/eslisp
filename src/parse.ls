@@ -226,15 +226,15 @@ root-macro-table = do
 
     \= : do
       declaration = ({compile}, ...args) ->
-        if args.length isnt 2
-          throw Error "Expected variable declaration to get 2 arguments, \
+        if args.length > 2
+          throw Error "Expected variable declaration to get 1 or 2 arguments, \
                        but got #{arguments.length}."
         type : \VariableDeclaration
         kind : "var"
         declarations : [
           type : \VariableDeclarator
           id : compile args.0
-          init : compile args.1
+          init : if args.1 then compile args.1 else null
         ]
 
       declaration

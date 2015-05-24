@@ -158,6 +158,10 @@ test "assignment expression" -> # += and whatever are same code path
     ..`@equals` "f = function (x) {\n    return x + 1;\n};"
 
 test "variable declaration statement" ->
+  esl "(= f)"
+    ..`@equals` "var f;"
+
+test "variable declaration and assignment" ->
   esl "(= f (function (x) (return (+ x 1))))"
     ..`@equals` "var f = function (x) {\n    return x + 1;\n};"
 
