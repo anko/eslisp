@@ -246,6 +246,10 @@ test "for loop with null init, update and test" ->
                      ((. console log) "still ok"))'
     ..`@equals` "for (;; ;; ;) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
+test "for-in loop" ->
+  esl '(forin (= x) xs ((. console log) x))'
+    ..`@equals` "for (var x in xs) {\n    console.log(x);\n}"
+
 test "multiple statements in program" ->
   esl '((. console log) "hello") ((. console log) "world")'
     ..`@equals` "console.log('hello');\nconsole.log('world');"

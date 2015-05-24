@@ -296,6 +296,14 @@ root-macro-table = do
         type : \BlockStatement
         body : compile-many body .map statementify
 
+    \forin : ({compile, compile-many}, left, right, ...body) ->
+      type : \ForInStatement
+      left : compile left
+      right : compile right
+      body :
+        type : \BlockStatement
+        body : compile-many body .map statementify
+
     \break : ->
       type : \BreakStatement
       label : null # TODO?
