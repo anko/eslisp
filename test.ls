@@ -196,8 +196,8 @@ test "func with member and call in it" ->
 test "switch statement" ->
   esl '''
       (switch (y)
-              (== x 5) (((. console log) "hi") (break))
-              default  ((return false)))
+              ((== x 5) ((. console log) "hi") (break))
+              (default  (return false)))
       '''
     ..`@equals` """
                 switch (y()) {
@@ -530,8 +530,8 @@ test "macro can ask for atom/string argument type and get text" ->
   esl '''
       (macro stringy (x)
        (switch true
-        (isAtom x)   ((return `,(+ "atom:" (textOf x))))
-        (isString x) ((return `,(textOf x)))))
+        ((isAtom x)   (return `,(+ "atom:" (textOf x))))
+        ((isString x) (return `,(textOf x)))))
       (stringy a)
       (stringy "b")
       '''
