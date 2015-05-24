@@ -387,6 +387,74 @@ root-macro-table = do
       type : \ThrowStatement
       argument : compile args.0
 
+    \try : ({compile, compile-many}, ...args) ->
+
+      block = args.shift!
+      unless block instanceof list
+        throw Error "Expected `try` block (first argument) to be a list"
+
+      # The `catch`- and `finally`-clauses can come in either order
+
+      clause-a = args.shift!
+      clause-b = args.shift!
+
+      if args.length
+        throw Error "Unexpected fourth argument to `try` \
+                     (expected between 1 and 3)"
+
+      unless clause-a
+        throw Error "`try` has no catch- or finally-block \
+                     (expected either or both)"
+
+      read-clause = (clause, options={}) ->
+        return unless clause
+        contents-a = clause.contents!
+        type-a = contents-a.shift!
+        unless type-a instanceof atom and type-a.text! in <[ catch finally ]>
+          throw Error "First clause of `try` not labelled `catch` or `finally`"
+        switch type-a.text!
+        | \catch
+          if options.deny-catch then throw Error "Duplicate `catch` clause"
+
+          type : \catch
+          pattern : compile contents-a.shift!
+          body :
+            type : \BlockStatement
+            body : compile-many contents-a .map statementify
+        | \finally
+          if options.deny-finally then throw Error "Duplicate `finally` clause"
+
+          type : \finally
+          body :
+            type : \BlockStatement
+            body : compile-many contents-a .map statementify
+
+      var catch-clause, finally-clause
+      a = read-clause clause-a
+      switch a?type
+      | \catch   => catch-clause   := a
+      | \finally => finally-clause := a
+
+      b = read-clause clause-b, switch a.type # disallow same again
+                                | \catch   => { +deny-catch }
+                                | \finally => { +deny-finally }
+      switch b?type
+      | \catch   => catch-clause   := b
+      | \finally => finally-clause := b
+
+      type : \TryStatement
+      block :
+        type : \BlockStatement
+        body : compile-many block.contents! .map statementify
+      handler :
+        if catch-clause
+          type  : \CatchClause
+          param : catch-clause.pattern
+          body  : catch-clause.body
+        else null
+      finalizer : if finally-clause then that.body
+                  else null
+
     \macro : (env, name, ...function-args) ->
 
       # TODO error checking

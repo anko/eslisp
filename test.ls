@@ -254,6 +254,80 @@ test "throw statement" ->
   esl '(throw e)'
     ..`@equals` "throw e;"
 
+test "try-catch (with `catch` and `finally`)" ->
+  esl '''
+      (try
+       ((yep) (nope))
+       (catch err
+        (a err) (b err))
+       (finally (x) (y)))
+      '''
+    ..`@equals` """
+      try {
+          yep();
+          nope();
+      } catch (err) {
+          a(err);
+          b(err);
+      } finally {
+          x();
+          y();
+      }
+      """
+
+test "try-catch (with `catch` and `finally` in opposite order)" ->
+  esl '''
+      (try
+       ((yep) (nope))
+       (finally (x) (y))
+       (catch err
+        (a err) (b err)))
+      '''
+    ..`@equals` """
+      try {
+          yep();
+          nope();
+      } catch (err) {
+          a(err);
+          b(err);
+      } finally {
+          x();
+          y();
+      }
+      """
+
+test "try-catch (`catch`; no `finally`)" ->
+  esl '''
+      (try
+       ((yep) (nope))
+       (catch err
+        (a err) (b err)))
+      '''
+    ..`@equals` """
+      try {
+          yep();
+          nope();
+      } catch (err) {
+          a(err);
+          b(err);
+      }
+      """
+
+test "try-catch (`finally`; no `catch`)" ->
+  esl '''
+      (try
+       ((yep) (nope))
+       (finally (x) (y)))
+      '''
+    ..`@equals` """
+      try {
+          yep();
+          nope();
+      } finally {
+          x();
+          y();
+      }
+      """
 #test "quoting a list produces array" ->
 #  esl "'(1 2 3)"
 #    ..`@equals` "[\n    1,\n    2,\n    3\n];"
