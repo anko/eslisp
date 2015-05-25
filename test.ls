@@ -600,3 +600,12 @@ test "macro can create implicit last-expr returning function shorthand" ->
           var x = 1;
       });
       """
+
+test "macro-generating macro" -> # yes srsly
+  esl '''
+    (macro define-with-name (x)
+      (return `(macro ,x () `(hello))))
+    (define-with-name what)
+    (what no)
+    '''
+    ..`@equals` "no();"
