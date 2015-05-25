@@ -186,7 +186,7 @@ macro.
 
 * * *
 
-See the unit tests for more.
+Want more?  [The tests][19] are basically a language tutorial.
 
 ## Try it
 
@@ -195,14 +195,14 @@ eslisp to it. Receive ECMAScript.
 
     echo '((. console log) "Yo!")' | ./bin/eslc
 
-If you want `eslc` in your [`$PATH`][19], `npm install --global`.
+If you want `eslc` in your [`$PATH`][20], `npm install --global`.
 
 To remove it cleanly, `npm uninstall --global`.
 
 ## How does it work
 
 A table of predefined macros is used to turn S-expressions into [SpiderMonkey
-AST][20], which is fed to [escodegen][21], which outputs JS.  Some of those
+AST][21], which is fed to [escodegen][22], which outputs JS.  Some of those
 macros allow defining further macros, which get added to the table and
 henceforth work just like the predefined ones do.
 
@@ -213,51 +213,51 @@ I'll go in rough order of decreasing similarity.
 
 ### Independent JS lisp implementations
 
-[**Jisp**][22] is the most similar existing project. It has implemented macros
+[**Jisp**][23] is the most similar existing project. It has implemented macros
 slightly differently in the details, and is more opinionated about how code
 should be written; everything is an expression, sometimes at the cost of a
 one-to-one language mapping.  It is currently not actively maintained.
 
-[**Sibilant**][23] also emphasises staying close to JavaScript semantics, but
+[**Sibilant**][24] also emphasises staying close to JavaScript semantics, but
 unlike eslisp, it accepts extensive syntactic sugar and its macros (though
 featureful) are cumbersome to write.
 
-[**LispyScript**][24] adds syntactic sugar quite aggressively.  Its "macros"
+[**LispyScript**][25] adds syntactic sugar quite aggressively.  Its "macros"
 are really just subsitution templates: they can't do computation, which allows
 only extremely simple uses.
 
 ### Subsets of other lisps in JS
 
-[**wisp**][25] is a [Clojure][26] subset, inheriting its syntax and many ideas,
+[**wisp**][26] is a [Clojure][27] subset, inheriting its syntax and many ideas,
 but is friendlier to JavaScript.  It is more mature and featureful than eslisp.
 However, its syntax inherits some Clojure-isms that translate awkwardly to JS
 and its macros compile to an internal representation, so they can't be defined
 in separate modules.
 
-[**Ralph**][27] is a [Dylan][28] subset.  It compiles to JavaScript and has a
+[**Ralph**][28] is a [Dylan][29] subset.  It compiles to JavaScript and has a
 quasiquoting macro system, but it again has lots some syntax that doesn't
 translate obviously into JS.  Allows macros to be defined in separate modules.
 Currently not actively maintained.
 
 ### Compilers hosted on other lisps
 
-[**ClojureScript**][29] is a heavy approach; a full [Clojure][30] compiler
-targeting JavaScript.  Unlike eslisp, it requires the [JVM][31] and totally
+[**ClojureScript**][30] is a heavy approach; a full [Clojure][31] compiler
+targeting JavaScript.  Unlike eslisp, it requires the [JVM][32] and totally
 overrides JS' semantics.
 
-[**Parenscript**][32] similarly requires a Common Lisp compiler.  It uses CL
+[**Parenscript**][33] similarly requires a Common Lisp compiler.  It uses CL
 idioms, but is implemented instead as a CL library, allowing it to make a
 little more effort than ClojureScript to produce readable JavaScript output.
 
 ### Lisp interpreters in JS
 
-[**SLip**][33], [**Javathcript**][34], [**Fargo**][35] (and many others) are
+[**SLip**][34], [**Javathcript**][35], [**Fargo**][36] (and many others) are
 interpreters; they work on internal code representations and so have limited
 interoperability with other JavaScript.
 
 ## License
 
-[ISC][36].
+[ISC][37].
 
 [1]: http://semver.org/
 [2]: https://en.wikipedia.org/wiki/S-expression
@@ -277,21 +277,22 @@ interoperability with other JavaScript.
 [16]: http://c2.com/cgi/wiki?LispMacro
 [17]: http://semver.org/
 [18]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
-[19]: http://en.wikipedia.org/wiki/PATH_(variable)
-[20]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[21]: https://github.com/estools/escodegen
-[22]: http://jisp.io/
-[23]: http://sibilantjs.info/
-[24]: http://lispyscript.com/
-[25]: https://github.com/Gozala/wisp
-[26]: http://clojure.org/
-[27]: https://github.com/turbolent/ralph
-[28]: http://en.wikipedia.org/wiki/Dylan_(programming_language)
-[29]: https://github.com/clojure/clojurescript
-[30]: http://clojure.org/
-[31]: http://en.wikipedia.org/wiki/Java_virtual_machine
-[32]: https://common-lisp.net/project/parenscript/
-[33]: http://lisperator.net/slip/
-[34]: http://kybernetikos.github.io/Javathcript/
-[35]: https://github.com/jcoglan/fargo
-[36]: http://opensource.org/licenses/ISC
+[19]: https://github.com/anko/eslisp/blob/master/test.ls
+[20]: http://en.wikipedia.org/wiki/PATH_(variable)
+[21]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[22]: https://github.com/estools/escodegen
+[23]: http://jisp.io/
+[24]: http://sibilantjs.info/
+[25]: http://lispyscript.com/
+[26]: https://github.com/Gozala/wisp
+[27]: http://clojure.org/
+[28]: https://github.com/turbolent/ralph
+[29]: http://en.wikipedia.org/wiki/Dylan_(programming_language)
+[30]: https://github.com/clojure/clojurescript
+[31]: http://clojure.org/
+[32]: http://en.wikipedia.org/wiki/Java_virtual_machine
+[33]: https://common-lisp.net/project/parenscript/
+[34]: http://lisperator.net/slip/
+[35]: http://kybernetikos.github.io/Javathcript/
+[36]: https://github.com/jcoglan/fargo
+[37]: http://opensource.org/licenses/ISC
