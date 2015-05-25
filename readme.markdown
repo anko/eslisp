@@ -201,10 +201,10 @@ cleanly, `npm uninstall --global`.
 
 ## How does it work
 
-It has a table of predefined macros to turn S-expressions into [SpiderMonkey
-AST][20] and feeds that to [escodegen][21].  Some of those macros allow
-defining further macros.  Apart from some little details, that's pretty much
-it.
+A table of predefined macros is used to turn S-expressions into [SpiderMonkey
+AST][20], which is fed to [escodegen][21], which outputs JS.  Some of those
+macros allow defining further macros, which get added to the table and
+henceforth work just like the predefined ones do.
 
 ## Comparison to other JS-lisps
 
