@@ -1,8 +1,11 @@
 # eslisp [![](https://img.shields.io/badge/api-unstable-red.svg?style=flat-square)][1]
 
-[S-expression][2] syntax for [ECMAScript][3], with [macros][4].  Unopinionated,
-with minimum [magic][5] or [sugar][6].  Intended as an extensible base for
-further syntax abstractions.
+[S-expression][2] syntax for [ECMAScript][3], with [lisp macros][4].
+Unopinionated, with minimum [magic][5] or [sugar][6].  Intended as an
+extensible base for further syntax abstractions.
+
+*I'll use the terms ECMAScript, JavaScript and JS interchangeably here, because
+[the difference][7] is fairly unimportant.*
 
 <!-- !test program ./bin/eslc | head -c -1 -->
 
@@ -37,26 +40,24 @@ further syntax abstractions.
 
 ## Philosophy
 
--   **Just plain JS, just with macros and macro-friendly syntax**.  The
-    language core should as far as reasonable match the output JS one-to-one.
-    Syntactic sugar should be optional and provided by macros that are
-    separately maintained.
+-   **Plain JS, in S-expressions**.  The language core should (as much as
+    reasonable) match the output JS one-to-one.  Lisp is an inspiration here,
+    not the only goal.
 
--   **Macros front and center**.  S-expressions are a minimal homoiconic
-    representation of an [Abstract Syntax Tree][7] and [lisp macros rock][8]
+-   **Embrace macros**.  S-expressions are a minimal homoiconic representation
+    of a language's [Abstract Syntax Tree][8], which makes it a breeze to
+    modify the fundamental syntax of the language.  [Lisp macros rock][9], and
     for good reason.  Let's use what works.
 
--   **Syntactic features should be on [npm][9]**.  For example, getting an
-    [anaphoric conditional][10] should be a matter of `npm install esl-aif` and
-    `require`-ing that.  Further languages can be built on that.
+-   **Optional, modular syntactic features**.  For example, using an [anaphoric
+    conditional][10] from [npm][11] should be a matter of `npm install esl-aif`
+    and `require`-ing that.  Choose the syntax that works for you.
 
--   **Trivially machine-changeable code is a virtue**.  Programmatic generation
-    of code is a huge time-saver and it should be trivial where possible, so
-    anyone can metaprogram.
+Also, this had too much [hack value][12] to pass up.  Code that writes code is
+the coolest thing since mint ice cream.  [Conditional compilation][13]!
+[DLSs][14]!  [Anaphora][15]!  [*So cool*][16].
 
-Also, this had too much [hack value][11] to pass up.  Code that writes code is
-the coolest thing since mint ice cream.  [Conditional compilation][12]!
-[DLSs][13]!  [Anaphora][14]!  [*So cool*][15].
+[Semantic versioning ^2.0.0][17] will be followed.
 
 ## Examples
 
@@ -111,7 +112,7 @@ Loops are as you'd expect.
 
 Macros are functions that run at compile-time.  Whatever they return becomes
 part of the compiled code.  User-defined macros are treated equivalently to
-predefined ones.  They can [`quasiquote`][16] (`` ` ``) and `unquote` (`,`)
+predefined ones.  They can [`quasiquote`][18] (`` ` ``) and `unquote` (`,`)
 values into their outputs, or `evaluate` their arguments to perform arbitrary
 computations on them first.
 
@@ -148,9 +149,9 @@ compilation side-effects or conditional compilation.
 
 <!-- !test in nothing-returning macro -->
 
+    ; Only include statement if `$DEBUG` environment variable is set
     (macro debug (statement)
-     ; Only return statement if `DEBUG` environment variable is set
-     (?: (. process env DEBUG) statement null))
+     (return (?: (. process env DEBUG) statement null)))
 
     (debug ((. console log) "debug output"))
     (yep)
@@ -195,13 +196,13 @@ Pipe eslisp to it. Receive ECMAScript.
 
     echo '((. console log) "Yo!")' | ./bin/eslc
 
-If you want `eslc` in your [`$PATH`][17], `npm install --global`.  To remove it
+If you want `eslc` in your [`$PATH`][19], `npm install --global`.  To remove it
 cleanly, `npm uninstall --global`.
 
 ## How does it work
 
 It has a table of predefined macros to turn S-expressions into [SpiderMonkey
-AST][18] and feeds that to [escodegen][19].  Some of those macros allow
+AST][20] and feeds that to [escodegen][21].  Some of those macros allow
 defining further macros.  Apart from some little details, that's pretty much
 it.
 
@@ -212,51 +213,51 @@ I'll go in rough order of decreasing similarity.
 
 ### Independent JS lisp implementations
 
-[**Jisp**][20] is the most similar existing project. It has implemented macros
+[**Jisp**][22] is the most similar existing project. It has implemented macros
 slightly differently in the details, and is more opinionated about how code
 should be written; everything is an expression, sometimes at the cost of a
 one-to-one language mapping.  It is currently not actively maintained.
 
-[**Sibilant**][21] also emphasises staying close to JavaScript semantics, but
+[**Sibilant**][23] also emphasises staying close to JavaScript semantics, but
 unlike eslisp, it accepts extensive syntactic sugar and its macros (though
 featureful) are cumbersome to write.
 
-[**LispyScript**][22] adds syntactic sugar quite aggressively.  Its "macros"
+[**LispyScript**][24] adds syntactic sugar quite aggressively.  Its "macros"
 are really just subsitution templates: they can't do computation, which allows
 only extremely simple uses.
 
 ### Subsets of other lisps in JS
 
-[**wisp**][23] is a [Clojure][24] subset, inheriting its syntax and many ideas,
+[**wisp**][25] is a [Clojure][26] subset, inheriting its syntax and many ideas,
 but is friendlier to JavaScript.  It is more mature and featureful than eslisp.
 However, its syntax inherits some Clojure-isms that translate awkwardly to JS
 and its macros compile to an internal representation, so they can't be defined
 in separate modules.
 
-[**Ralph**][25] is a [Dylan][26] subset.  It compiles to JavaScript and has a
+[**Ralph**][27] is a [Dylan][28] subset.  It compiles to JavaScript and has a
 quasiquoting macro system, but it again has lots some syntax that doesn't
 translate obviously into JS.  Allows macros to be defined in separate modules.
 Currently not actively maintained.
 
 ### Compilers hosted on other lisps
 
-[**ClojureScript**][27] is a heavy approach; a full [Clojure][28] compiler
-targeting JavaScript.  Unlike eslisp, it requires the [JVM][29] and totally
+[**ClojureScript**][29] is a heavy approach; a full [Clojure][30] compiler
+targeting JavaScript.  Unlike eslisp, it requires the [JVM][31] and totally
 overrides JS' semantics.
 
-[**Parenscript**][30] similarly requires a Common Lisp compiler.  It uses CL
+[**Parenscript**][32] similarly requires a Common Lisp compiler.  It uses CL
 idioms, but is implemented instead as a CL library, allowing it to make a
 little more effort than ClojureScript to produce readable JavaScript output.
 
 ### Lisp interpreters in JS
 
-[**SLip**][31], [**Javathcript**][32], [**Fargo**][33] (and many others) are
+[**SLip**][33], [**Javathcript**][34], [**Fargo**][35] (and many others) are
 interpreters; they work on internal code representations and so have limited
 interoperability with other JavaScript.
 
 ## License
 
-[ISC][34].
+[ISC][36].
 
 [1]: http://semver.org/
 [2]: https://en.wikipedia.org/wiki/S-expression
@@ -264,31 +265,33 @@ interoperability with other JavaScript.
 [4]: http://stackoverflow.com/questions/267862/what-makes-lisp-macros-so-special
 [5]: http://www.catb.org/jargon/html/M/magic.html
 [6]: http://en.wikipedia.org/wiki/Syntactic_sugar
-[7]: http://en.wikipedia.org/wiki/Abstract_syntax_tree
-[8]: http://blog.rongarret.info/2015/05/why-lisp.html
-[9]: https://www.npmjs.com/
+[7]: http://stackoverflow.com/questions/912479/what-is-the-difference-between-javascript-and-ecmascript
+[8]: http://en.wikipedia.org/wiki/Abstract_syntax_tree
+[9]: http://blog.rongarret.info/2015/05/why-lisp.html
 [10]: https://en.wikipedia.org/wiki/Anaphoric_macro
-[11]: http://www.catb.org/jargon/html/H/hack-value.html
-[12]: http://en.wikipedia.org/wiki/Conditional_compilation
-[13]: http://en.wikipedia.org/wiki/Domain-specific_language
-[14]: http://en.wikipedia.org/wiki/Anaphoric_macro
-[15]: http://c2.com/cgi/wiki?LispMacro
-[16]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
-[17]: http://en.wikipedia.org/wiki/PATH_(variable)
-[18]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[19]: https://github.com/estools/escodegen
-[20]: http://jisp.io/
-[21]: http://sibilantjs.info/
-[22]: http://lispyscript.com/
-[23]: https://github.com/Gozala/wisp
-[24]: http://clojure.org/
-[25]: https://github.com/turbolent/ralph
-[26]: http://en.wikipedia.org/wiki/Dylan_(programming_language)
-[27]: https://github.com/clojure/clojurescript
-[28]: http://clojure.org/
-[29]: http://en.wikipedia.org/wiki/Java_virtual_machine
-[30]: https://common-lisp.net/project/parenscript/
-[31]: http://lisperator.net/slip/
-[32]: http://kybernetikos.github.io/Javathcript/
-[33]: https://github.com/jcoglan/fargo
-[34]: http://opensource.org/licenses/ISC
+[11]: https://www.npmjs.com/
+[12]: http://www.catb.org/jargon/html/H/hack-value.html
+[13]: http://en.wikipedia.org/wiki/Conditional_compilation
+[14]: http://en.wikipedia.org/wiki/Domain-specific_language
+[15]: http://en.wikipedia.org/wiki/Anaphoric_macro
+[16]: http://c2.com/cgi/wiki?LispMacro
+[17]: http://semver.org/
+[18]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
+[19]: http://en.wikipedia.org/wiki/PATH_(variable)
+[20]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[21]: https://github.com/estools/escodegen
+[22]: http://jisp.io/
+[23]: http://sibilantjs.info/
+[24]: http://lispyscript.com/
+[25]: https://github.com/Gozala/wisp
+[26]: http://clojure.org/
+[27]: https://github.com/turbolent/ralph
+[28]: http://en.wikipedia.org/wiki/Dylan_(programming_language)
+[29]: https://github.com/clojure/clojurescript
+[30]: http://clojure.org/
+[31]: http://en.wikipedia.org/wiki/Java_virtual_machine
+[32]: https://common-lisp.net/project/parenscript/
+[33]: http://lisperator.net/slip/
+[34]: http://kybernetikos.github.io/Javathcript/
+[35]: https://github.com/jcoglan/fargo
+[36]: http://opensource.org/licenses/ISC
