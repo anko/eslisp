@@ -190,14 +190,14 @@ See the unit tests for more.
 
 ## Try it
 
-Clone this repo and `npm install` to get the compiler in `bin/eslc`.
-
-Pipe eslisp to it. Receive ECMAScript.
+Clone this repo and `npm install` to get the compiler in `bin/eslc`.  Pipe
+eslisp to it. Receive ECMAScript.
 
     echo '((. console log) "Yo!")' | ./bin/eslc
 
-If you want `eslc` in your [`$PATH`][19], `npm install --global`.  To remove it
-cleanly, `npm uninstall --global`.
+If you want `eslc` in your [`$PATH`][19], `npm install --global`.
+
+To remove it cleanly, `npm uninstall --global`.
 
 ## How does it work
 
