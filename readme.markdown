@@ -8,8 +8,15 @@ further syntax abstractions.
 
 <!-- !test in fib -->
 
-    (= fib             ; Fibonacci number sequence
+    ; Only include given statement if `$DEBUG` environment variable is set
+    (macro debug (statement)
+     (return (?: (. process env DEBUG)
+                 statement
+                 null)))
+
+    (= fib ; Fibonacci number sequence
        (function (x)
+        (debug ((. console log) (+ "resolving number " x)))
         (switch x
          (0 (return 1))
          (1 (return 1))
