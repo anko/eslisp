@@ -572,7 +572,7 @@ test "macro can generate symbol with unique name" ->
     (unique identifiers) `@deep-equals` .. # all were unique
 
 test "macro can create implicit last-expr returning function shorthand" ->
-  code = esl '''
+  esl '''
     (macro fn ()
      (= args ((. Array prototype slice call) arguments))
      (= fnArgs (. args  0))
