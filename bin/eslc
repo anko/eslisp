@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/*
+This is just a wrapper that loads the actual compiled source from `../lib`.
+
+Why?  Because compiling everything to over there is much simpler to organise,
+and this file can just stay constant.
+*/
+
 var path = require("path");
 var fs   = require("fs");
 
