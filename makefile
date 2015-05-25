@@ -12,4 +12,11 @@ lib/%.js: src/%.ls
 clean:
 	rm -rf lib/
 
+test:
+	lsc test.ls
+
+# `all` because txm requires the executable to be built
+test-readme: all readme.markdown
+	txm readme.markdown
+
 .PHONY: default all clean

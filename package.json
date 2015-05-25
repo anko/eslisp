@@ -5,8 +5,8 @@
   "main": "./lib",
   "scripts": {
     "prepublish": "make all",
-    "test": "lsc test.ls",
-    "test-readme": "txm readme.markdown"
+    "test": "make test",
+    "test-readme": "make test-readme"
   },
   "directories": {
     "lib": "./lib",
