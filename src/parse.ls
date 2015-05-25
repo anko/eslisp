@@ -252,11 +252,17 @@ root-macro-table = do
             else t
           consequent : compile-many c .map statementify
 
-    \if : ({compile}, test, consequent, alternate) ->
+    \if : ({compile, compile-many}, test, consequent, alternate) ->
       type : \IfStatement
       test       : compile test
-      consequent : statementify compile consequent
-      alternate  : statementify compile alternate
+      consequent :
+        type : \BlockStatement
+        body : compile-many consequent.contents! .map statementify
+      alternate :
+        if alternate
+          type : \BlockStatement
+          body : compile-many alternate.contents! .map statementify
+        else null
 
     \?: : ({compile}, test, consequent, alternate) ->
       type : \ConditionalExpression

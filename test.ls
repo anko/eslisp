@@ -209,9 +209,25 @@ test "switch statement" ->
                 }
                 """
 
-test "if statement" ->
-  esl '(if (+ 1 0) ((. console log) "yes") ((. console error) "no"))'
-    ..`@equals` "if (1 + 0)\n    console.log(\'yes\');\nelse\n    console.error(\'no\');"
+test "if-statement" ->
+  esl '(if (+ 1 0) (((. console log) "yes") (x)) (((. console error) "no")))'
+    ..`@equals` """
+      if (1 + 0) {
+          console.log(\'yes\');
+          x();
+      } else {
+          console.error(\'no\');
+      }
+      """
+
+test "if-statement without alternate" ->
+  esl '(if (+ 1 0) (((. console log) "yes") (x)))'
+    ..`@equals` """
+      if (1 + 0) {
+          console.log(\'yes\');
+          x();
+      }
+      """
 
 test "ternary expression" ->
   esl '(?: "something" 0 1)'
