@@ -1,4 +1,4 @@
-{ first, map, fold, zip, concat-map } = require \prelude-ls
+{ first, map, fold, zip, concat-map, unfoldr, reverse } = require \prelude-ls
 { atom, list, string } = require \./ast
 uuid = require \uuid .v4
 
@@ -127,7 +127,33 @@ root-macro-table = do
 
   import-macro = (env, name, func) ->
 
-    compilerspace-macro = ({compile, compile-many}, ...args) ->
+    # The macro table of the current environment is what should be used when
+    # the macro is called.  This preserves lexical scoping.
+
+    # To expand a bit more on that:  This fixes situations where a macro, which
+    # the now-defined macro uses, is redefined later.  The redefinition should
+    # not affect this macro's behaviour, so we have to hold on to a copy of the
+    # environment as it was when we defined this.
+
+    flattened-macro-table = env.macro-table
+      |> unfoldr -> [ it, it.parent ] if it # get chain of nested macro tables
+      |> map (.contents)                    # get their contents
+      |> reverse                            # they're backwards, so reverse
+      |> fold (<<<), {}                     # import each from oldest to newest
+      |> -> parent : null contents : it     # wrap as expected
+
+    # Emulate the usual compile functions, but using the flattened macro table
+    # from this environment.
+    compile = ->
+      if it.compile?
+        it.compile flattened-macro-table
+      else it
+    compile-many = -> it |> concat-map compile |> (.filter (isnt null))
+
+    # Note that the first argument (normally containing the compilation
+    # environment) is ignored.  `compile` and `compile-many` inside here refer
+    # to the ones that use the flattened macro table.
+    compilerspace-macro = (_, ...args) ->
       args .= map ->
         if it instanceof list
           it.contents!

@@ -609,3 +609,12 @@ test "macro-generating macro" -> # yes srsly
     (what no)
     '''
     ..`@equals` "no();"
+
+test "macros are referentially transparent" ->
+  esl '''
+    (macro say () (return '(yes))) ; define macro "say"
+    (macro m   () (return `(say))) ; use "say" in another macro "m"
+    (macro say () (return '(no)))  ; redefine macro "say"
+    (m)                            ; call macro "m"
+    '''
+    ..`@equals` "yes();"
