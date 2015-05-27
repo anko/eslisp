@@ -146,7 +146,7 @@ root-macro-table = do
     # from this environment.
     compile = ->
       if it.compile?
-        it.compile flattened-macro-table
+        it.compile flattened-macro-table, env.macro-table
       else it
     compile-many = -> it |> concat-map compile |> (.filter (isnt null))
 
@@ -167,7 +167,11 @@ root-macro-table = do
       | typeof! internal-ast-form is \Array => compile-many internal-ast-form
       | otherwise => compile internal-ast-form
 
-    env.macro-table.parent.contents[name] = compilerspace-macro
+    # If the import target macro table is available, import the macro to that.
+    # Otherwise, import it to the usual table.
+
+    (env.import-target-macro-table || env.macro-table)
+      .parent.contents[name] = compilerspace-macro
 
   parent : null
   contents :
@@ -647,9 +651,10 @@ module.exports = (ast) ->
     | \atom   => atom it.text
     | \list   => list it.contents.map convert
 
+  macro-table = contents : {}, parent : root-macro-table
   statements = ast.contents.map convert
   type : \Program
   body : statements
-    |> concat-map (.compile root-macro-table)
+    |> concat-map (.compile macro-table)
     |> (.filter (isnt null)) # macro definitions emit nothing, hence this
     |> (.map statementify)

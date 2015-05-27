@@ -65,7 +65,15 @@ class list
         type : \ArrayExpression elements : @content.map (.as-sm!)
     ]
 
-  compile : (parent-macro-table) ->
+  compile : (parent-macro-table, import-target-macro-table) ->
+
+    # The import-target-macro-table argument is for the situation when a macro
+    # returns another macro.  In such a case, the returned macro should be
+    # added to the table that the macro that created it was in, not to the
+    # table representing the scope of the the outer macro's contents.
+
+    # If that's confusing, take a few deep breaths and read it again.  Welcome
+    # to the blissful land of Lisp, where everything is recursive somehow.
 
     macro-table = contents : {}, parent : parent-macro-table
 
@@ -98,7 +106,13 @@ class list
         compile-many = -> it |> concat-map compile |> (.filter (isnt null))
         compile-to-js = -> es-generate it
 
-        { compile, compile-many, compile-to-js, macro-table }
+        {
+          compile
+          compile-many
+          compile-to-js
+          macro-table
+          import-target-macro-table
+        }
 
       that.apply null, ([ env ] ++ rest)
 
