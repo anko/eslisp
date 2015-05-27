@@ -146,7 +146,7 @@ root-macro-table = do
     # from this environment.
     compile = ->
       if it.compile?
-        it.compile flattened-macro-table
+        it.compile flattened-macro-table, env.macro-table
       else it
     compile-many = -> it |> concat-map compile |> (.filter (isnt null))
 
@@ -167,7 +167,11 @@ root-macro-table = do
       | typeof! internal-ast-form is \Array => compile-many internal-ast-form
       | otherwise => compile internal-ast-form
 
-    env.macro-table.parent.contents[name] = compilerspace-macro
+    # If the import target macro table is available, import the macro to that.
+    # Otherwise, import it to the usual table.
+
+    (env.import-target-macro-table || env.macro-table)
+      .parent.contents[name] = compilerspace-macro
 
   parent : null
   contents :

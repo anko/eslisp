@@ -604,11 +604,11 @@ test "macro can create implicit last-expr returning function shorthand" ->
 test "macro-generating macro" -> # yes srsly
   esl '''
     (macro define-with-name (x)
-      (return `(macro ,x () `(hello))))
+      (return `(macro ,x () (return `(hello)))))
     (define-with-name what)
-    (what no)
+    (what)
     '''
-    ..`@equals` "no();"
+    ..`@equals` "hello();"
 
 test "macros are referentially transparent" ->
   esl '''
