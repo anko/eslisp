@@ -647,9 +647,10 @@ module.exports = (ast) ->
     | \atom   => atom it.text
     | \list   => list it.contents.map convert
 
+  macro-table = contents : {}, parent : root-macro-table
   statements = ast.contents.map convert
   type : \Program
   body : statements
-    |> concat-map (.compile root-macro-table)
+    |> concat-map (.compile macro-table)
     |> (.filter (isnt null)) # macro definitions emit nothing, hence this
     |> (.map statementify)

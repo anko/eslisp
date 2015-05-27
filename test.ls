@@ -618,3 +618,8 @@ test "macros are referentially transparent" ->
     (m)                            ; call macro "m"
     '''
     ..`@equals` "yes();"
+
+test "multiple invocations of the compiler are separate" ->
+  esl "(macro what () (return 'hi))"
+  esl "(what)"
+    .. `@equals` "what();" # instead of "hi;"
