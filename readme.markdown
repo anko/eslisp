@@ -1,5 +1,7 @@
 # eslisp [![](https://img.shields.io/badge/api-unstable-red.svg?style=flat-square)][1] [![](https://img.shields.io/travis/anko/eslisp.svg?style=flat-square)][2]
 
+[![Join the chat at https://gitter.im/anko/eslisp](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/anko/eslisp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [S-expression][3] syntax for [ECMAScript][4], with [lisp macros][5].
 Unopinionated, with minimum [magic][6] or [sugar][7].  Intended as an
 extensible base for further syntax abstractions.
