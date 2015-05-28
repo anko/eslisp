@@ -382,7 +382,7 @@ test "simple quoting macro" ->
        (+ (random) (random))"
     ..`@equals` "Math.random() + Math.random();"
 
-test "simple non-quoting macro" ->
+test "simple unquoting macro" ->
   esl "(macro three () (return `,(+ 1 2)))
        (three)"
     ..`@equals` "3;"
@@ -392,12 +392,12 @@ test "empty-list-returning macro" ->
        (nothing)"
     ..`@equals` ";"
 
-test "empty-list-returning macro using quasiquote" ->
+test "empty-list-returning macro (using quasiquote)" ->
   esl "(macro nothing () (return `()))
        (nothing)"
     ..`@equals` ";"
 
-test "null-returning macro" ->
+test "nothing-returning macro" ->
   esl "(macro nothing () (return undefined))
        (nothing)"
     ..`@equals` ""
