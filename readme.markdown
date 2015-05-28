@@ -55,7 +55,7 @@ extensible base for further syntax abstractions.
 
 Also, this had too much [hack value][14] to pass up.  Code that writes code is
 the coolest thing since mint ice cream.  [Conditional compilation][15]!
-[DLSs][16]!  [Anaphora][17]!  [*So cool*][18].
+[DSLs][16]!  [Anaphora][17]!  [*So cool*][18].
 
 [Semantic versioning ^2.0.0][19] will be followed.
 
