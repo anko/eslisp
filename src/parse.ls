@@ -434,6 +434,14 @@ root-macro-table = do
       type : \ThrowStatement
       argument : compile args.0
 
+    \regex : ({compile}, ...args) ->
+
+      if args.length isnt 1
+        throw Error "Expected 1 argument to `regex`; got #{args.length}"
+
+      type : \Literal
+      value : new RegExp args.0.text!
+
     \try : ({compile, compile-many}, ...args) ->
 
       block = args.shift!

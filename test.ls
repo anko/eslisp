@@ -517,6 +517,18 @@ test "computed member expression (\"square brackets\")" ->
   esl "(get a b 5)"
     ..`@equals` "a[b][5];"
 
+test "regex literal" ->
+  esl '(regex ".*")'
+    ..`@equals` "/.*/;"
+
+test "regex literals are escaped" ->
+  esl '(regex "/.\\"*")'
+    ..`@equals` "/\\/.\"*/;"
+
+test "regex literals can be derived from atoms too" ->
+  esl '(regex .*)'
+    ..`@equals` "/.*/;"
+
 test "macro deliberately breaking hygiene for function argument anaphora" ->
   esl "(macro : (body)
        (return `(function (it) ,body)))
