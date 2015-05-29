@@ -361,21 +361,21 @@ test "try-catch (`finally`; no `catch`)" ->
           y();
       }
       """
-#test "quoting a list produces array" ->
-#  esl "'(1 2 3)"
-#    ..`@equals` "[\n    1,\n    2,\n    3\n];"
-#
-#test "quoting numbers produces numbers" ->
-#  esl "'(1)"
-#    ..`@equals` "[1];"
-#
-#test "quoting strings produces strings" ->
-#  esl "'(\"hi\")"
-#    ..`@equals` "['hi'];"
-#
-#test "quoting atoms produces an object representing it" ->
-#  esl "'(fun)"
-#    ..`@equals` "[{\n        \'type\': \'atom\',\n        \'text\': \'fun\'\n    }];"
+test "quoting a list produces array" ->
+  esl "'(1 2 3)"
+    ..`@equals` "[\n    1,\n    2,\n    3\n];"
+
+test "quoting numbers produces numbers" ->
+  esl "'(1)"
+    ..`@equals` "[1];"
+
+test "quoting strings produces strings" ->
+  esl "'(\"hi\")"
+    ..`@equals` "['hi'];"
+
+test "quoting atoms produces an object representing it" ->
+  esl "'(fun)"
+    ..`@equals` "[atom('fun')];"
 
 test "simple quoting macro" ->
   esl "(macro random () (return '((. Math random))))

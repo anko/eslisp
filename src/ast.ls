@@ -57,13 +57,7 @@ class list
     @content := it
 
   as-sm : ->
-    type : \CallExpression
-    callee :
-      type : \Identifier
-      name : \list
-    arguments : [
-        type : \ArrayExpression elements : @content.map (.as-sm!)
-    ]
+    type : \ArrayExpression elements : @content.map (.as-sm!)
 
   compile : (parent-macro-table, import-target-macro-table) ->
 
