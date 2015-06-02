@@ -17,20 +17,20 @@ Unopinionated and extensible.  Minimum [magic][7] or [sugar][8].
        (function (x)
         (debug ((. console log) (+ "resolving number " x)))
         (switch x
-         (0 (return 1))
+         (0 (return 0))
          (1 (return 1))
-         (default (return (+ (fib x) (fib (- x 1))))))))
+         (default (return (+ (fib (- x 1)) (fib (- x 2))))))))
 
 <!-- !test out fib -->
 
     var fib = function (x) {
         switch (x) {
         case 0:
-            return 1;
+            return 0;
         case 1:
             return 1;
         default:
-            return fib(x) + fib(x - 1);
+            return fib(x - 1) + fib(x - 2);
         }
     };
 
