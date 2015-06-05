@@ -2,7 +2,7 @@ concat = require \concat-stream
 { zip } = require \prelude-ls
 spawn = (require \child_process).spawn
 esl = require \./index
-require! <[ async fs path ]>
+require! <[ fs path ]>
 
 print-usage = ->
   console.log do
