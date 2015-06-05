@@ -1,7 +1,7 @@
-concat = require \concat-stream
+concat  = require \concat-stream
 { zip } = require \prelude-ls
-spawn = (require \child_process).spawn
-esl = require \./index
+spawn   = (require \child_process).spawn
+esl     = require \./index
 require! <[ fs path ]>
 
 print-usage = ->
@@ -37,12 +37,11 @@ process.argv
       else
         target-path := it
 
-show-that = -> console.log esl it
+compile-and-show = -> console.log esl it
 
 if target-path
   e, esl-code <- fs.read-file target-path, encoding : \utf8
   if e then throw e
-  show-that esl-code
+  compile-and-show esl-code
 else
-  process.stdin .pipe concat (esl-code) ->
-    show-that esl-code
+  process.stdin .pipe concat compile-and-show
