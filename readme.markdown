@@ -1,7 +1,7 @@
 # eslisp [![](https://img.shields.io/badge/api-unstable-red.svg?style=flat-square)][1] [![](https://img.shields.io/travis/anko/eslisp.svg?style=flat-square)][2] [![](https://img.shields.io/badge/chat-gitter_%E2%86%92-blue.svg?style=flat-square)][3]
 
-[S-expression][4] syntax for [ECMAScript][5]/JavaScript, with [lisp macros][6].
-Unopinionated and extensible.  Minimum [magic][7] or [sugar][8].
+[S-expression][4] syntax for [ECMAScript][5]/JavaScript, with [lisp-like
+macros][6].  Unopinionated and extensible.  Minimum [magic][7] or [sugar][8].
 
 <!-- !test program ./bin/eslc | head -c -1 -->
 
