@@ -115,7 +115,7 @@ root-macro-table = do
 
     is-expr = -> it |> convert |> env.compile |> is-expression
 
-    { evaluate, multi, is-atom, is-string, text-of, gensym, is-expr }
+    { evaluate, multi, is-atom, is-string, text-of, gensym, is-expr, atom }
 
   compile-to-function = (env, function-args) ->
 

@@ -588,6 +588,20 @@ test "macro can generate symbol with unique name" ->
     ..every -> it?                         # all matched
     (unique identifiers) `@deep-equals` .. # all were unique
 
+test "macro can create atoms with `this.atom` too" ->
+
+  # This is mainly meant for macros written in plain JavaScript or
+  # other languages that don't have a quasiquote construct that
+  # generates the appropriate code, as would be idiomatic in eslisp.
+
+  esl '''
+      (macro get-content (x)
+       (= contentAtom ((. this atom) "content"))
+       (return `(. ,x ,contentAtom)))
+      (get-content a)
+      '''
+    ..`@equals` "a.content;"
+
 test "macros can be required relative to root directory" ->
 
   # Create dummy temporary file
