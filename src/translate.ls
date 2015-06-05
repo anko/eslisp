@@ -93,6 +93,30 @@ root-macro-table = do
     | otherwise =>
       throw Error "Unexpected return type #that"
 
+  macro-env = (env) ->
+
+    # Create the functions to be exposed for use in a macro's body based on the
+    # given compilation environment
+
+    evaluate = -> it |> env.compile |> env.compile-to-js |> eval
+    multi    = (...args) -> multiple-statements args
+    is-atom  = (instanceof atom)
+    is-string  = (instanceof string)
+    text-of  = ->
+      if it instanceof [ atom, string ] then it.text!
+      else throw Error "Attempting to get text of non-atom non-string thing \
+                        #{JSON.stringify it}"
+    gensym = ->
+      if arguments.length
+        throw Error "Got #that arguments to `gensym`; expected none."
+      atom "$#{uuid!.replace /-/g, \_}"
+      # RFC4122 v4 UUIDs are based on random bits.  Hyphens become
+      # underscores to make the UUID a valid JS identifier.
+
+    is-expr = -> it |> convert |> env.compile |> is-expression
+
+    { evaluate, multi, is-atom, is-string, text-of, gensym, is-expr }
+
   compile-to-function = (env, function-args) ->
 
     # function-args is the forms that go after the `function` keyword, so
@@ -106,22 +130,8 @@ root-macro-table = do
       # they're in scope during the `eval` and hence available in the compiled
       # macro function.
 
-      evaluate = -> it |> env.compile |> env.compile-to-js |> eval
-      multi    = (...args) -> multiple-statements args
-      is-atom  = (instanceof atom)
-      is-string  = (instanceof string)
-      text-of  = ->
-        if it instanceof [ atom, string ] then it.text!
-        else throw Error "Attempting to get text of non-atom non-string thing \
-                          #{JSON.stringify it}"
-      gensym = ->
-        if arguments.length
-          throw Error "Got #that arguments to `gensym`; expected none."
-        atom "$#{uuid!.replace /-/g, \_}"
-        # RFC4122 v4 UUIDs are based on random bits.  Hyphens become
-        # underscores to make the UUID a valid JS identifier.
-
-      is-expr = -> it |> convert |> env.compile |> is-expression
+      { evaluate, multi, is-atom, is-string,
+      text-of, gensym, is-expr } = macro-env env
 
       let { require } = require.main
         eval "(#{env.compile-to-js es-ast})"
@@ -159,7 +169,7 @@ root-macro-table = do
         if it instanceof list
           it.contents!
         else it
-      userspace-macro-result = func.apply null, args
+      userspace-macro-result = func.apply (macro-env env), args
 
       internal-ast-form = convert userspace-macro-result
 

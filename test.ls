@@ -601,6 +601,31 @@ test "macros can be required relative to root directory" ->
 
   fs.unlink-sync file-name
 
+test "macros required from separate modules can access complation env" ->
+
+  # To set up, create a temporary file with the appropriate macro contents
+  { name, fd } = tmp.file-sync!
+  fs.write-sync fd, """
+    module.exports = function() {
+      // Return two statements: a string and a generated symbol
+      return this.multi("ok", this.gensym());
+    };
+    """
+
+  code = esl """
+    (macros
+     (= x (require "#name"))
+     (return (object x x)))
+    (x)
+    """
+
+  code.split "\n"
+    ..length `@equals` 2
+    ..0 `@equals` "'ok';" # first line is the string
+    @ok ..1               # second is generated symbol
+
+  fs.unlink-sync name # clean up
+
 test "macro can create implicit last-expr returning function shorthand" ->
   esl '''
     (macro fn ()
