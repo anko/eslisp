@@ -653,14 +653,9 @@ root-macro-table = do
 
 module.exports = (ast) ->
 
-  convert = ->
-    switch it.type
-    | \string => string it.text
-    | \atom   => atom it.text
-    | \list   => list it.contents.map convert
-
   macro-table = contents : {}, parent : root-macro-table
-  statements = ast.contents.map convert
+  statements = ast.content
+
   type : \Program
   body : statements
     |> concat-map (.compile macro-table)

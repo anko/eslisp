@@ -2,9 +2,10 @@
 # objects.
 
 parse-sexpr = require \s-expression
+{ list, atom, string } = require \./ast
 
 # This serves as an adapter from the s-expression module's way of returning
-# things to a more explicit JS object representation.
+# things to eslisp AST objects.
 make-explicit = (tree) ->
   sexpr-type = (thing) ->
     switch typeof! thing
@@ -13,11 +14,12 @@ make-explicit = (tree) ->
       | \object => \string
       | \string => \atom
     | \Array => \list
-    | _ => throw Error "Unexpected type `#that` (of `#thing`)"
+    | otherwise => null
 
   switch sexpr-type tree
-  | \list => type : \list, contents : tree.map make-explicit
-  | \atom => fallthrough
-  | \string => type : that, text : tree.to-string!
+  | \list   => list   tree.map make-explicit
+  | \atom   => atom   tree.to-string!
+  | \string => string tree.to-string!
+  | null    => throw Error "Unexpected type `#that` (of `#thing`)"
 
 module.exports = parse-sexpr >> make-explicit
