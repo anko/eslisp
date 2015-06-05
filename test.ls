@@ -7,6 +7,7 @@ test = (name, test-func) ->
 esl = require \./src/index.ls
 
 { unique } = require \prelude-ls
+require! <[ tmp fs uuid ]>
 
 test "nothing" ->
   esl ""
@@ -582,6 +583,23 @@ test "macro can generate symbol with unique name" ->
   identifiers = lines.map (.match /var (.*) = null;/ .1)
     ..every -> it?                         # all matched
     (unique identifiers) `@deep-equals` .. # all were unique
+
+test "macros can be required relative to root directory" ->
+
+  # Create dummy temporary file
+  file-name = "./#{uuid.v4!}.js"
+  fd = fs.open-sync file-name, \a+
+  fs.write-sync fd, "module.exports = function() { }"
+
+  esl """
+    (macros
+     (= x (require "#file-name"))
+     (return (object x x)))
+    (x)
+    """
+    ..`@equals` ""
+
+  fs.unlink-sync file-name
 
 test "macro can create implicit last-expr returning function shorthand" ->
   esl '''

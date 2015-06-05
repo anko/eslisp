@@ -123,7 +123,8 @@ root-macro-table = do
 
       is-expr = -> it |> convert |> env.compile |> is-expression
 
-      eval "(#{env.compile-to-js es-ast})"
+      let { require } = require.main
+        eval "(#{env.compile-to-js es-ast})"
 
   import-macro = (env, name, func) ->
 
