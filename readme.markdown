@@ -107,17 +107,18 @@ Loops are as you'd expect.
 * * *
 
 Macros are functions that run at compile-time.  Whatever they return becomes
-part of the compiled code.  User-defined macros are treated equivalently to
-predefined ones.  They can [`quasiquote`][22] (`` ` ``) and `unquote` (`,`)
-values into their outputs, or `evaluate` their arguments to perform arbitrary
-computations on them first.
+part of the compiled code.  User-defined macros and pre-defined compiler ones
+are treated equivalently.  They can [`quasiquote`][22] (`` ` ``) and `unquote`
+(`,`) values into their outputs and perform arbitrary computations.  They can
+also use the methods defined in `this` to examine (`isExpr`, `isAtom`,
+`isString`) and `evaluate` their arguments.
 
 <!-- !test in macro and call -->
 
     (macro m (x) (return `(+ ,x 2)))
     ((. console log) (m 40))
 
-    (macro m2 (x) (return `,(+ (evaluate x) 2)))
+    (macro m2 (x) (return `,(+ ((. this evaluate) x) 2)))
     ((. console log) (m2 40))
 
 <!-- !test out macro and call -->
@@ -131,8 +132,9 @@ function, which is only defined inside macros).
 <!-- !test in multiple-return macro -->
 
     (macro what (varName)
-     (return (multi `((. console log) ((. JSON stringify) ,varName))
-                  `(++ ,varName))))
+     (return ((. this multi)
+              `((. console log) ((. JSON stringify) ,varName))
+              `(++ ,varName))))
     (what ever)
 
 <!-- !test out multiple-return macro -->

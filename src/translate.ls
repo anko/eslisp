@@ -130,9 +130,6 @@ root-macro-table = do
       # they're in scope during the `eval` and hence available in the compiled
       # macro function.
 
-      { evaluate, multi, is-atom, is-string,
-      text-of, gensym, is-expr } = macro-env env
-
       let { require } = require.main
         eval "(#{env.compile-to-js es-ast})"
 

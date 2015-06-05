@@ -444,7 +444,7 @@ test "macros can quasiquote to unquote arguments into output" ->
 test "macros can unquote modified arguments too" ->
   esl "(macro rand (upper)
                   (= x (* 2
-                          (evaluate upper)))
+                          ((. this evaluate) upper)))
                   (return `(* ,x ((. Math random)))))
        (rand 5)"
     ..`@equals` "10 * Math.random();"
@@ -452,7 +452,7 @@ test "macros can unquote modified arguments too" ->
 
 test "macros can evaluate arguments and operate on them further" ->
   esl "(macro increment (x)
-                  (return (+ 1 (evaluate x))))
+                  (return (+ 1 ((. this evaluate) x))))
        (increment 1)"
     ..`@equals` "2;"
 
@@ -544,23 +544,27 @@ test "macros creates block invoked as function, return val forms macros" ->
   esl """
       (macros
         (= x 0)
-        (return (object plusPrev  (function (n) (return (+= x (evaluate n)) x))
-                        timesPrev (function (n) (return (*= x (evaluate n)) x)))))
+        (return (object plusPrev  (function (n)
+                                  (return (+= x ((. this evaluate) n)) x))
+                        timesPrev (function (n)
+                                  (return (*= x ((. this evaluate) n)) x)))))
       (plusPrev 2) (timesPrev 2)
        """
    ..`@equals` "2;\n4;"
 
 test "macro can return multiple statements with `multi`" ->
-  esl "(macro declareTwo () (return (multi '(= x 0) '(= y 1))))
+  esl "(macro declareTwo () (return ((. this multi) '(= x 0) '(= y 1))))
        (declareTwo)"
    ..`@equals` "var x = 0;\nvar y = 1;"
 
 test "macro can ask for atom/string argument type and get text" ->
   esl '''
       (macro stringy (x)
+       (= isAtom (. this isAtom))
+       (= isString (. this isString))
        (switch true
-        ((isAtom x)   (return `,(+ "atom:" (textOf x))))
-        ((isString x) (return `,(textOf x)))))
+        ((isAtom x)   (return `,(+ "atom:" ((. this textOf) x))))
+        ((isString x) (return `,((. this textOf) x)))))
       (stringy a)
       (stringy "b")
       '''
@@ -569,7 +573,7 @@ test "macro can ask for atom/string argument type and get text" ->
 test "macro can generate symbol with unique name" ->
   code = esl '''
     (macro declare ()
-     (return `(= ,(gensym) null)))
+     (return `(= ,((. this gensym)) null)))
     (declare)
     (declare)
     (declare)
@@ -636,7 +640,7 @@ test "macro can create implicit last-expr returning function shorthand" ->
      (= last ((. fnBody pop)))
 
      (= lastConverted
-      (?: (isExpr last)
+      (?: ((. this isExpr) last)
           `(return ,last)
           last))
 
