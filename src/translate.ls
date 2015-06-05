@@ -100,8 +100,6 @@ root-macro-table = do
 
     evaluate = -> it |> env.compile |> env.compile-to-js |> eval
     multi    = (...args) -> multiple-statements args
-    is-atom  = (instanceof atom)
-    is-string  = (instanceof string)
     text-of  = ->
       if it instanceof [ atom, string ] then it.text!
       else throw Error "Attempting to get text of non-atom non-string thing \
@@ -115,7 +113,7 @@ root-macro-table = do
 
     is-expr = -> it |> convert |> env.compile |> is-expression
 
-    { evaluate, multi, is-atom, is-string, text-of, gensym, is-expr, atom }
+    { evaluate, multi, atom, string, text-of, gensym, is-expr }
 
   compile-to-function = (env, function-args) ->
 

@@ -560,11 +560,13 @@ test "macro can return multiple statements with `multi`" ->
 test "macro can ask for atom/string argument type and get text" ->
   esl '''
       (macro stringy (x)
-       (= isAtom (. this isAtom))
-       (= isString (. this isString))
+       (= atom (. this atom))
+       (= string (. this string))
        (switch true
-        ((isAtom x)   (return `,(+ "atom:" ((. this textOf) x))))
-        ((isString x) (return `,((. this textOf) x)))))
+        ((instanceof x atom)
+         (return `,(+ "atom:" ((. this textOf) x))))
+        ((instanceof x string)
+         (return `,((. this textOf) x)))))
       (stringy a)
       (stringy "b")
       '''
