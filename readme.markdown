@@ -202,58 +202,11 @@ AST][25], which is fed to [escodegen][26], which outputs JS.  Some of those
 macros allow defining further macros, which get added to the table and
 henceforth work just like the predefined ones do.
 
-## Comparison to other JS-lisps
-
-Here's an overview of other compile-to-JS lisps and how they compare to eslisp.
-I'll go in rough order of decreasing similarity.
-
-### Independent JS lisp implementations
-
-[**Jisp**][27] is the most similar existing project. It has implemented macros
-slightly differently in the details, and is more opinionated about how code
-should be written; everything is an expression, sometimes at the cost of a
-one-to-one language mapping.  It is currently not actively maintained.
-
-[**Sibilant**][28] also emphasises staying close to JavaScript semantics, but
-unlike eslisp, it accepts extensive syntactic sugar and its macros (though
-featureful) are cumbersome to write.
-
-[**LispyScript**][29] adds syntactic sugar quite aggressively.  Its "macros"
-are really just subsitution templates: they can't do computation, which allows
-only extremely simple uses.
-
-### Subsets of other lisps in JS
-
-[**wisp**][30] is a [Clojure][31] subset, inheriting its syntax and many ideas,
-but is friendlier to JavaScript.  It is more mature and featureful than eslisp.
-However, its syntax inherits some Clojure-isms that translate awkwardly to JS
-and its macros compile to an internal representation, so they can't be defined
-in separate modules.
-
-[**Ralph**][32] is a [Dylan][33] subset.  It compiles to JavaScript and has a
-quasiquoting macro system, but it again has lots some syntax that doesn't
-translate obviously into JS.  Allows macros to be defined in separate modules.
-Currently not actively maintained.
-
-### Compilers hosted on other lisps
-
-[**ClojureScript**][34] is a heavy approach; a full [Clojure][35] compiler
-targeting JavaScript.  Unlike eslisp, it requires the [JVM][36] and totally
-overrides JS' semantics.
-
-[**Parenscript**][37] similarly requires a Common Lisp compiler.  It uses CL
-idioms, but is implemented instead as a CL library, allowing it to make a
-little more effort than ClojureScript to produce readable JavaScript output.
-
-### Lisp interpreters in JS
-
-[**SLip**][38], [**Javathcript**][39], [**Fargo**][40] (and many others) are
-interpreters; they work on internal code representations and so have limited
-interoperability with other JavaScript.
+The [brief comparison to other JS lisp-likes][27] might be interesting too.
 
 ## License
 
-[ISC][41].
+[ISC][28].
 
 [1]: http://semver.org/
 [2]: https://travis-ci.org/anko/eslisp
@@ -281,18 +234,5 @@ interoperability with other JavaScript.
 [24]: http://en.wikipedia.org/wiki/PATH_(variable)
 [25]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
 [26]: https://github.com/estools/escodegen
-[27]: http://jisp.io/
-[28]: http://sibilantjs.info/
-[29]: http://lispyscript.com/
-[30]: https://github.com/Gozala/wisp
-[31]: http://clojure.org/
-[32]: https://github.com/turbolent/ralph
-[33]: http://en.wikipedia.org/wiki/Dylan_(programming_language)
-[34]: https://github.com/clojure/clojurescript
-[35]: http://clojure.org/
-[36]: http://en.wikipedia.org/wiki/Java_virtual_machine
-[37]: https://common-lisp.net/project/parenscript/
-[38]: http://lisperator.net/slip/
-[39]: http://kybernetikos.github.io/Javathcript/
-[40]: https://github.com/jcoglan/fargo
-[41]: http://opensource.org/licenses/ISC
+[27]: doc/comparison-to-other-js-lisps.markdown
+[28]: http://opensource.org/licenses/ISC

@@ -10,7 +10,8 @@
   },
   "directories": {
     "lib": "./lib",
-    "bin": "./bin"
+    "bin": "./bin",
+    "doc": "./doc"
   },
   "bin": {
     "eslc": "./bin/eslc"
