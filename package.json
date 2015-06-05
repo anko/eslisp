@@ -1,7 +1,7 @@
 {
   "name": "eslisp",
-  "version": "0.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "minimal S-expression syntax and macro system for JavaScript",
   "main": "./lib",
   "scripts": {
     "prepublish": "make all",
@@ -21,6 +21,8 @@
     "bin"
   ],
   "author": "Anko <an@cyan.io> (http://an.cyan.io)",
+  "repository": "anko/eslisp",
+  "bugs": "https://github.com/anko/eslisp/issues",
   "license": "ISC",
   "devDependencies": {
     "LiveScript": "^1.3.1",
