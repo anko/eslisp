@@ -118,8 +118,8 @@ root-macro-table = do
         if arguments.length
           throw Error "Got #that arguments to `gensym`; expected none."
         atom "$#{uuid!.replace /-/g, \_}"
-        # RFC4122 v4 UUIDs are based on random bits.  Hyphens become underscores
-        # to make the UUID a valid JS identifier.
+        # RFC4122 v4 UUIDs are based on random bits.  Hyphens become
+        # underscores to make the UUID a valid JS identifier.
 
       is-expr = -> it |> convert |> env.compile |> is-expression
 

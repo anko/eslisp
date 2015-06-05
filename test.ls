@@ -563,7 +563,7 @@ test "macro can ask for atom/string argument type and get text" ->
       (stringy a)
       (stringy "b")
       '''
-   ..`@equals` "'atom:a';\n'b';"
+    ..`@equals` "'atom:a';\n'b';"
 
 test "macro can generate symbol with unique name" ->
   code = esl '''
