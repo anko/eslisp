@@ -1,6 +1,10 @@
-{ lists-to-obj } = require \prelude-ls
+# Turns an input S-expression string into a simple tree format based on JS
+# objects.
+
 parse-sexpr = require \s-expression
 
+# This serves as an adapter from the s-expression module's way of returning
+# things to a more explicit JS object representation.
 make-explicit = (tree) ->
   sexpr-type = (thing) ->
     switch typeof! thing
