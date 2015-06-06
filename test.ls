@@ -510,7 +510,7 @@ test "property access (dotting) chains mixed literals and identifiers" ->
   esl "(. a b 2 a)"
     ..`@equals` "a.b[2].a;"
 
-test "property access (dotting) treats stringa as literals, not identifiers" ->
+test "property access (dotting) treats strings as literals, not identifiers" ->
   esl "(. a \"hi\")"
     ..`@equals` "a['hi'];"
 
