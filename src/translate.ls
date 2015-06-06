@@ -67,28 +67,46 @@ root-macro-table = do
 
   # macro function form → internal compiler-form
   #
-  # To make user-defined macros simpler to write, they may return just plain
-  # JS values, which we'll read back here as AST nodes.  This makes macros
-  # easier to write and a little more tolerant of silliness.
+  # To make user-defined macros simpler to write, they may return just plain JS
+  # values, which we'll read back here as AST nodes.  This makes macros easier
+  # to write and a little more tolerant of silliness.
   convert = (ast) ->
+
+    # Stuff already in internal compiler form can stay that way.
     if ast instanceof [ string, atom ] then return ast
+
+    # Lists' contents need to be converted, in case they've got
+    # non-compiler-form stuff inside them.
     if ast instanceof list then return list ast.contents!map convert
-    if ast instanceof multiple-statements then return ast.statements.map convert
+
+    # Multiple-statements just become an array of their contents, but like
+    # lists, those contents might need conversion.
+    if ast instanceof multiple-statements
+      return ast.statements.map convert
+
+    # Everything else needs a little more thinking based on their type
     switch typeof! ast
-    # Arrays represent lists
-    | \Array  => list ast.map convert
-    # Objects are expected to represent atoms
-    | \Object =>
-      if ast.atom then atom ("" + ast.atom)
-      else throw Error "Macro returned object, without an `atom` property"
-    | \String => string ast
-    | \Number => atom ("" + ast)
-    # Undefined and null represent nothing
-    | \Undefined => fallthrough
-    | \Null      => null
-    # Everything else is an error
-    | otherwise =>
-      throw Error "Unexpected return type #that"
+
+      # Arrays represent lists
+      | \Array  => list ast.map convert
+
+      # Objects are expected to represent atoms
+      | \Object =>
+        if ast.atom then atom ("" + ast.atom)
+        else throw Error "Macro returned object without `atom` property"
+
+      # Strings become strings as you'd expect
+      | \String => string ast
+
+      # Numbers become atoms
+      | \Number => atom ("" + ast)
+
+      # Undefined and null represent nothing
+      | \Undefined => fallthrough
+      | \Null      => null
+
+      # Anything else errors
+      | otherwise => throw Error "Unexpected macro return type #that"
 
   macro-env = (env) ->
 
