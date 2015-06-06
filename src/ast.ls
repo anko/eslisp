@@ -36,8 +36,14 @@ class atom
     else
       type : \CallExpression
       callee :
-        type : \Identifier
-        name : \atom
+        type : \MemberExpression
+        object :
+          type : \Identifier
+          name : \this
+        property :
+          type : \Identifier
+          name : \atom
+        computed : false
       arguments : [ { type : \Literal, value : @content-text, raw : "\"#{@content-text}\"" } ]
 
   compile : ->

@@ -376,7 +376,7 @@ test "quoting strings produces strings" ->
 
 test "quoting atoms produces an object representing it" ->
   esl "'(fun)"
-    ..`@equals` "[atom('fun')];"
+    ..`@equals` "[this.atom('fun')];"
 
 test "simple quoting macro" ->
   esl "(macro random () (return '((. Math random))))
