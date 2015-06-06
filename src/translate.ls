@@ -77,13 +77,10 @@ root-macro-table = do
     switch typeof! ast
     # Arrays represent lists
     | \Array  => list ast.map convert
-    # Objects are turned into lists too
+    # Objects are expected to represent atoms
     | \Object =>
-      [ keys, values ] = obj-to-lists ast
-      keys   .= map convert
-      values .= map convert
-      keys-values = zip keys, values
-      list ([ \object ] ++ keys-values)
+      if ast.atom then atom ("" + ast.atom)
+      else throw Error "Macro returned object, without an `atom` property"
     | \String => string ast
     | \Number => atom ("" + ast)
     # Undefined and null represent nothing

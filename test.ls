@@ -376,7 +376,7 @@ test "quoting strings produces strings" ->
 
 test "quoting atoms produces an object representing it" ->
   esl "'(fun)"
-    ..`@equals` "[this.atom('fun')];"
+    ..`@equals` "[{ atom: 'fun' }];"
 
 test "simple quoting macro" ->
   esl "(macro random () (return '((. Math random))))
@@ -590,15 +590,17 @@ test "macro can generate symbol with unique name" ->
     ..every -> it?                         # all matched
     (unique identifiers) `@deep-equals` .. # all were unique
 
-test "macro can create atoms with `this.atom` too" ->
+test "macro can create atoms by returning an object with key `atom`" ->
 
   # This is mainly meant for macros written in plain JavaScript or
   # other languages that don't have a quasiquote construct that
-  # generates the appropriate code, as would be idiomatic in eslisp.
+  # generates the appropriate code, as eslisp can do.
+
+  # Quasiquoting compiles to this anyway.
 
   esl '''
       (macro get-content (x)
-       (= contentAtom ((. this atom) "content"))
+       (= contentAtom (object atom "content"))
        (return `(. ,x ,contentAtom)))
       (get-content a)
       '''

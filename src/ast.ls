@@ -34,17 +34,17 @@ class atom
       value : Number @content-text
       raw   : @content-text
     else
-      type : \CallExpression
-      callee :
-        type : \MemberExpression
-        object :
-          type : \Identifier
-          name : \this
-        property :
+      type : \ObjectExpression
+      properties : [
+        type : \Property
+        key :
           type : \Identifier
           name : \atom
-        computed : false
-      arguments : [ { type : \Literal, value : @content-text, raw : "\"#{@content-text}\"" } ]
+        value  :
+          type : \Literal
+          value : @content-text
+          raw : "\"#{@content-text}\""
+      ]
 
   compile : ->
     if @content-text |> looks-like-number
