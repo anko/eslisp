@@ -108,17 +108,24 @@ root-macro-table = do
       # Anything else errors
       | otherwise => throw Error "Unexpected macro return type #that"
 
+  to-macro-form = (compiler-form-ast) ->
+    c = compiler-form-ast
+    switch
+    | c instanceof list   => c.contents!map to-macro-form
+    | c instanceof string => c.text!
+    | c instanceof atom
+      if c.is-number! then Number c.text!
+      else atom : c.text!
+    | otherwise => throw Error "Internal error: Unexpected compiler AST value"
+
   macro-env = (env) ->
 
     # Create the functions to be exposed for use in a macro's body based on the
     # given compilation environment
 
-    evaluate = -> it |> env.compile |> env.compile-to-js |> eval
+    evaluate = ->
+      it |> to-compiler-form |> env.compile |> env.compile-to-js |> eval
     multi    = (...args) -> multiple-statements args
-    text-of  = ->
-      if it instanceof [ atom, string ] then it.text!
-      else throw Error "Attempting to get text of non-atom non-string thing \
-                        #{JSON.stringify it}"
     gensym = ->
       if arguments.length
         throw Error "Got #that arguments to `gensym`; expected none."
@@ -128,7 +135,7 @@ root-macro-table = do
 
     is-expr = -> it |> to-compiler-form |> env.compile |> is-expression
 
-    { evaluate, multi, atom, string, text-of, gensym, is-expr }
+    { evaluate, multi, gensym, is-expr }
 
   compile-to-function = (env, function-args) ->
 
@@ -175,10 +182,7 @@ root-macro-table = do
     # environment) is ignored.  `compile` and `compile-many` inside here refer
     # to the ones that use the flattened macro table.
     compilerspace-macro = (_, ...args) ->
-      args .= map ->
-        if it instanceof list
-          it.contents!
-        else it
+      args .= map to-macro-form
       userspace-macro-result = func.apply (macro-env env), args
 
       internal-ast-form = to-compiler-form userspace-macro-result

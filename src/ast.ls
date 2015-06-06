@@ -28,8 +28,10 @@ class atom
     return @content-text if not it?
     @content-text := it
 
+  is-number: -> looks-like-number @content-text
+
   as-sm : ->
-    if @content-text |> looks-like-number
+    if @is-number!
       type  : \Literal
       value : Number @content-text
       raw   : @content-text

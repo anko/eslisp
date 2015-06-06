@@ -560,13 +560,11 @@ test "macro can return multiple statements with `multi`" ->
 test "macro can ask for atom/string argument type and get text" ->
   esl '''
       (macro stringy (x)
-       (= atom (. this atom))
-       (= string (. this string))
-       (switch true
-        ((instanceof x atom)
-         (return `,(+ "atom:" ((. this textOf) x))))
-        ((instanceof x string)
-         (return `,((. this textOf) x)))))
+       (if (. x atom)
+        ((return `,(+ "atom:" (. x atom))))
+        ((if (== (typeof x) "string")
+         ((return x))
+         ((return "An unexpected development!"))))))
       (stringy a)
       (stringy "b")
       '''
@@ -605,6 +603,29 @@ test "macro can create atoms by returning an object with key `atom`" ->
       (get-content a)
       '''
     ..`@equals` "a.content;"
+
+test "compiler types are converted to JS ones when passed to macros" ->
+  r = esl '''
+      (macro check-these ()
+       (= type
+        (function (x)
+         (return
+          ((. ((. (object) toString call) x) slice)
+           8 -1))))
+
+       (return ((. this multi)
+                (type (. arguments 0))
+                (type (. arguments 1))
+                (type (. arguments 2))
+                (type (. arguments 3)))))
+      (check-these 1 a "a" ())
+      '''
+  r.split "\n"
+    ..length `@equals` 4
+    ..0 `@equals` "'Number';"
+    ..1 `@equals` "'Object';"
+    ..2 `@equals` "'String';"
+    ..3 `@equals` "'Array';"
 
 test "macros can be required relative to root directory" ->
 
