@@ -70,25 +70,25 @@ root-macro-table = do
   # To make user-defined macros simpler to write, they may return just plain JS
   # values, which we'll read back here as AST nodes.  This makes macros easier
   # to write and a little more tolerant of silliness.
-  convert = (ast) ->
+  to-compiler-form = (ast) ->
 
     # Stuff already in internal compiler form can stay that way.
     if ast instanceof [ string, atom ] then return ast
 
     # Lists' contents need to be converted, in case they've got
     # non-compiler-form stuff inside them.
-    if ast instanceof list then return list ast.contents!map convert
+    if ast instanceof list then return list ast.contents!map to-compiler-form
 
     # Multiple-statements just become an array of their contents, but like
     # lists, those contents might need conversion.
     if ast instanceof multiple-statements
-      return ast.statements.map convert
+      return ast.statements.map to-compiler-form
 
     # Everything else needs a little more thinking based on their type
     switch typeof! ast
 
       # Arrays represent lists
-      | \Array  => list ast.map convert
+      | \Array  => list ast.map to-compiler-form
 
       # Objects are expected to represent atoms
       | \Object =>
@@ -126,7 +126,7 @@ root-macro-table = do
       # RFC4122 v4 UUIDs are based on random bits.  Hyphens become
       # underscores to make the UUID a valid JS identifier.
 
-    is-expr = -> it |> convert |> env.compile |> is-expression
+    is-expr = -> it |> to-compiler-form |> env.compile |> is-expression
 
     { evaluate, multi, atom, string, text-of, gensym, is-expr }
 
@@ -181,7 +181,7 @@ root-macro-table = do
         else it
       userspace-macro-result = func.apply (macro-env env), args
 
-      internal-ast-form = convert userspace-macro-result
+      internal-ast-form = to-compiler-form userspace-macro-result
 
       return switch
       | internal-ast-form is null => null
