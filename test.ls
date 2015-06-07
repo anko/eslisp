@@ -548,6 +548,12 @@ test "empty macros block produces no output" ->
   esl "(macros)"
    ..`@equals` ""
 
+test "macro given nothing produces no output" ->
+  esl "(macro null)"
+   ..`@equals` ""
+  esl "(macro undefined)"
+   ..`@equals` ""
+
 test "macros creates block invoked as function, return val forms macros" ->
   esl """
       (macros

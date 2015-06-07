@@ -566,6 +566,8 @@ root-macro-table = do
         | \Object =>
           for k, v of result
             import-macro env, k, v
+        | \Null => fallthrough
+        | \Undefined => # do nothing
         | otherwise =>
           throw Error "Invalid macro source #that (expected to get an Object, \
                        or a name argument and a Function)"
