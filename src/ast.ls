@@ -49,7 +49,11 @@ class atom
       ]
 
   compile : ->
-    if @content-text |> looks-like-number
+    if @content-text is \null
+      type  : \Literal
+      value : null
+      raw   : @content-text
+    else if @content-text |> looks-like-number
       type  : \Literal
       value : Number @content-text
       raw   : @content-text

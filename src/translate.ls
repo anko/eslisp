@@ -1,6 +1,7 @@
 { first, map, fold, zip, concat-map, unfoldr, reverse } = require \prelude-ls
 { atom, list, string } = require \./ast
 uuid = require \uuid .v4
+require! \esvalid
 
 is-expression = ->
   it.type?match /Expression$/ or it.type in <[ Literal Identifier ]>
@@ -190,7 +191,21 @@ root-macro-table = do
       return switch
       | internal-ast-form is null => null
       | typeof! internal-ast-form is \Array => compile-many internal-ast-form
-      | otherwise => compile internal-ast-form
+      | otherwise =>
+
+        sm-ast = compile internal-ast-form
+
+        switch sm-ast
+        | null => null # happens if internal-ast-form was only macros
+        | otherwise
+
+          errors = esvalid.errors sm-ast
+            .filter (.message isnt "given AST node should be of type Program")
+                     # no neater way of detecting that currently...
+
+          throw Error errors.0 if errors.length
+
+          sm-ast
 
     # If the import target macro table is available, import the macro to that.
     # Otherwise, import it to the usual table.

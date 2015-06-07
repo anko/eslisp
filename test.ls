@@ -717,6 +717,18 @@ test "macros are referentially transparent" ->
     '''
     ..`@equals` "yes();"
 
+test "invalid AST caused by macro errors" ->
+  @throws do
+    ->
+      # `console.log` is invalid as a variable name, but if used as if it were
+      # one, without checking if the AST makes sense, this will compile to
+      # valid JavaScript code of `console.log('hi');`!
+      esl '''
+        (macro hack () (return '(console.log "hi")))
+        (hack)
+        '''
+    Error
+
 test "multiple invocations of the compiler are separate" ->
   esl "(macro what () (return 'hi))"
   esl "(what)"
