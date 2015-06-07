@@ -378,6 +378,14 @@ test "quoting atoms produces an object representing it" ->
   esl "'(fun)"
     ..`@equals` "[{ atom: 'fun' }];"
 
+test "macro constructor given object imports properties as macros" ->
+  esl '''
+      (macro (object a (function () (return '"hi a"))
+                     b (function () (return '"hi b"))))
+      (a) (b)
+      '''
+   ..`@equals` "'hi a';\n'hi b';"
+
 test "simple quoting macro" ->
   esl "(macro random (function () (return '((. Math random)))))
        (+ (random) (random))"

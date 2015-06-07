@@ -548,14 +548,38 @@ root-macro-table = do
       finalizer : if finally-clause then that.body
                   else null
 
-    \macro : (env, name, ...function-args) ->
+    \macro : (env, ...args) ->
 
-      # TODO error checking
+      compile-as-macro = (es-ast) ->
+        # This is deliberately defined in the closure here, so it's in scope
+        # during the `eval` and available to the code being compiled.
+        let { require } = require.main
+          eval "(#{env.compile-to-js es-ast})"
 
-      userspace-macro = compile-to-function env, function-args.0
+      switch args.length
+      | 1 =>
+        es-ast = env.compile args.0
 
-      name .= text!
-      import-macro env, name, userspace-macro
+        result = compile-as-macro es-ast
+
+        switch typeof! result
+        | \Object =>
+          for k, v of result
+            import-macro env, k, v
+        | otherwise =>
+          throw Error "Invalid macro source #that (expected to get an Object, \
+                       or a name argument and a Function)"
+      | 2 =>
+        [ name, form ] = args
+
+        userspace-macro = form |> env.compile |> compile-as-macro
+
+        name .= text!
+        import-macro env, name, userspace-macro
+
+      | otherwise =>
+        throw Error "Bad number of arguments to macro constructor \
+                     (expected 1 or 2; got #that)"
       return null
 
     \macros : (env, ...body) ->
