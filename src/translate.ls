@@ -136,12 +136,12 @@ root-macro-table = do
 
     { evaluate, multi, gensym, is-expr }
 
-  compile-to-function = (env, function-args) ->
+  compile-to-function = (env, function-arg) ->
 
     # function-args is the forms that go after the `function` keyword, so
     # including parameter list and function body.
 
-    es-ast = env.compile list ([ atom \function ] ++ function-args)
+    es-ast = env.compile function-arg
 
     userspace-function = do
 
@@ -552,7 +552,7 @@ root-macro-table = do
 
       # TODO error checking
 
-      userspace-macro = compile-to-function env, function-args
+      userspace-macro = compile-to-function env, function-args.0
 
       name .= text!
       import-macro env, name, userspace-macro
@@ -563,7 +563,10 @@ root-macro-table = do
       # Compile the body as if it were a function with no parameters
       body-as-function = compile-to-function do
         env
-        ([list [] ] ++ body) # prepend empty parameter list
+        list ([
+          atom "function"
+          list []
+        ] ++ body)
 
       # Run it
       ret = body-as-function!

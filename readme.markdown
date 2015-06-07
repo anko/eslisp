@@ -8,10 +8,10 @@ macros][6].  Unopinionated and extensible.  Minimum [magic][7] or [sugar][8].
 <!-- !test in fib -->
 
     ; Only include given statement if `$DEBUG` environment variable is set
-    (macro debug (statement)
+    (macro debug (function (statement)
      (return (?: (. process env DEBUG)
                  statement
-                 null)))
+                 null))))
 
     (= fib ; Fibonacci number sequence
        (function (x)
@@ -115,10 +115,10 @@ also use the methods defined in `this` to examine (`isExpr`, `isAtom`,
 
 <!-- !test in macro and call -->
 
-    (macro m (x) (return `(+ ,x 2)))
+    (macro m (function (x) (return `(+ ,x 2))))
     ((. console log) (m 40))
 
-    (macro m2 (x) (return `,(+ ((. this evaluate) x) 2)))
+    (macro m2 (function (x) (return `,(+ ((. this evaluate) x) 2))))
     ((. console log) (m2 40))
 
 <!-- !test out macro and call -->
@@ -131,10 +131,10 @@ function, which is only defined inside macros).
 
 <!-- !test in multiple-return macro -->
 
-    (macro what (varName)
+    (macro what (function (varName)
      (return ((. this multi)
               `((. console log) ((. JSON stringify) ,varName))
-              `(++ ,varName))))
+              `(++ ,varName)))))
     (what ever)
 
 <!-- !test out multiple-return macro -->
@@ -148,8 +148,8 @@ compilation side-effects or conditional compilation.
 <!-- !test in nothing-returning macro -->
 
     ; Only include statement if `$DEBUG` environment variable is set
-    (macro debug (statement)
-     (return (?: (. process env DEBUG) statement null)))
+    (macro debug (function (statement)
+     (return (?: (. process env DEBUG) statement null))))
 
     (debug ((. console log) "debug output"))
     (yep)
