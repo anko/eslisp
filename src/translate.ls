@@ -2,9 +2,7 @@
 { atom, list, string } = require \./ast
 uuid = require \uuid .v4
 require! \esvalid
-
-is-expression = ->
-  it.type?match /Expression$/ or it.type in <[ Literal Identifier ]>
+{ is-expression } = require \esutils .ast
 
 statementify = (es-ast-node) ->
   if es-ast-node |> is-expression

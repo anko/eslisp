@@ -33,6 +33,7 @@
   "dependencies": {
     "concat-stream": "^1.4.7",
     "escodegen": "^1.4.1",
+    "esutils": "^2.0.2",
     "esvalid": "1.1.0",
     "prelude-ls": "^1.1.1",
     "s-expression": "anko/s-expression#678fc7254717484b7d14d23afe3f5a6c96cb1d14",
