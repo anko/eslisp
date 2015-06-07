@@ -158,16 +158,18 @@ compilation side-effects or conditional compilation.
 
     yep();
 
-If you want macros that can share state between each other, create a `macros`
-block and return an object.  Each key-value pair of the object is interned as a
-macro.
+If you want macros that can share state between each other, just pass an
+[immediately-invoked function expression (IIFE)][23] to `macro` and return an
+object.  Each property of the object is interned as a macro.  The variables in
+the IIFE closure are shared between them.
 
 <!-- !test in macros block -->
 
-    (macros (= x 0)
+    (macro ((function ()
+            (= x 0)
             (return (object increment (function () (return (++ x)))
                             decrement (function () (return (-- x)))
-                            get       (function () (return x)))))
+                            get       (function () (return x)))))))
 
     (increment)
     (increment)
@@ -184,7 +186,7 @@ macro.
 
 * * *
 
-Want more?  [The tests][23] are basically a language tutorial.
+Want more?  [The tests][24] are basically a language tutorial.
 
 ## Try it
 
@@ -193,22 +195,22 @@ eslisp to it. Receive ECMAScript.
 
     echo '((. console log) "Yo!")' | ./bin/eslc
 
-If you want `eslc` in your [`$PATH`][24], `npm install --global`.
+If you want `eslc` in your [`$PATH`][25], `npm install --global`.
 
 To remove it cleanly, `npm uninstall --global`.
 
 ## How does it work
 
 A table of predefined macros is used to turn S-expressions into [SpiderMonkey
-AST][25], which is fed to [escodegen][26], which outputs JS.  Some of those
+AST][26], which is fed to [escodegen][27], which outputs JS.  Some of those
 macros allow defining further macros, which get added to the table and
 henceforth work just like the predefined ones do.
 
-The [brief comparison to other JS lisp-likes][27] might be interesting too.
+The [brief comparison to other JS lisp-likes][28] might be interesting too.
 
 ## License
 
-[ISC][28].
+[ISC][29].
 
 [1]: http://semver.org/
 [2]: https://travis-ci.org/anko/eslisp
@@ -232,9 +234,10 @@ The [brief comparison to other JS lisp-likes][27] might be interesting too.
 [20]: http://c2.com/cgi/wiki?LispMacro
 [21]: http://semver.org/spec/v2.0.0.html
 [22]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
-[23]: https://github.com/anko/eslisp/blob/master/test.ls
-[24]: http://en.wikipedia.org/wiki/PATH_(variable)
-[25]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[26]: https://github.com/estools/escodegen
-[27]: doc/comparison-to-other-js-lisps.markdown
-[28]: http://opensource.org/licenses/ISC
+[23]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
+[24]: https://github.com/anko/eslisp/blob/master/test.ls
+[25]: http://en.wikipedia.org/wiki/PATH_(variable)
+[26]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[27]: https://github.com/estools/escodegen
+[28]: doc/comparison-to-other-js-lisps.markdown
+[29]: http://opensource.org/licenses/ISC

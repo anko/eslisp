@@ -136,22 +136,6 @@ root-macro-table = do
 
     { evaluate, multi, gensym, is-expr }
 
-  compile-to-function = (env, function-arg) ->
-
-    # function-args is the forms that go after the `function` keyword, so
-    # including parameter list and function body.
-
-    es-ast = env.compile function-arg
-
-    userspace-function = do
-
-      # These functions are deliberately defined in the closure here, such that
-      # they're in scope during the `eval` and hence available in the compiled
-      # macro function.
-
-      let { require } = require.main
-        eval "(#{env.compile-to-js es-ast})"
-
   import-macro = (env, name, func) ->
 
     # The macro table of the current environment is what should be used when
@@ -583,37 +567,6 @@ root-macro-table = do
         throw Error "Bad number of arguments to macro constructor \
                      (expected 1 or 2; got #that)"
       return null
-
-    \macros : (env, ...body) ->
-
-      # Compile the body as if it were a function with no parameters
-      body-as-function = compile-to-function do
-        env
-        list ([
-          atom "function"
-          list []
-        ] ++ body)
-
-      # Run it
-      ret = body-as-function!
-
-      switch typeof! ret
-      | \Undefined => fallthrough
-      | \Null =>
-        return null
-      | \Object
-        for name, func of ret
-          # sanity: no space or parens in macro name
-          if name.match /[\s()]/ isnt null
-            throw Error "`macros` return has illegal characters in return name"
-          if typeof func isnt \function
-            throw Error """`macros` return object value wasn't a function
-                           (got `#{typeof! func}`)"""
-
-          import-macro env, name, func
-        return null
-      | otherwise
-        throw Error "Non-object return from `macros`! (got `#{typeof! ret}`)"
 
     \quote : do
       quote = ({compile}, ...args) ->

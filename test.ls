@@ -544,24 +544,20 @@ test "macro deliberately breaking hygiene for function argument anaphora" ->
         (: (return (. it x)))"
     ..`@equals` "(function (it) {\n    return it.x;\n});"
 
-test "empty macros block produces no output" ->
-  esl "(macros)"
-   ..`@equals` ""
-
 test "macro given nothing produces no output" ->
   esl "(macro null)"
    ..`@equals` ""
   esl "(macro undefined)"
    ..`@equals` ""
 
-test "macros creates block invoked as function, return val forms macros" ->
+test "when returned from an IIFE, macros can share state" ->
   esl """
-      (macros
-        (= x 0)
+      (macro
+       ((function () (= x 0)
         (return (object plusPrev  (function (n)
                                   (return (+= x ((. this evaluate) n)) x))
                         timesPrev (function (n)
-                                  (return (*= x ((. this evaluate) n)) x)))))
+                                  (return (*= x ((. this evaluate) n)) x)))))))
       (plusPrev 2) (timesPrev 2)
        """
    ..`@equals` "2;\n4;"
@@ -649,9 +645,7 @@ test "macros can be required relative to root directory" ->
   fs.write-sync fd, "module.exports = function() { }"
 
   esl """
-    (macros
-     (= x (require "#file-name"))
-     (return (object x x)))
+    (macro (object x (require "#file-name")))
     (x)
     """
     ..`@equals` ""
@@ -670,9 +664,7 @@ test "macros required from separate modules can access complation env" ->
     """
 
   code = esl """
-    (macros
-     (= x (require "#name"))
-     (return (object x x)))
+    (macro (object x (require "#name")))
     (x)
     """
 
