@@ -699,6 +699,19 @@ test "macro can create implicit last-expr returning function shorthand" ->
       });
       """
 
+test "macro function can be returned from IIFE" ->
+  # IIFE = immediately-invoked function expression
+  #
+  # Note how the outer function is wrapped in another set of parens to
+  # immediately call it.  It returns another function, and *that* becomes the
+  # macro.
+  esl '''
+    (macro say-hi ((function ()
+      (return (function () (return "hi"))))))
+    (say-hi)
+    '''
+    ..`@equals` "'hi';"
+
 test "macro-generating macro" -> # yes srsly
   esl '''
     (macro define-with-name (function (x)
