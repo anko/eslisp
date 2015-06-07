@@ -717,7 +717,7 @@ test "macros are referentially transparent" ->
     '''
     ..`@equals` "yes();"
 
-test "invalid AST caused by macro errors" ->
+test "invalid AST caused by macro throws error" ->
   @throws do
     ->
       # `console.log` is invalid as a variable name, but if used as if it were
