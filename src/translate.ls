@@ -633,10 +633,9 @@ root-macro-table = do
 
       qq = ({compile}, ...args) ->
 
-        # Each arg is a form passed to the quasiquote call.
         if args.length > 1
-          throw Error "Attempted to quasiquote >1 values, not inside list"
-
+          throw Error "Too many arguments to quasiquote (`); \
+                       expected 1, got #{args.length}"
         arg = args.0
 
         if arg instanceof list and arg.contents!length
