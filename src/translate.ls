@@ -195,6 +195,13 @@ root-macro-table = do
     (env.import-target-macro-table || env.macro-table)
       .parent.contents[name] = compilerspace-macro
 
+  quote = ->
+    if arguments.length > 1
+      throw Error "Too many arguments to quote; \
+                   expected 1 but got #{arguments.length}"
+    if it then it.as-sm!
+    else list!as-sm! # empty list
+
   parent : null
   contents :
     \+ : n-ary-expr \+
@@ -568,14 +575,7 @@ root-macro-table = do
                      (expected 1 or 2; got #that)"
       return null
 
-    \quote : do
-      quote = (_, ...args) ->
-        if args.length > 1
-          throw Error "Attempted to quote >1 values, not inside list"
-        if args.0
-          args.0.as-sm!
-        else
-          list!as-sm!
+    \quote : (_, ...args) -> quote.apply null, args
 
     \quasiquote : do
 
@@ -612,7 +612,7 @@ root-macro-table = do
         | ast instanceof list
           [head, ...rest] = ast.contents!
           switch
-          | not head? => [ quote null, list [] ] # empty list
+          | not head? => [ quote list [] ] # empty list
           | head instanceof atom =>
             switch head.text!
             | \unquote => unquote rest.0
@@ -620,7 +620,7 @@ root-macro-table = do
             | _ => [ recurse-on ast ]
           | _   => [ recurse-on ast ]
 
-        | _ => [ quote null, ast ]
+        | _ => [ quote ast ]
 
       generate-concat = (concattable-things) ->
         type : \CallExpression
@@ -674,7 +674,7 @@ root-macro-table = do
 
             generate-concat concattable-args
 
-        else quote null, arg # act like regular quote
+        else quote arg # act like regular quote
 
 module.exports = (ast) ->
 
