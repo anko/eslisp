@@ -628,7 +628,7 @@ root-macro-table = do
             type : \MemberExpression
             object   : type : \Identifier name : \Array
             property : type : \Identifier name : \prototype
-          property   : type : \Identifer name : \concat
+          property   : type : \Identifier name : \concat
         arguments : concattable-things
 
       qq = ({compile}, ...args) ->
