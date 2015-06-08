@@ -615,8 +615,8 @@ root-macro-table = do
           | not head? => [ quote list [] ] # empty list
           | head instanceof atom =>
             switch head.text!
-            | \unquote => unquote rest.0
-            | \unquote-splicing => unquote-splicing rest.0
+            | \unquote          => unquote         .apply null rest
+            | \unquote-splicing => unquote-splicing.apply null rest
             | _ => [ recurse-on ast ]
           | _   => [ recurse-on ast ]
 
