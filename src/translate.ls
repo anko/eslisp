@@ -584,6 +584,7 @@ root-macro-table = do
       # `unquote-splicing` into either an array of values or an identifier to
       # an array of values.
       qq-body = (compile, ast) ->
+
         recurse-on = (ast-list) ->
           type : \ArrayExpression
           elements : ast-list.contents!
@@ -591,10 +592,12 @@ root-macro-table = do
                      |> fold (++), []
 
         unquote = ->
-          # Unquoting a list should compile to whatever the list
+          # Unquoting should compile to just the thing separated with an array
+          # wrapper.
           [ compile it ]
         unquote-splicing = ->
-          # The returned thing should be an array anyway.
+          # Splicing should leave it without the array wrapper so concat
+          # splices it into the array it's contained in.
           compile it
 
         if ast instanceof list
@@ -619,14 +622,15 @@ root-macro-table = do
 
       qq = ({compile}, ...args) ->
 
-        # Each argument (in args) is an atom passed to the quasiquote macro.
+        # Each arg is a form passed to the quasiquote call.
         if args.length > 1
           throw Error "Attempted to quasiquote >1 values, not inside list"
 
         arg = args.0
 
         if arg instanceof list and arg.contents!length
-          if arg.contents!0 instanceof atom and arg.contents!0.text! is \unquote
+          first-arg = arg.contents!0
+          if first-arg instanceof atom and first-arg.text! is \unquote
             rest = arg.contents!slice 1 .0
             compile rest
           else
@@ -636,9 +640,9 @@ root-macro-table = do
               |> map qq-body compile, _
 
               # Each quasiquote-body resolution produces SpiderMonkey AST
-              # compiled values, but if there are many of them, it'll produce an
-              # array.  We'll convert these into ArrayExpressions so the results
-              # are effectively still compiled values.
+              # compiled values, but if there are many of them, it'll produce
+              # an array.  We'll convert these into ArrayExpressions so the
+              # results are effectively still compiled values.
               |> map ->
                 if typeof! it is \Array
                   type : \ArrayExpression
