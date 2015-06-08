@@ -620,6 +620,17 @@ root-macro-table = do
             [ recurse-on ast ]
         else [ ast.as-sm! ]
 
+      generate-concat = (concattable-things) ->
+        type : \CallExpression
+        callee :
+          type : \MemberExpression
+          object :
+            type : \MemberExpression
+            object   : type : \Identifier name : \Array
+            property : type : \Identifier name : \prototype
+          property   : type : \Identifer name : \concat
+        arguments : concattable-things
+
       qq = ({compile}, ...args) ->
 
         # Each arg is a form passed to the quasiquote call.
@@ -645,8 +656,7 @@ root-macro-table = do
               # results are effectively still compiled values.
               |> map ->
                 if typeof! it is \Array
-                  type : \ArrayExpression
-                  elements : it
+                  type : \ArrayExpression elements : it
                 else it
 
             # Now each should be an array (or a literal that was
@@ -658,21 +668,8 @@ root-macro-table = do
             # this macro produce a concatenation of the quasiquote-resolved
             # arguments.
 
-            type : \CallExpression
-            callee :
-              type : \MemberExpression
-              object :
-                type : \MemberExpression
-                object :
-                  type : \Identifier
-                  name : \Array
-                property :
-                  type : \Identifier
-                  name : \prototype
-              property :
-                type : \Identifer
-                name : \concat
-            arguments : concattable-args
+            generate-concat concattable-args
+
         else quote compile, arg
 
 module.exports = (ast) ->
