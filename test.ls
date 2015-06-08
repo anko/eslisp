@@ -475,6 +475,18 @@ test "macros can splice arrays into quasiquoted lists" ->
        (sumOf (1 2 3))"
     ..`@equals` "1 + (2 + 3);"
 
+test "quasiquote can contain nested lists" ->
+  esl '''
+      (macro mean
+       (function ()
+        ; Convert arguments into array
+        (= args ((. Array prototype slice call) arguments 0))
+        (= total (. args length))
+        (return `(/ (+ ,@args) ,total))))
+       (mean 1 2 3)
+      '''
+    ..`@equals` "(1 + (2 + 3)) / 3;"
+
 test "array macro produces array expression" ->
   esl "(array 1 2 3)"
     ..`@equals` "[\n    1,\n    2,\n    3\n];"

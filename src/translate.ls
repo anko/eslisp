@@ -586,10 +586,13 @@ root-macro-table = do
       qq-body = (compile, ast) ->
 
         recurse-on = (ast-list) ->
-          type : \ArrayExpression
-          elements : ast-list.contents!
-                     |> map qq-body compile, _
-                     |> fold (++), []
+          ast-list.contents!
+          |> map qq-body compile, _
+          |> map ->
+            if typeof! it is \Array
+              type : \ArrayExpression elements : it
+            else it
+          |> generate-concat
 
         unquote = ->
           if arguments.length isnt 1
