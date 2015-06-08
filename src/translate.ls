@@ -592,36 +592,31 @@ root-macro-table = do
                      |> fold (++), []
 
         unquote = ->
+          if arguments.length isnt 1
+            throw Error "Expected 1 argument to unquote but got #{rest.length}"
+
           # Unquoting should compile to just the thing separated with an array
           # wrapper.
           [ compile it ]
+
         unquote-splicing = ->
+          if arguments.length isnt 1
+            throw Error "Expected 1 argument to unquoteSplicing but got
+                         #{rest.length}"
+
           # Splicing should leave it without the array wrapper so concat
           # splices it into the array it's contained in.
           compile it
 
         switch
         | ast instanceof list
-
           [head, ...rest] = ast.contents!
           switch
           | not head? => [ quote null, list [] ] # empty list
           | head instanceof atom =>
             switch head.text!
-            | \unquote =>
-              if rest.length isnt 1
-                throw Error "Expected 1 argument to unquote but got
-                             #{rest.length}"
-
-              unquote rest.0
-
-            | \unquote-splicing =>
-              if rest.length isnt 1
-                throw Error "Expected 1 argument to unquoteSplicing but got
-                             #{rest.length}"
-
-              unquote-splicing rest.0
-
+            | \unquote => unquote rest.0
+            | \unquote-splicing => unquote-splicing rest.0
             | _ => [ recurse-on ast ]
           | _   => [ recurse-on ast ]
 
