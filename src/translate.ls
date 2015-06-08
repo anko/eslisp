@@ -600,25 +600,32 @@ root-macro-table = do
           # splices it into the array it's contained in.
           compile it
 
-        if ast instanceof list
+        switch
+        | ast instanceof list
+
           [head, ...rest] = ast.contents!
-          if not head? then [ quote null, list [] ] # empty list
-          else if head instanceof atom
+          switch
+          | not head? => [ quote null, list [] ] # empty list
+          | head instanceof atom =>
             switch head.text!
             | \unquote =>
               if rest.length isnt 1
                 throw Error "Expected 1 argument to unquote but got
                              #{rest.length}"
+
               unquote rest.0
+
             | \unquote-splicing =>
               if rest.length isnt 1
                 throw Error "Expected 1 argument to unquoteSplicing but got
                              #{rest.length}"
+
               unquote-splicing rest.0
-            | otherwise => [ recurse-on ast ]
-          else # head wasn't an atom
-            [ recurse-on ast ]
-        else [ quote null, ast ]
+
+            | _ => [ recurse-on ast ]
+          | _   => [ recurse-on ast ]
+
+        | _ => [ quote null, ast ]
 
       generate-concat = (concattable-things) ->
         type : \CallExpression
