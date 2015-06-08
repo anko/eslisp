@@ -569,7 +569,7 @@ root-macro-table = do
       return null
 
     \quote : do
-      quote = ({compile}, ...args) ->
+      quote = (_, ...args) ->
         if args.length > 1
           throw Error "Attempted to quote >1 values, not inside list"
         if args.0
@@ -602,7 +602,7 @@ root-macro-table = do
 
         if ast instanceof list
           [head, ...rest] = ast.contents!
-          if not head? then [ quote compile, list [] ] # empty list
+          if not head? then [ quote null, list [] ] # empty list
           else if head instanceof atom
             switch head.text!
             | \unquote =>
@@ -618,7 +618,7 @@ root-macro-table = do
             | otherwise => [ recurse-on ast ]
           else # head wasn't an atom
             [ recurse-on ast ]
-        else [ ast.as-sm! ]
+        else [ quote null, ast ]
 
       generate-concat = (concattable-things) ->
         type : \CallExpression
@@ -639,10 +639,13 @@ root-macro-table = do
         arg = args.0
 
         if arg instanceof list and arg.contents!length
+
           first-arg = arg.contents!0
+
           if first-arg instanceof atom and first-arg.text! is \unquote
             rest = arg.contents!slice 1 .0
             compile rest
+
           else
             concattable-args = arg.contents!
 
@@ -669,7 +672,7 @@ root-macro-table = do
 
             generate-concat concattable-args
 
-        else quote compile, arg
+        else quote null, arg # act like regular quote
 
 module.exports = (ast) ->
 
