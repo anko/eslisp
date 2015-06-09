@@ -69,35 +69,27 @@ class atom
       ]
 
   compile : ->
-    if @content-text is \this
-      type : \ThisExpression
-    else if @content-text is \null
-      type  : \Literal
-      value : null
-      raw   : @content-text
-    else if @content-text is \true
-      type  : \Literal
-      value : true
-      raw   : @content-text
-    else if @content-text is \false
-      type  : \Literal
-      value : false
-      raw   : @content-text
-    else if @content-text |> looks-like-number
-      type  : \Literal
-      value : Number @content-text
-      raw   : @content-text
-    else if @content-text |> looks-like-negative-number
-      type : \UnaryExpression
-      operator : \-
-      prefix : true
-      argument :
+
+    lit = ~> type : \Literal, value : it, raw : @content-text
+
+    switch @content-text
+    | \this  => type : \ThisExpression
+    | \null  => lit null
+    | \true  => lit true
+    | \false => lit false
+    | otherwise switch
+      | looks-like-number @content-text
         type  : \Literal
-        value : Number @content-text.slice 1 # trim leading minus
+        value : Number @content-text
         raw   : @content-text
-    else
-      type : \Identifier
-      name : @content-text
+      | looks-like-negative-number @content-text
+        type     : \UnaryExpression
+        operator : \-
+        prefix   : true
+        argument : lit Number @content-text.slice 1 # trim leading minus
+      | otherwise
+        type : \Identifier
+        name : @content-text
 
 class list
   (@content=[]) ~>
