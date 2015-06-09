@@ -1,8 +1,25 @@
 { obj-to-lists, zip, concat-map } = require \prelude-ls
 es-generate = (require \escodegen).generate _
+require! \esvalid
 
 looks-like-number = (atom-text) ->
   atom-text.match /^\d+(\.\d+)?$/
+
+ast-errors = ->
+  return null if it is null
+  it
+  |> esvalid.errors
+  |> -> it.filter ->
+    # Disregard errors to do with where things are allowed to appear.  Eslisp
+    # compiles stuff incrementally and takes care that the context makes sense.
+    it.message not in [
+      "given AST node should be of type Program"
+      "ReturnStatement must be nested within a FunctionExpression or FunctionDeclaration node"
+      "BreakStatement must have an IterationStatement or SwitchStatement as an ancestor"
+      "ContinueStatement must have an IterationStatement as an ancestor"
+    ]
+  |> -> | it.length => it
+        | _         => null
 
 class string
   (@content-text) ~>
@@ -120,7 +137,13 @@ class list
           import-target-macro-table
         }
 
-      that.apply null, ([ env ] ++ rest)
+      r = that.apply null, ([ env ] ++ rest)
+
+      if ast-errors r
+        that.for-each -> console.error it
+        #throw Error "Invalid AST"
+
+      r
 
     else
       # TODO compile-time check if callee has sensible type
