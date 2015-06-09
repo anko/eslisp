@@ -4,6 +4,8 @@ require! \esvalid
 
 looks-like-number = (atom-text) ->
   atom-text.match /^\d+(\.\d+)?$/
+looks-like-negative-number = (atom-text) ->
+  atom-text.match /^-\d+(\.\d+)?$/
 
 ast-errors = ->
   return null if it is null
@@ -77,6 +79,14 @@ class atom
       type  : \Literal
       value : Number @content-text
       raw   : @content-text
+    else if @content-text |> looks-like-negative-number
+      type : \UnaryExpression
+      operator : \-
+      prefix : true
+      argument :
+        type  : \Literal
+        value : Number @content-text.slice 1 # trim leading minus
+        raw   : @content-text
     else
       type : \Identifier
       name : @content-text
