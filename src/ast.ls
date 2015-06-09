@@ -1,8 +1,12 @@
 { obj-to-lists, zip, concat-map } = require \prelude-ls
 es-generate = (require \escodegen).generate _
 
+ast-errors = require \./esvalid-partial
+
 looks-like-number = (atom-text) ->
   atom-text.match /^\d+(\.\d+)?$/
+looks-like-negative-number = (atom-text) ->
+  atom-text.match /^-\d+(\.\d+)?$/
 
 class string
   (@content-text) ~>
@@ -39,6 +43,7 @@ class atom
       type : \ObjectExpression
       properties : [
         type : \Property
+        kind : \init
         key :
           type : \Identifier
           name : \atom
@@ -49,17 +54,27 @@ class atom
       ]
 
   compile : ->
-    if @content-text is \null
-      type  : \Literal
-      value : null
-      raw   : @content-text
-    else if @content-text |> looks-like-number
-      type  : \Literal
-      value : Number @content-text
-      raw   : @content-text
-    else
-      type : \Identifier
-      name : @content-text
+
+    lit = ~> type : \Literal, value : it, raw : @content-text
+
+    switch @content-text
+    | \this  => type : \ThisExpression
+    | \null  => lit null
+    | \true  => lit true
+    | \false => lit false
+    | otherwise switch
+      | looks-like-number @content-text
+        type  : \Literal
+        value : Number @content-text
+        raw   : @content-text
+      | looks-like-negative-number @content-text
+        type     : \UnaryExpression
+        operator : \-
+        prefix   : true
+        argument : lit Number @content-text.slice 1 # trim leading minus
+      | otherwise
+        type : \Identifier
+        name : @content-text
 
 class list
   (@content=[]) ~>
@@ -95,7 +110,7 @@ class list
         else return null                      # no parent to ask; fail
       | otherwise => that                     # defined at this level; succeed
 
-    return type : \EmptyStatement if @content.length is 0
+    return null if @content.length is 0
 
     [ head, ...rest ] = @content
 
@@ -120,7 +135,19 @@ class list
           import-target-macro-table
         }
 
-      that.apply null, ([ env ] ++ rest)
+      r = that.apply null, ([ env ] ++ rest)
+
+      check-for-ast-errors = ->
+        if ast-errors it
+          that.for-each -> console.error it
+          #throw Error "Invalid AST"
+
+      if typeof! r is \Array
+        r.for-each check-for-ast-errors
+      else
+        check-for-ast-errors r
+
+      r
 
     else
       # TODO compile-time check if callee has sensible type

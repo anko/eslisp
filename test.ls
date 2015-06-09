@@ -168,7 +168,7 @@ test "variable declaration and assignment" ->
 
 test "empty statement" ->
   esl "()"
-    ..`@equals` ";"
+    ..`@equals` ""
 
 test "break and continue statements" ->
   esl "(break) (continue)"
@@ -256,12 +256,12 @@ test "for loop with no body" ->
 test "for loop with null update" ->
   esl '(for (= x 1) (< x 10) () ((. console log) "ok")
                                 ((. console log) "still ok"))'
-    ..`@equals` "for (var x = 1; x < 10; ;) {\n    console.log('ok');\n    console.log('still ok');\n}"
+    ..`@equals` "for (var x = 1; x < 10;) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "for loop with null init, update and test" ->
   esl '(for () () () ((. console log) "ok")
                      ((. console log) "still ok"))'
-    ..`@equals` "for (;; ;; ;) {\n    console.log('ok');\n    console.log('still ok');\n}"
+    ..`@equals` "for (;;) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "for-in loop" ->
   esl '(forin (= x) xs ((. console log) x))'
@@ -399,12 +399,12 @@ test "simple unquoting macro" ->
 test "empty-list-returning macro" ->
   esl "(macro nothing (function () (return '())))
        (nothing)"
-    ..`@equals` ";"
+    ..`@equals` ""
 
 test "empty-list-returning macro (using quasiquote)" ->
   esl "(macro nothing (function () (return `())))
        (nothing)"
-    ..`@equals` ";"
+    ..`@equals` ""
 
 test "nothing-returning macro" ->
   esl "(macro nothing (function () (return undefined)))

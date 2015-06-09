@@ -1,7 +1,7 @@
 { first, map, fold, zip, concat-map, unfoldr, reverse } = require \prelude-ls
 { atom, list, string } = require \./ast
 uuid = require \uuid .v4
-require! \esvalid
+ast-errors = require \./esvalid-partial
 { is-expression } = require \esutils .ast
 
 statementify = (es-ast-node) ->
@@ -181,11 +181,8 @@ root-macro-table = do
         | null => null # happens if internal-ast-form was only macros
         | otherwise
 
-          errors = esvalid.errors sm-ast
-            .filter (.message isnt "given AST node should be of type Program")
-                     # no neater way of detecting that currently...
-
-          throw Error errors.0 if errors.length
+          errors = ast-errors sm-ast
+          throw Error errors.0 if errors
 
           sm-ast
 
