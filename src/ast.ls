@@ -75,6 +75,14 @@ class atom
       type  : \Literal
       value : null
       raw   : @content-text
+    else if @content-text is \true
+      type  : \Literal
+      value : true
+      raw   : @content-text
+    else if @content-text is \false
+      type  : \Literal
+      value : false
+      raw   : @content-text
     else if @content-text |> looks-like-number
       type  : \Literal
       value : Number @content-text
