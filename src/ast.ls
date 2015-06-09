@@ -152,9 +152,15 @@ class list
 
       r = that.apply null, ([ env ] ++ rest)
 
-      if ast-errors r
-        that.for-each -> console.error it
-        #throw Error "Invalid AST"
+      check-for-ast-errors = ->
+        if ast-errors it
+          that.for-each -> console.error it
+          #throw Error "Invalid AST"
+
+      if typeof! r is \Array
+        r.for-each check-for-ast-errors
+      else
+        check-for-ast-errors r
 
       r
 
