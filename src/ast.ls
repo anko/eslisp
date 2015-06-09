@@ -125,7 +125,7 @@ class list
         else return null                      # no parent to ask; fail
       | otherwise => that                     # defined at this level; succeed
 
-    return type : \EmptyStatement if @content.length is 0
+    return null if @content.length is 0
 
     [ head, ...rest ] = @content
 
