@@ -56,6 +56,7 @@ class atom
       type : \ObjectExpression
       properties : [
         type : \Property
+        kind : \init
         key :
           type : \Identifier
           name : \atom
