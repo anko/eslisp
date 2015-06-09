@@ -67,7 +67,9 @@ class atom
       ]
 
   compile : ->
-    if @content-text is \null
+    if @content-text is \this
+      type : \ThisExpression
+    else if @content-text is \null
       type  : \Literal
       value : null
       raw   : @content-text
