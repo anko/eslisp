@@ -730,6 +730,15 @@ test "macro function can be returned from IIFE" ->
     '''
     ..`@equals` "'hi';"
 
+test "IIFE given to macro can itself contain other macros" ->
+  esl '''
+    (macro say-hi ((function ()
+      (macro x (function() (return '"hi")))
+      (return (function () (return (x)))))))
+    (say-hi)
+    '''
+    ..`@equals` "'hi';"
+
 test "macro-generating macro" -> # yes srsly
   esl '''
     (macro define-with-name (function (x)
