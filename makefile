@@ -17,8 +17,10 @@ clean:
 test:
 	@lsc test.ls
 
-# `all` because txm requires the executable to be built
 test-readme: all readme.markdown
 	@txm readme.markdown
+
+test-docs: all doc/how-macros-work.markdown
+	@txm doc/how-macros-work.markdown
 
 .PHONY: all clean test test-readme

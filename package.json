@@ -6,7 +6,8 @@
   "scripts": {
     "prepublish": "make all",
     "test": "make test",
-    "test-readme": "make test-readme"
+    "test-readme": "make test-readme",
+    "test-docs": "make test-docs"
   },
   "directories": {
     "lib": "./lib",
