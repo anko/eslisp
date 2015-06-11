@@ -1,4 +1,4 @@
-# eslisp [![](https://img.shields.io/badge/api-unstable-red.svg?style=flat-square)][1] [![](https://img.shields.io/travis/anko/eslisp.svg?style=flat-square)][2] [![](https://img.shields.io/badge/chat-gitter_%E2%86%92-blue.svg?style=flat-square)][3]
+# eslisp [![](https://img.shields.io/npm/v/eslisp.svg?style=flat-square)][1] [![](https://img.shields.io/travis/anko/eslisp.svg?style=flat-square)][2] [![](https://img.shields.io/badge/chat-gitter_%E2%86%92-blue.svg?style=flat-square)][3]
 
 [S-expression][4] syntax for [ECMAScript][5]/JavaScript, with [lisp-like
 macros][6].  Unopinionated and easily extensible.  Minimum [magic][7] or
@@ -337,7 +337,7 @@ under the ISC license.
 
 [ISC][34].
 
-[1]: http://semver.org/
+[1]: https://www.npmjs.com/package/eslisp
 [2]: https://travis-ci.org/anko/eslisp
 [3]: https://gitter.im/anko/eslisp
 [4]: https://en.wikipedia.org/wiki/S-expression
