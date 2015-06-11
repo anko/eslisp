@@ -138,6 +138,18 @@ root-macro-table = do
 
   import-macro = (env, name, func) ->
 
+    root-env = ^^env
+      ..macro-table = root-macro-table
+      ..import-target-macro-table =
+        (env.import-target-macro-table || env.macro-table)
+
+    import-capmacro root-env, name, func
+
+  import-capmacro = (env, name, func) ->
+
+    #console.log "importing macro #name"
+    #console.log "into" (env.import-target-macro-table || env.macro-table).parent
+
     # The macro table of the current environment is what should be used when
     # the macro is called.  This preserves lexical scoping.
 
@@ -157,7 +169,7 @@ root-macro-table = do
     # from this environment.
     compile = ->
       if it.compile?
-        it.compile flattened-macro-table, env.macro-table
+        it.compile flattened-macro-table, (env.import-target-macro-table || env.macro-table)
       else it
     compile-many = -> it |> concat-map compile |> (.filter (isnt null))
 
@@ -566,6 +578,42 @@ root-macro-table = do
 
         name .= text!
         import-macro env, name, userspace-macro
+
+      | otherwise =>
+        throw Error "Bad number of arguments to macro constructor \
+                     (expected 1 or 2; got #that)"
+      return null
+
+    \capmacro : (env, ...args) ->
+
+      compile-as-macro = (es-ast) ->
+        # This is deliberately defined in the closure here, so it's in scope
+        # during the `eval` and available to the code being compiled.
+        let { require } = require.main
+          eval "(#{env.compile-to-js es-ast})"
+
+      switch args.length
+      | 1 =>
+        es-ast = env.compile args.0
+
+        result = compile-as-macro es-ast
+
+        switch typeof! result
+        | \Object =>
+          for k, v of result
+            import-capmacro env, k, v
+        | \Null => fallthrough
+        | \Undefined => # do nothing
+        | otherwise =>
+          throw Error "Invalid macro source #that (expected to get an Object, \
+                       or a name argument and a Function)"
+      | 2 =>
+        [ name, form ] = args
+
+        userspace-macro = form |> env.compile |> compile-as-macro
+
+        name .= text!
+        import-capmacro env, name, userspace-macro
 
       | otherwise =>
         throw Error "Bad number of arguments to macro constructor \

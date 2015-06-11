@@ -748,12 +748,35 @@ test "macro-generating macro" -> # yes srsly
     '''
     ..`@equals` "hello();"
 
-test "macros are referentially transparent" ->
+test "macros do not capture macros from the outer env by default" ->
+  # A macro's environment is ordinarily the clean root macro table; it ignores
+  # user-defined macros.
   esl '''
-    (macro say (function () (return '(yes)))) ; define macro "say"
-    (macro m   (function () (return `(say)))) ; use "say" in another macro "m"
-    (macro say (function () (return '(no))))  ; redefine macro "say"
-    (m)                                       ; call macro "m"
+    (macro f (function () (return '"hello")))
+    (macro g (function () (return '(f))))
+    (g)
+    '''
+    ..`@equals` "f();"
+
+test "capmacro allows macros capture from outer env" ->
+  # To create a macro that *does* capture the current macro environment, use
+  # `capmacro`.
+  esl '''
+    (capmacro f (function () (return '"hello")))
+    (capmacro g (function () (return '(f))))
+    (g)
+    '''
+    ..`@equals` "'hello';"
+
+test "capturing macros are referentially transparent" ->
+  # A macro that captures its environment does so when defined, not when
+  # called.  This means it's robust to later redefinitions in the same scope it
+  # captured from.
+  esl '''
+    (macro say (function () (return '(yes))))    ; define macro "say"
+    (capmacro m   (function () (return '(say)))) ; use "say" in "m"
+    (macro say (function () (return '(no))))     ; redefine macro "say"
+    (m)                                          ; call macro "m"
     '''
     ..`@equals` "yes();"
 
