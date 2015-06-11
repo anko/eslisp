@@ -1,17 +1,19 @@
 # eslisp [![](https://img.shields.io/badge/api-unstable-red.svg?style=flat-square)][1] [![](https://img.shields.io/travis/anko/eslisp.svg?style=flat-square)][2] [![](https://img.shields.io/badge/chat-gitter_%E2%86%92-blue.svg?style=flat-square)][3]
 
 [S-expression][4] syntax for [ECMAScript][5]/JavaScript, with [lisp-like
-macros][6].  Unopinionated and extensible.  Minimum [magic][7] or [sugar][8].
+macros][6].  Unopinionated and easily extensible.  Minimum [magic][7] or
+[sugar][8].
 
 <!-- !test program ./bin/eslc | head -c -1 -->
 
 <!-- !test in fib -->
 
     ; Only include given statement if `$DEBUG` environment variable is set
-    (macro debug (function (statement)
-     (return (?: (. process env DEBUG)
-                 statement
-                 null))))
+    (macro debug
+     (function (statement)
+      (return (?: (. process env DEBUG)
+                  statement
+                  null))))
 
     (= fib ; Fibonacci number sequence
        (function (x)
@@ -53,81 +55,189 @@ Also, this had great [hack value][15].  [Metaprogramming][16] is the coolest
 thing since mint ice cream.  [Conditional compilation][17]!  [DSLs][18]!
 [Anaphora][19]!  [*So cool*][20].
 
-Versioning will follow [semver][21].
+For a comparison against other JS-lisps, [see here][21].
 
-## Examples
+Versioning will follow [semver][22].
 
-Nested parentheses represent macro- or function-calls.  Here `.` is a
-compiler-defined macro representing property access, so `(. console log)`
-becomes `console.log`, and
+## Brief tutorial
 
-<!-- !test in initial -->
+### Building blocks
 
-    ((. console log) "Hello world!")
+Eslisp code consists of comments, atoms, strings and lists.
 
-becomes
+    ; Everything from a semicolon to the end of a line is a comment.
 
-<!-- !test out initial -->
+    hello           ; This is an atom.
+    "hello"         ; This is a string.
+    (hello "hello") ; This is a list containing an atom and a string.
+    ()              ; This is an empty list.
 
-    console.log('Hello world!');
+Lists describe the code structure.  Whitespace is insignificant.
 
-* * *
+    (these mean (the same) thing)
 
-The function-constructing macro takes a list of arguments first.  The rest are
-treated like the statements in the function body.
+    (these
+    mean (the
+    same) thing)
+
+    (these    mean (the
+                    same) thing)
+
+All eslisp code is constructed by calling macros at compile-time.  There are
+built-in macros to generate JavaScript operators, loop structures, expressions,
+statements… everything needed to write arbitrary JavaScript.
+
+### Some simple built-in macros
+
+A macro is called by writing a list with its name as the first element and its
+arguments as the rest:
+
+<!-- !test in simple macros -->
+
+    ; Everything from a semicolon to the end of a line is a comment.
+
+    ; The "." macro compiles to property access.
+    (. a b)
+    (. a b 5 c "yo")
+
+    ; The "+" macro compiles to addition.
+    (+ 1 2)
+
+    ; ... and similarly for "-", "*", "/" and "%".
+
+<!-- !test out simple macros -->
+
+    a.b;
+    a.b[5].c['yo'];
+    1 + 2;
+
+If the first element of a list isn't a macro name, it compiles to a function
+call:
+
+<!-- !test in function call -->
+
+    (a 1)
+    (a 1 2)
+    (a)
+
+<!-- !test out function call -->
+
+    a(1);
+    a(1, 2);
+    a();
+
+They can of course be nested:
+
+<!-- !test in nested macros -->
+
+    ; The "=" macro compiles to a variable declaration.
+    (= x (+ 1 (* 2 3)))
+
+    ; Calling the result of a property access expression
+    ((. console log) "hi")
+
+<!-- !test out nested macros -->
+
+    var x = 1 + 2 * 3;
+    console.log('hi');
+
+### More complex built-in macros
+
+Some macros treat their arguments specially.  For example, the `if` macro
+expects its first argument to return a conditional expression, and its second
+and third arguments to be lists of statements that go in the consecutive and
+alternate blocks respectively.
+
+<!-- !test in special form -->
+
+    ; The "if" macro compiles to an if-statement.
+    (if ok                ; It treats the first argument as the conditional,
+        ((= x (! ok))     ; the second as a list of consequent statements,
+         (return x))
+        ((return false))) ; and the (optional) third as alternate statements.
+
+<!-- !test out special form -->
+
+    if (ok) {
+        var x = !ok;
+        return x;
+    } else {
+        return false;
+    }
+
+Similarly, the `function` macro treats its first argument as a list of the
+function's argument names, and the rest as statements in the function body.
 
 <!-- !test in func and call -->
 
-    (= f (function (x) (return (+ x 2))))
+    (= f (function (x)
+          (a x)
+          (return (+ x 2))))
     (f 40)
 
 <!-- !test out func and call -->
 
     var f = function (x) {
+        a(x);
         return x + 2;
     };
     f(40);
 
-* * *
-
-Loops are as you'd expect.
+While-loops work similarly.
 
 <!-- !test in while loop -->
 
     (= n 10)
-    (while (-- n) ((. console log) n))
+    (while (-- n)   ; first argument is loop conditional
+     (hello n)      ; the rest are loop-body statements
+     (hello (- n 1)))
 
 <!-- !test out while loop -->
 
     var n = 10;
     while (--n) {
-        console.log(n);
+        hello(n);
+        hello(n - 1);
     }
 
-* * *
+### Writing your own macros
+
+This is what eslisp is really for.
 
 Macros are functions that run at compile-time.  Whatever they return becomes
 part of the compiled code.  User-defined macros and pre-defined compiler ones
-are treated equivalently.  They can [`quasiquote`][22] (`` ` ``) and `unquote`
-(`,`) values into their outputs and perform arbitrary computations.  They can
-also use the methods defined in `this` to examine (`isExpr`, `isAtom`,
-`isString`) and `evaluate` their arguments.
+are treated equivalently.  You can define as literally just JavaScript
+functions that return stuff.
+
+**There's a [fuller tutorial to eslisp macros in the `doc/` directory][23].**
+This is just some representative bits.
+
+Macros can [`quasiquote`][24] (`` ` ``) and `unquote` (`,`) values into their
+outputs and perform arbitrary computations.
 
 <!-- !test in macro and call -->
 
     (macro m (function (x) (return `(+ ,x 2))))
     ((. console log) (m 40))
 
-    (macro m2 (function (x) (return `,(+ ((. this evaluate) x) 2))))
-    ((. console log) (m2 40))
-
 <!-- !test out macro and call -->
 
     console.log(40 + 2);
+
+The function is called with a `this` context containing methods handy for
+working with macro arguments, such as `this.evaluate`, which compiles and runs
+the argument and returns the result.
+
+<!-- !test in evaluate in macro -->
+
+    (macro m2 (function (x) (return `,(+ ((. this evaluate) x) 2))))
+    ((. console log) (m2 40))
+
+<!-- !test out evaluate in macro -->
+
     console.log(42);
 
-You can even return multiple statements from a macro (with the `multi`
-function, which is only defined inside macros).
+You can return multiple statements from a macro with `this.multi`.
 
 <!-- !test in multiple-return macro -->
 
@@ -159,7 +269,7 @@ compilation side-effects or conditional compilation.
     yep();
 
 If you want macros that can share state between each other, just pass an
-[immediately-invoked function expression (IIFE)][23] to `macro` and return an
+[immediately-invoked function expression (IIFE)][25] to `macro` and return an
 object.  Each property of the object is interned as a macro.  The variables in
 the IIFE closure are shared between them.
 
@@ -184,9 +294,14 @@ the IIFE closure are shared between them.
     3;
     2;
 
-* * *
+### Macros as modules
 
-Want more?  [The tests][24] are basically a language tutorial.
+The second argument to `macro` needs to evaluate to a function, but it can be
+whatever. so you can put the macro function in a separate file and do `(macro
+someName (require "./file.js"))` to use it.
+
+This means you can publish eslisp macros on [npm][26].  The name prefix `esl-`
+is recommended.
 
 ## Try it
 
@@ -195,22 +310,32 @@ eslisp to it. Receive ECMAScript.
 
     echo '((. console log) "Yo!")' | ./bin/eslc
 
-If you want `eslc` in your [`$PATH`][25], `npm install --global`.
+[The tests][27] are basically a language tutorial.
+
+If you want `eslc` in your [`$PATH`][28], `npm install --global`.
 
 To remove it cleanly, `npm uninstall --global`.
 
 ## How does it work
 
 A table of predefined macros is used to turn S-expressions into [SpiderMonkey
-AST][26], which is fed to [escodegen][27], which outputs JS.  Some of those
+AST][29], which is fed to [escodegen][30], which outputs JS.  Some of those
 macros allow defining further macros, which get added to the table and
 henceforth work just like the predefined ones do.
 
-The [brief comparison to other JS lisp-likes][28] might be interesting too.
+The [brief comparison to other JS lisp-likes][31] might be interesting too.
+
+## Bugs & contributing
+
+Create a [github issue][32], or come say hi [in gitter chat][33].  Ideas and
+questions warmly welcomed.
+
+For pull requests, I'll assume you're OK with releasing your contributions
+under the ISC license.
 
 ## License
 
-[ISC][29].
+[ISC][34].
 
 [1]: http://semver.org/
 [2]: https://travis-ci.org/anko/eslisp
@@ -232,12 +357,17 @@ The [brief comparison to other JS lisp-likes][28] might be interesting too.
 [18]: http://en.wikipedia.org/wiki/Domain-specific_language
 [19]: http://en.wikipedia.org/wiki/Anaphoric_macro
 [20]: http://c2.com/cgi/wiki?LispMacro
-[21]: http://semver.org/spec/v2.0.0.html
-[22]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
-[23]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
-[24]: https://github.com/anko/eslisp/blob/master/test.ls
-[25]: http://en.wikipedia.org/wiki/PATH_(variable)
-[26]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[27]: https://github.com/estools/escodegen
-[28]: doc/comparison-to-other-js-lisps.markdown
-[29]: http://opensource.org/licenses/ISC
+[21]: doc/comparison-to-other-js-lisps.markdown
+[22]: http://semver.org/spec/v2.0.0.html
+[23]: doc/how-macros-work.markdown
+[24]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
+[25]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
+[26]: https://www.npmjs.com/
+[27]: https://github.com/anko/eslisp/blob/master/test.ls
+[28]: http://en.wikipedia.org/wiki/PATH_(variable)
+[29]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[30]: https://github.com/estools/escodegen
+[31]: doc/comparison-to-other-js-lisps.markdown
+[32]: https://github.com/anko/eslisp/issues/new
+[33]: https://gitter.im/anko/eslisp
+[34]: http://opensource.org/licenses/ISC
