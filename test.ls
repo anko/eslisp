@@ -542,13 +542,17 @@ test "regex literal" ->
   esl '(regex ".*")'
     ..`@equals` "/.*/;"
 
+test "regex literal with flags" ->
+  esl '(regex ".*" "gm")'
+    ..`@equals` "/.*/gm;"
+
 test "regex literals are escaped" ->
   esl '(regex "/.\\"*")'
     ..`@equals` "/\\/.\"*/;"
 
 test "regex literals can be derived from atoms too" ->
-  esl '(regex .*)'
-    ..`@equals` "/.*/;"
+  esl '(regex abc.* g)'
+    ..`@equals` "/abc.*/g;"
 
 test "macro deliberately breaking hygiene for function argument anaphora" ->
   esl "(macro : (function (body)

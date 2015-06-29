@@ -474,11 +474,11 @@ root-macro-table = do
 
     \regex : ({compile}, ...args) ->
 
-      if args.length isnt 1
-        throw Error "Expected 1 argument to `regex`; got #{args.length}"
+      if args.length not in [ 1 2 ]
+        throw Error "Expected 1 or 2 arguments to `regex`; got #{args.length}"
 
       type : \Literal
-      value : new RegExp args.0.text!
+      value : new RegExp args.0.text!, args.1?text!
 
     \try : ({compile, compile-many}, ...args) ->
 
