@@ -20,6 +20,6 @@ make-explicit = (tree) ->
   | \list   => list   tree.map make-explicit
   | \atom   => atom   tree.to-string!
   | \string => string tree.to-string!
-  | null    => throw Error "Unexpected type `#that` (of `#thing`)"
+  | null    => throw Error "Unexpected type `#that` (of `#tree`)"
 
 module.exports = parse-sexpr >> make-explicit
