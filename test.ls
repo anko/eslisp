@@ -554,6 +554,10 @@ test "regex literals can be derived from atoms too" ->
   esl '(regex abc.* g)'
     ..`@equals` "/abc.*/g;"
 
+test "regex can be given atoms with escaped spaces and slashes" ->
+  esl '(regex abc\\ */ g)'
+    ..`@equals` "/abc *\\//g;"
+
 test "macro deliberately breaking hygiene for function argument anaphora" ->
   esl "(macro : (function (body)
        (return `(function (it) ,body))))

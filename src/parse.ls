@@ -1,7 +1,7 @@
 # Turns an input S-expression string into a simple tree format based on JS
 # objects.
 
-parse-sexpr = require \s-expression
+parse-sexpr = require \sexpr-plus .parse
 { list, atom, string } = require \./ast
 
 # This serves as an adapter from the s-expression module's way of returning
