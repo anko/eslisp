@@ -29,6 +29,22 @@ test "plain somewhat number-looking variable" ->
   esl "3asd5"
     ..`@equals` "3asd5;"
 
+test "plain string literal" ->
+  esl '"ok then"'
+    ..`@equals` "'ok then';"
+
+test "string literal escaping" ->
+  esl '"\\"ok\\" then"'
+    ..`@equals` "'\"ok\" then';"
+
+test "string literal newline" ->
+  esl '"ok\nthen"'
+    ..`@equals` "'ok\\nthen';"
+
+test "string literal newline escape" ->
+  esl '"ok\\nthen"'
+    ..`@equals` "'ok\\nthen';"
+
 test "n-ary plus" ->
   esl "(+ 3 4 5)"
     ..`@equals` "3 + (4 + 5);"
