@@ -663,15 +663,17 @@ test "compiler types are converted to JS ones when passed to macros" ->
                 (type (. arguments 0))
                 (type (. arguments 1))
                 (type (. arguments 2))
-                (type (. arguments 3))))))
-      (check-these 1 a "a" ())
+                (type (. arguments 3))
+                (type (. arguments 4))))))
+      (check-these 1 -1 a "a" ())
       '''
   r.split "\n"
-    ..length `@equals` 4
+    ..length `@equals` 5
     ..0 `@equals` "'Number';"
-    ..1 `@equals` "'Object';"
-    ..2 `@equals` "'String';"
-    ..3 `@equals` "'Array';"
+    ..1 `@equals` "'Number';"
+    ..2 `@equals` "'Object';"
+    ..3 `@equals` "'String';"
+    ..4 `@equals` "'Array';"
 
 test "macros can be required relative to root directory" ->
 

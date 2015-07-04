@@ -32,7 +32,8 @@ class atom
     return @content-text if not it?
     @content-text := it
 
-  is-number: -> looks-like-number @content-text
+  is-number: -> (looks-like-number @content-text)
+             || (looks-like-negative-number @content-text)
 
   as-sm : ->
     if @is-number!
