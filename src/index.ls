@@ -1,6 +1,6 @@
-parse     = require \./parse
-translate = require \./translate
-compile   = (require \escodegen).generate _
+string-to-ast = require \./parse
+ast-to-estree = require \./translate
+estree-to-js  = (require \escodegen).generate _
 
 module.exports = (input) ->
   input .= to-string!
@@ -9,6 +9,6 @@ module.exports = (input) ->
   if input.match /^(#!.*\n)/ then input .= slice that.1.length
 
   "(#input\n)" # Implicit list of everything (trailing \n terminates comments)
-  |> parse
-  |> translate
-  |> compile
+  |> string-to-ast
+  |> ast-to-estree
+  |> estree-to-js
