@@ -1,4 +1,3 @@
-concat    = require \concat-stream
 parse     = require \./parse
 translate = require \./translate
 compile   = (require \escodegen).generate _

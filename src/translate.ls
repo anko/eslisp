@@ -1,9 +1,6 @@
-{ map, zip, concat-map } = require \prelude-ls
-{ atom, list, string } = require \./ast
-{ is-expression } = require \esutils .ast
-{ import-macro, import-capmacro, multiple-statements } = require \./import-macro
+{ concat-map }   = require \prelude-ls
 root-macro-table = require \./built-in-macros
-statementify = require \./es-statementify
+statementify     = require \./es-statementify
 
 module.exports = (ast) ->
 
