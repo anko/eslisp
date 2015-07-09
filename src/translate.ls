@@ -145,6 +145,14 @@ root-macro-table = do
 
     import-capmacro root-env, name, func
 
+  flatten-macro-table = (table) ->
+    table
+    |> unfoldr -> [ it, it.parent ] if it # get chain of nested macro tables
+    |> map (.contents)                    # get their contents
+    |> reverse                            # they're backwards, so reverse
+    |> fold (<<<), {}                     # import each from oldest to newest
+    |> -> parent : null contents : it     # wrap as expected
+
   import-capmacro = (env, name, func) ->
 
     #console.log "importing macro #name"
@@ -158,12 +166,7 @@ root-macro-table = do
     # not affect this macro's behaviour, so we have to hold on to a copy of the
     # environment as it was when we defined this.
 
-    flattened-macro-table = env.macro-table
-      |> unfoldr -> [ it, it.parent ] if it # get chain of nested macro tables
-      |> map (.contents)                    # get their contents
-      |> reverse                            # they're backwards, so reverse
-      |> fold (<<<), {}                     # import each from oldest to newest
-      |> -> parent : null contents : it     # wrap as expected
+    flattened-macro-table = flatten-macro-table env.macro-table
 
     # Emulate the usual compile functions, but using the flattened macro table
     # from this environment.
