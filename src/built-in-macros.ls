@@ -1,12 +1,7 @@
 { map, zip, concat-map } = require \prelude-ls
 { atom, list, string } = require \./ast
 { is-expression } = require \esutils .ast
-
-statementify = (es-ast-node) ->
-  if es-ast-node |> is-expression
-    type : \ExpressionStatement expression : es-ast-node
-  else es-ast-node
-
+statementify = require \./es-statementify
 { import-macro, import-capmacro, multiple-statements } = require \./import-macro
 
 chained-binary-expr = (type, operator) ->

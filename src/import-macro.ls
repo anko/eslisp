@@ -7,10 +7,7 @@ uuid = require \uuid .v4
 ast-errors = require \./esvalid-partial
 { is-expression } = require \esutils .ast
 
-statementify = (es-ast-node) ->
-  if es-ast-node |> is-expression
-    type : \ExpressionStatement expression : es-ast-node
-  else es-ast-node
+statementify = require \./es-statementify
 
 # This is only used to let macros return multiple statements, in a way
 # detectable as different from other return types with an

@@ -3,11 +3,7 @@
 { is-expression } = require \esutils .ast
 { import-macro, import-capmacro, multiple-statements } = require \./import-macro
 root-macro-table = require \./built-in-macros
-
-statementify = (es-ast-node) ->
-  if es-ast-node |> is-expression
-    type : \ExpressionStatement expression : es-ast-node
-  else es-ast-node
+statementify = require \./es-statementify
 
 module.exports = (ast) ->
 
