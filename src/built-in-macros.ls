@@ -271,29 +271,13 @@ contents =
         throw Error "dot called with no arguments"
 
 
-  \function : do
-    compile-function-body = (compile-many, nodes) ->
-
-      nodes = compile-many nodes
-
-      last-node = nodes.pop!
-      # Automatically return last node if it's an expression
-      nodes.push if is-expression last-node
-        type : \ReturnStatement
-        argument : last-node
-      else last-node
-
+  \function : ({compile, compile-many}, params, ...body) ->
+    type : \FunctionExpression
+    id : null
+    params : params.contents!map compile
+    body :
       type : \BlockStatement
-      body : nodes.map statementify
-
-    func = ({compile, compile-many}, params, ...body) ->
-      type : \FunctionExpression
-      id : null
-      params : params.contents!map compile
-      body :
-        type : \BlockStatement
-        body : compile-many body .map statementify
-    func
+      body : compile-many body .map statementify
 
   \new : ({compile}, ...args) ->
     [ newTarget, ...newArgs ] = args
