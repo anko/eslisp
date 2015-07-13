@@ -507,6 +507,10 @@ test "array macro produces array expression" ->
   esl "(array 1 2 3)"
     ..`@equals` "[\n    1,\n    2,\n    3\n];"
 
+test "array macro can be empty" ->
+  esl "(array)"
+    ..`@equals` "[];"
+
 test "object macro produces object expression" ->
   esl "(object a 1 b 2)"
     ..`@equals` "({\n    a: 1,\n    b: 2\n});"
