@@ -491,6 +491,11 @@ test "macros can splice arrays into quasiquoted lists" ->
        (sumOf (1 2 3))"
     ..`@equals` "1 + (2 + 3);"
 
+test "macros can splice in empty arrays" ->
+  esl "(macro sumOf (function (xs) (return `(+ 1 2 ,@xs))))
+       (sumOf ())"
+    ..`@equals` "1 + 2;"
+
 test "quasiquote can contain nested lists" ->
   esl '''
       (macro mean
