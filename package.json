@@ -36,6 +36,7 @@
     "escodegen": "^1.4.1",
     "esutils": "^2.0.2",
     "esvalid": "1.1.0",
+    "nopt": "^3.0.3",
     "prelude-ls": "^1.1.1",
     "sexpr-plus": "^5.0.1",
     "uuid": "^2.0.1"

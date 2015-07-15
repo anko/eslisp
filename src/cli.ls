@@ -2,14 +2,7 @@ concat  = require \concat-stream
 { zip } = require \prelude-ls
 spawn   = (require \child_process).spawn
 esl     = require \./index
-require! <[ fs path ]>
-
-print-usage = ->
-  console.log do
-    "Usage: eslc [-h] [-v] [FILE]\n" +
-    "  FILE           file to read (stdin if omitted)\n" +
-    "  -v, --version  print version, exit\n" +
-    "  -h, --help     print usage, exit"
+require! <[ fs path nopt ]>
 
 print-version = ->
   try
@@ -20,22 +13,35 @@ print-version = ->
     console.error "Unknown version; error reading or parsing package.json"
     process.exit 1
 
+print-usage = ->
+  console.log do
+    "Usage: eslc [-h] [-v] [FILE]\n" +
+    "  FILE           file to read (stdin if omitted)\n" +
+    "  -v, --version  print version, exit\n" +
+    "  -h, --help     print usage, exit"
+
+options =
+  version : Boolean
+  help : Boolean
+
+option-shorthands =
+  v : \--version
+  h : \--help
+
+parsed-options = nopt do
+  options
+  option-shorthands
+  process.argv
+
 target-path = null
 
-process.argv
-  .slice 2 # chop "node scriptname"
+parsed-options.argv.remain
   .for-each ->
-    switch it
-    | \-v => fallthrough
-    | \--version => print-version! ; process.exit!
-    | \-h => fallthrough
-    | \--help => print-usage! ; process.exit!
-    | otherwise =>
-      if target-path
-        console.error "Too many arguments (expected 0 or 1 files)"
-        process.exit 2
-      else
-        target-path := it
+    if target-path
+      console.error "Too many arguments (expected 0 or 1 files)"
+      process.exit 2
+    else
+      target-path := it
 
 compile-and-show = -> console.log esl it
 
