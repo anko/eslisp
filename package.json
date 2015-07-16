@@ -27,6 +27,7 @@
   "license": "ISC",
   "devDependencies": {
     "LiveScript": "^1.3.1",
+    "rimraf": "^2.4.1",
     "tape": "^4.0.0",
     "tests-ex-markdown": "^1.0.0",
     "tmp": "0.0.26"

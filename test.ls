@@ -7,7 +7,7 @@ test = (name, test-func) ->
 esl = require \./src/index.ls
 
 { unique } = require \prelude-ls
-require! <[ tmp fs uuid ]>
+require! <[ tmp fs uuid rimraf path ]>
 
 test "nothing" ->
   esl ""
@@ -698,6 +698,38 @@ test "macros can be required relative to root directory" ->
     ..`@equals` ""
 
   fs.unlink-sync file-name
+
+test "macros can be required from node_modules relative to root directory" ->
+
+  # Create dummy temporary package
+
+  module-name = "test-#{uuid.v4!}"
+  dir = "./node_modules/#module-name"
+  fs.mkdir-sync dir
+  fd = fs.open-sync "#dir/index.js" \a+
+  fs.write-sync fd, "module.exports = function() { }"
+
+  fd = fs.open-sync "#dir/package.json" \a+
+  fs.write-sync fd, """
+  {
+    "name": "#module-name",
+    "version": "0.1.0",
+    "description": "test-generated module; safe to delete",
+    "main": "index.js",
+    "dependencies": {
+    }
+  }
+  """
+
+  # Attempt to require it and use it as a macro
+
+  esl """
+    (macro (object x (require "#module-name")))
+    (x)
+    """
+    ..`@equals` ""
+
+  e <- rimraf dir
 
 test "macros required from separate modules can access complation env" ->
 

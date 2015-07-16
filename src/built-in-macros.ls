@@ -383,7 +383,8 @@ contents =
     compile-as-macro = (es-ast) ->
       # This is deliberately defined in the closure here, so it's in scope
       # during the `eval` and available to the code being compiled.
-      let { require } = require.main
+      root-require = require.main.require.bind require.main
+      let require = root-require
         eval "(#{env.compile-to-js es-ast})"
 
     switch args.length
