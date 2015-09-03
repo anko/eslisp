@@ -22,6 +22,14 @@ chained-binary-expr = (type, operator) ->
       throw Error "binary expression macro `#operator` unexpectedly called \
                    with no arguments"
 
+  (env, ...args) ->
+    if args.length is 1
+      console.log "ERR"
+      throw Error "Chained binary expression `#operator` unexpectedly called \
+                   with 1 argument"
+    else
+      macro .apply null arguments
+
 unary-expr = (operator) ->
   ({ compile }, arg) ->
     type : \UnaryExpression

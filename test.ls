@@ -70,7 +70,7 @@ test "n-ary multiplication" ->
     ..`@equals` "1 * (2 * 3);"
 
 test "unary multiplication is invalid" ->
-  esl "(* 2)"
+  (-> esl "(* 2)")
     ..`@throws` Error
 
 test "n-ary division" ->
@@ -78,7 +78,7 @@ test "n-ary division" ->
     ..`@equals` "1 / (2 / 3);"
 
 test "unary division is invalid" ->
-  esl "(/ 2)"
+  (-> esl "(/ 2)")
     ..`@throws` Error
 
 test "n-ary modulus" ->
