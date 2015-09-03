@@ -92,7 +92,7 @@ class list
     # The import-target-macro-table argument is for the situation when a macro
     # returns another macro.  In such a case, the returned macro should be
     # added to the table that the macro that created it was in, not to the
-    # table representing the scope of the the outer macro's contents.
+    # table representing the scope of the outer macro's contents.
 
     # If that's confusing, take a few deep breaths and read it again.  Welcome
     # to the blissful land of Lisp, where everything is recursive somehow.
