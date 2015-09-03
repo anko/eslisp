@@ -859,6 +859,16 @@ test "invalid AST returned by macro throws error" ->
         '''
     Error
 
+test "macro return intermediates may be invalid if fixed by later macro" ->
+  # `...` is an invalid variable name, but since it's corrected by a later
+  # macro before evaluation, that's fine.
+  esl '''
+    (macro callDots (function () (return '(...))))
+    (macro replaceDots (function () (return 'x)))
+    (replaceDots (callDots))
+    '''
+      ..`@equals` "x;"
+
 test "multiple invocations of the compiler are separate" ->
   esl "(macro what (function () (return 'hi)))"
   esl "(what)"
