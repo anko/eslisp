@@ -815,6 +815,15 @@ test "macro-generating macro" -> # yes srsly
     '''
     ..`@equals` "hello();"
 
+test "macro generating macro and macro call" -> # yes srsly squared
+  esl '''
+    (macro define-and-call (function (x)
+      (return ((. this multi) `(macro what (function () (return `(hello))))
+                              `(what)))))
+    (define-and-call)
+    '''
+    ..`@equals` "hello();"
+
 test "macros do not capture macros from the outer env by default" ->
   # A macro's environment is ordinarily the clean root macro table; it ignores
   # user-defined macros.

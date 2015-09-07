@@ -1,7 +1,7 @@
 # This module deals with importing macros into macro tables (which are mappings
 # of names to AST-transforming functions).
 
-{ map, fold, concat-map, unfoldr, reverse } = require \prelude-ls
+{ map, fold, concat-map, unfoldr, reverse, each } = require \prelude-ls
 { atom, list, string } = require \./ast
 uuid = require \uuid .v4
 ast-errors = require \./esvalid-partial
@@ -94,8 +94,8 @@ import-macro = (env, name, func) ->
 
   root-env = ^^env
     ..macro-table = find-root env.macro-table
-    ..import-target-macro-table =
-      (env.import-target-macro-table || env.macro-table)
+    ..import-target-macro-tables =
+      (env.import-target-macro-tables || [ env.macro-table ])
 
   import-capmacro root-env, name, func
 
@@ -105,12 +105,16 @@ flatten-macro-table = (table) ->
   |> map (.contents)                    # get their contents
   |> reverse                            # they're backwards, so reverse
   |> fold (<<<), {}                     # import each from oldest to newest
-  |> -> parent : null contents : it     # wrap as expected
+  |> -> # wrap as expected
+    parent :
+      contents : {}
+      parent : null
+    contents : it
 
 import-capmacro = (env, name, func) ->
 
   #console.log "importing macro #name"
-  #console.log "into" (env.import-target-macro-table || env.macro-table).parent
+  #console.log "into" (env.import-target-macro-tables || env.macro-table).parent
 
   # The macro table of the current environment is what should be used when
   # the macro is called.  This preserves lexical scoping.
@@ -122,11 +126,26 @@ import-capmacro = (env, name, func) ->
 
   flattened-macro-table = flatten-macro-table env.macro-table
 
+  clone-array = (.slice 0)
+
   # Emulate the usual compile functions, but using the flattened macro table
   # from this environment.
   compile = ->
     if it.compile?
-      it.compile flattened-macro-table, (env.import-target-macro-table || env.macro-table)
+
+      # Use the previously stored macro scope
+      table-to-read-from = flattened-macro-table
+
+      # Import macros both into the outer scope...
+      tables-to-import-into =
+        if env.import-target-macro-tables then clone-array that
+        else [ env.macro-table ]
+
+      # ... and the current compilation's scope
+      tables-to-import-into
+        ..push flattened-macro-table
+
+      it.compile table-to-read-from, tables-to-import-into
     else it
   compile-many = -> it |> concat-map compile |> (.filter (isnt null))
 
@@ -158,8 +177,13 @@ import-capmacro = (env, name, func) ->
   # If the import target macro table is available, import the macro to that.
   # Otherwise, import it to the usual table.
 
-  (env.import-target-macro-table || env.macro-table)
-    .parent.contents[name] = compilerspace-macro
+  import-into = ->
+    it.parent.contents[name] = compilerspace-macro
+
+  if env.import-target-macro-tables
+    that |> each import-into
+  else
+    import-into env.macro-table
 
 module.exports = {
   import-macro, import-capmacro, make-multiple-statements : multiple-statements
