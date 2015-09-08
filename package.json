@@ -21,6 +21,14 @@
     "lib",
     "bin"
   ],
+  "keywords": [
+    "language",
+    "compiler",
+    "lisp",
+    "macros",
+    "s-expression",
+    "javascript"
+  ],
   "author": "Anko <an@cyan.io> (http://an.cyan.io)",
   "repository": "anko/eslisp",
   "bugs": "https://github.com/anko/eslisp/issues",
