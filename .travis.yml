@@ -4,3 +4,6 @@ node_js:
   - "0.11"
   - "iojs"
   - "iojs-v1.0.4"
+cache:
+  directories:
+    - node_modules
