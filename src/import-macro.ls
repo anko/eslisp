@@ -107,9 +107,9 @@ flatten-macro-table = (table) ->
   |> fold (<<<), {}                     # import each from oldest to newest
   |> -> # wrap as expected
     parent :
-      contents : {}
+      contents : it
       parent : null
-    contents : it
+    contents : {}
 
 import-capmacro = (env, name, func) ->
 

@@ -809,11 +809,11 @@ test "IIFE given to macro can itself contain other macros" ->
 test "macro-generating macro" -> # yes srsly
   esl '''
     (macro define-with-name (function (x)
-      (return `(macro ,x (function () (return `(hello)))))))
+      (return `(macro ,x (function () (return `(= hello 5)))))))
     (define-with-name what)
     (what)
     '''
-    ..`@equals` "hello();"
+    ..`@equals` "var hello = 5;"
 
 test "macro generating macro and macro call" -> # yes srsly squared
   esl '''
