@@ -659,6 +659,16 @@ test "macro can create atoms by returning an object with key `atom`" ->
       '''
     ..`@equals` "a.content;"
 
+test "macro returning atom with empty or null name fails" ->
+  self = this
+  <[ "" null undefined ]>.for-each ->
+    self.throws do
+      -> esl """
+          (macro mac (function () (return (object atom #it))))
+          (mac)
+          """
+      Error
+
 test "compiler types are converted to JS ones when passed to macros" ->
   r = esl '''
       (macro check-these (function ()

@@ -43,7 +43,7 @@ to-compiler-form = (ast) ->
     # Objects are expected to represent atoms
     | \Object =>
       if ast.atom then atom ("" + ast.atom)
-      else throw Error "Macro returned object without `atom` property"
+      else throw Error "Macro returned object without `atom` property, or atom property set to empty string (got #{JSON.stringify ast})"
 
     # Strings become strings as you'd expect
     | \String => string ast
