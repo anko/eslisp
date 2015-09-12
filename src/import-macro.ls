@@ -170,7 +170,9 @@ import-capmacro = (env, name, func) ->
       | otherwise
 
         errors = ast-errors sm-ast
-        throw Error errors.0 if errors
+        if errors
+          console.error "AST error at" sm-ast
+          throw Error errors.0
 
         sm-ast
 
