@@ -198,6 +198,10 @@ test "member expression" ->
   esl "(. console log)"
     ..`@equals` "console.log;"
 
+test "explicit block statement" ->
+  esl "(block a b)"
+    ..`@equals` "{\n    a;\n    b;\n}"
+
 test "call expression" ->
   esl "(f)"
     ..`@equals` "f();"

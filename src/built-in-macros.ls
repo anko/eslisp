@@ -161,6 +161,10 @@ contents =
 
     declaration
 
+  \block : ({compile, compile-many}, ...statements) ->
+    type : \BlockStatement
+    body : compile-many statements .map statementify
+
   \switch : ({compile, compile-many}, discriminant, ...cases) ->
     type : \SwitchStatement
     discriminant : compile discriminant
