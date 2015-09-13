@@ -127,8 +127,6 @@ arguments as the rest:
 
 <!-- !test in simple macros -->
 
-    ; Everything from a semicolon to the end of a line is a comment.
-
     ; The "." macro compiles to property access.
     (. a b)
     (. a b 5 c "yo")
@@ -136,7 +134,7 @@ arguments as the rest:
     ; The "+" macro compiles to addition.
     (+ 1 2)
 
-    ; ... and similarly for "-", "*", "/" and "%".
+    ; ... and similarly for "-", "*", "/" and "%" as you'd expect from JS.
 
 <!-- !test out simple macros -->
 
@@ -144,8 +142,8 @@ arguments as the rest:
     a.b[5].c['yo'];
     1 + 2;
 
-If the first element of a list isn't a macro name, it compiles to a function
-call:
+If the first element of a list isn't the name of a macro which is in scope, it
+compiles to a function call:
 
 <!-- !test in function call -->
 
@@ -159,7 +157,7 @@ call:
     a(1, 2);
     a();
 
-They can of course be nested:
+These can of course be nested:
 
 <!-- !test in nested macros -->
 
@@ -176,19 +174,15 @@ They can of course be nested:
 
 ### More complex built-in macros
 
-Some macros treat their arguments specially.  For example, the `if` macro
-expects its first argument to return a conditional expression, and its second
-and third arguments to be lists of statements that go in the consecutive and
-alternate blocks respectively.
+Conditionals are built with the `if` macro:
 
 <!-- !test in special form -->
 
-    ; The "if" macro compiles to an if-statement.
-    (if ok              ; It treats the first argument as the conditional,
-        (block          ; the second as the consequent,
-          (= x (! ok))  ;     (note that blocks must be explicit)
-          (return x))
-        (return false)) ; and the (optional) third as the alternate.
+    ; The "if" macro compiles to an if-statement
+    (if ok                  ; argument 1 becomes the conditional
+        (block (= x (! ok)) ; argument 2 the consequent
+               (return x))
+        (return false))     ; argument 3 (optional) the alternate
 
 <!-- !test out special form -->
 
@@ -198,11 +192,13 @@ alternate blocks respectively.
     } else
         return false;
 
-In most macros though, you don't have to declare the block statement explicitly like that.
+Note how the block statement (`(block ...)`) has to be made explicit.  Because
+it's so common, other macros that accept a block statement as their last
+argument have sugar for this: they just assume you meant the rest to be in a
+block.
 
-For example. the `function` macro treats its first argument as a list
-of the function's argument names, and the rest as statements in the
-function body.
+For example. the `function` macro treats its first argument as a list of the
+function's argument names, and the rest as statements in the function body.
 
 <!-- !test in func and call -->
 
