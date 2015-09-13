@@ -259,6 +259,11 @@ test "while loop with explicit body" ->
                       ((. console log) "still ok")))'
     ..`@equals` "while (--n) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
+test "while loop with explicit body that contains a block" ->
+  esl '(while (-- n) (block
+                      (block a)))'
+    ..`@equals` "while (--n) {\n    {\n        a;\n    }\n}"
+
 test "while loop with implicit body" ->
   esl '(while (-- n) ((. console log) "ok")
                      ((. console log) "still ok"))'
