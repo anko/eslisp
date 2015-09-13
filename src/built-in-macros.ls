@@ -66,6 +66,16 @@ quote = ->
   if it then it.as-sm!
   else list!as-sm! # empty list
 
+optionally-implicit-block-statement = ({compile, compile-many}, body) ->
+  switch body.length
+  | 1 =>
+    body-compiled = compile body.0
+    if body-compiled.type is \BlockStatement then return body-compiled
+    fallthrough # "else"
+  | _ =>
+    type : \BlockStatement
+    body : compile-many body .map statementify
+
 contents =
   \+ : n-ary-expr \+
   \- : n-ary-expr \-
@@ -192,50 +202,28 @@ contents =
     consequent : compile consequent
     alternate  : compile alternate
 
-  \while : ({compile, compile-many}, test, ...body) ->
+  \while : ({compile, compile-many}:env, test, ...body) ->
     type : \WhileStatement
     test : compile test
-    body : do
+    body : optionally-implicit-block-statement env, body
 
-      switch body.length
-      | 1
-        body-compiled = compile body.0
-        if body-compiled.type is \BlockStatement then body-compiled
-        else fallthrough
-      | _
-        type : \BlockStatement
-        body : compile-many body .map statementify
-
-  \dowhile : ({compile, compile-many}, test, ...body) ->
+  \dowhile : ({compile, compile-many}:env, test, ...body) ->
     type : \DoWhileStatement
     test : compile test
-    body : do
+    body : optionally-implicit-block-statement env, body
 
-      switch body.length
-      | 1
-        body-compiled = compile body.0
-        if body-compiled.type is \BlockStatement then body-compiled
-        else fallthrough
-      | _
-        type : \BlockStatement
-        body : compile-many body .map statementify
-
-  \for : ({compile, compile-many}, init, test, update, ...body) ->
+  \for : ({compile, compile-many}:env, init, test, update, ...body) ->
     type : \ForStatement
     init : compile init
     test : compile test
     update : compile update
-    body :
-      type : \BlockStatement
-      body : compile-many body .map statementify
+    body : optionally-implicit-block-statement env, body
 
-  \forin : ({compile, compile-many}, left, right, ...body) ->
+  \forin : ({compile, compile-many}:env, left, right, ...body) ->
     type : \ForInStatement
     left : compile left
     right : compile right
-    body :
-      type : \BlockStatement
-      body : compile-many body .map statementify
+    body : optionally-implicit-block-statement env, body
 
   \break : ->
     type : \BreakStatement

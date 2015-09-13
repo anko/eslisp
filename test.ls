@@ -280,9 +280,14 @@ test "do/while loop with explicit body" ->
                         ((. console log) "still ok")))'
     ..`@equals` "do {\n    console.log('ok');\n    console.log('still ok');\n} while (--n);"
 
-test "for loop" ->
+test "for loop with implicit body" ->
   esl '(for (= x 1) (< x 10) (++ x) ((. console log) "ok")
                                     ((. console log) "still ok"))'
+    ..`@equals` "for (var x = 1; x < 10; ++x) {\n    console.log('ok');\n    console.log('still ok');\n}"
+
+test "for loop with explicit body" ->
+  esl '(for (= x 1) (< x 10) (++ x) (block ((. console log) "ok")
+                                           ((. console log) "still ok")))'
     ..`@equals` "for (var x = 1; x < 10; ++x) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "for loop with no body" ->
@@ -299,8 +304,12 @@ test "for loop with null init, update and test" ->
                      ((. console log) "still ok"))'
     ..`@equals` "for (;;) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
-test "for-in loop" ->
+test "for-in loop with implicit body" ->
   esl '(forin (= x) xs ((. console log) x))'
+    ..`@equals` "for (var x in xs) {\n    console.log(x);\n}"
+
+test "for-in loop with explicit body" ->
+  esl '(forin (= x) xs (block ((. console log) x)))'
     ..`@equals` "for (var x in xs) {\n    console.log(x);\n}"
 
 test "multiple statements in program" ->
