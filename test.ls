@@ -316,9 +316,15 @@ test "multiple statements in program" ->
   esl '((. console log) "hello") ((. console log) "world")'
     ..`@equals` "console.log('hello');\nconsole.log('world');"
 
-test "multiple statements in function" ->
+test "function with implicit block body" ->
   esl '(function (x) ((. console log) "hello") \
                    ((. console log) "world"))'
+    ..`@equals` "(function (x) {\n    console.log(\'hello\');\n    console.log(\'world\');\n});"
+
+test "function with explicit block body" ->
+  esl '(function (x) (block
+                      ((. console log) "hello") \
+                      ((. console log) "world")))'
     ..`@equals` "(function (x) {\n    console.log(\'hello\');\n    console.log(\'world\');\n});"
 
 test "new statement" ->

@@ -281,13 +281,11 @@ contents =
         throw Error "dot called with no arguments"
 
 
-  \function : ({compile, compile-many}, params, ...body) ->
+  \function : ({compile, compile-many}:env, params, ...body) ->
     type : \FunctionExpression
     id : null
     params : params.contents!map compile
-    body :
-      type : \BlockStatement
-      body : compile-many body .map statementify
+    body : optionally-implicit-block-statement env, body
 
   \new : ({compile}, ...args) ->
     [ newTarget, ...newArgs ] = args
