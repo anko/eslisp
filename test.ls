@@ -253,14 +253,26 @@ test "ternary expression" ->
   esl '(?: "something" 0 1)'
     ..`@equals` "'something' ? 0 : 1;"
 
-test "while loop" ->
+test "while loop with explicit body" ->
+  esl '(while (-- n) (block
+                      ((. console log) "ok")
+                      ((. console log) "still ok")))'
+    ..`@equals` "while (--n) {\n    console.log('ok');\n    console.log('still ok');\n}"
+
+test "while loop with implicit body" ->
   esl '(while (-- n) ((. console log) "ok")
                      ((. console log) "still ok"))'
     ..`@equals` "while (--n) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
-test "do/while loop" ->
+test "do/while loop with implicit body" ->
   esl '(dowhile (-- n) ((. console log) "ok")
                      ((. console log) "still ok"))'
+    ..`@equals` "do {\n    console.log('ok');\n    console.log('still ok');\n} while (--n);"
+
+test "do/while loop with explicit body" ->
+  esl '(dowhile (-- n) (block
+                        ((. console log) "ok")
+                        ((. console log) "still ok")))'
     ..`@equals` "do {\n    console.log('ok');\n    console.log('still ok');\n} while (--n);"
 
 test "for loop" ->

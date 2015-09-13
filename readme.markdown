@@ -169,8 +169,11 @@ alternate blocks respectively.
     } else
         return false;
 
-Similarly, the `function` macro treats its first argument as a list of the
-function's argument names, and the rest as statements in the function body.
+In most macros though, you don't have to declare the block statement explicitly like that.
+
+For example. the `function` macro treats its first argument as a list
+of the function's argument names, and the rest as statements in the
+function body.
 
 <!-- !test in func and call -->
 
@@ -187,7 +190,7 @@ function's argument names, and the rest as statements in the function body.
     };
     f(40);
 
-While-loops work similarly.
+While-loops similarly.
 
 <!-- !test in while loop -->
 
@@ -197,6 +200,23 @@ While-loops work similarly.
      (hello (- n 1)))
 
 <!-- !test out while loop -->
+
+    var n = 10;
+    while (--n) {
+        hello(n);
+        hello(n - 1);
+    }
+
+You *can* use an explicit block statement there if you want to though.
+
+<!-- !test in while loop with explicit block -->
+
+    (= n 10)
+    (while (-- n)
+     (block (hello n)
+            (hello (- n 1))))
+
+<!-- !test out while loop with explicit block -->
 
     var n = 10;
     while (--n) {

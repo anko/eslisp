@@ -195,16 +195,30 @@ contents =
   \while : ({compile, compile-many}, test, ...body) ->
     type : \WhileStatement
     test : compile test
-    body :
-      type : \BlockStatement
-      body : compile-many body .map statementify
+    body : do
+
+      switch body.length
+      | 1
+        body-compiled = compile body.0
+        if body-compiled.type is \BlockStatement then body-compiled
+        else fallthrough
+      | _
+        type : \BlockStatement
+        body : compile-many body .map statementify
 
   \dowhile : ({compile, compile-many}, test, ...body) ->
     type : \DoWhileStatement
     test : compile test
-    body :
-      type : \BlockStatement
-      body : compile-many body .map statementify
+    body : do
+
+      switch body.length
+      | 1
+        body-compiled = compile body.0
+        if body-compiled.type is \BlockStatement then body-compiled
+        else fallthrough
+      | _
+        type : \BlockStatement
+        body : compile-many body .map statementify
 
   \for : ({compile, compile-many}, init, test, update, ...body) ->
     type : \ForStatement
