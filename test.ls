@@ -237,7 +237,7 @@ test "if-statement" ->
           console.log(\'yes\');
           x();
       } else
-          0
+          0;
       """
 
 test "if-statement without alternate" ->

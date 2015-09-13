@@ -191,9 +191,9 @@ contents =
   \if : ({compile, compile-many}, test, consequent, alternate) ->
     type : \IfStatement
     test       : compile test
-    consequent : compile consequent
+    consequent : statementify compile consequent
     alternate :
-      if alternate then compile that
+      if alternate then statementify compile that
       else null
 
   \?: : ({compile}, test, consequent, alternate) ->
