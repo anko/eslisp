@@ -360,6 +360,26 @@ test "try-catch (with `catch` and `finally`)" ->
       }
       """
 
+test "try-catch (with `catch` and `finally` as explicit blocks)" ->
+  esl '''
+      (try
+       ((yep) (nope))
+       (catch err (block (a err) (b err)))
+       (finally (block (x) (y))))
+      '''
+    ..`@equals` """
+      try {
+          yep();
+          nope();
+      } catch (err) {
+          a(err);
+          b(err);
+      } finally {
+          x();
+          y();
+      }
+      """
+
 test "try-catch (with `catch` and `finally` in opposite order)" ->
   esl '''
       (try

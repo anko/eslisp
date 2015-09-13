@@ -318,7 +318,7 @@ contents =
     type : \Literal
     value : new RegExp args.0.text!, args.1?text!
 
-  \try : ({compile, compile-many}, ...args) ->
+  \try : ({compile, compile-many}:env, ...args) ->
 
     block = args.shift!
     unless block instanceof list
@@ -349,16 +349,13 @@ contents =
 
         type : \catch
         pattern : compile contents-a.shift!
-        body :
-          type : \BlockStatement
-          body : compile-many contents-a .map statementify
+        body : optionally-implicit-block-statement env, contents-a
+
       | \finally
         if options.deny-finally then throw Error "Duplicate `finally` clause"
 
         type : \finally
-        body :
-          type : \BlockStatement
-          body : compile-many contents-a .map statementify
+        body : optionally-implicit-block-statement env, contents-a
 
     var catch-clause, finally-clause
     a = read-clause clause-a

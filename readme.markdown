@@ -207,7 +207,8 @@ While-loops similarly.
         hello(n - 1);
     }
 
-You *can* use an explicit block statement there if you want to though.
+You *can* use an explicit block statements (`(block ...)`) wherever implicit
+ones are allowed, if you want to.
 
 <!-- !test in while loop with explicit block -->
 
