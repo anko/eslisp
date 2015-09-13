@@ -256,14 +256,14 @@ This is what eslisp is really for.
 
 Macros are functions that run at compile-time.  Whatever they return becomes
 part of the compiled code.  User-defined macros and pre-defined compiler ones
-are treated equivalently.  You can define as literally just JavaScript
-functions that return stuff.
+are treated equivalently.
 
 **There's a [fuller tutorial to eslisp macros in the `doc/` directory][28].**
-This is just some representative bits.
+These are just some highlights.
 
-Macros can [`quasiquote`][29] (`` ` ``) and `unquote` (`,`) values into their
-outputs and perform arbitrary computations.
+Macros can use [`quasiquote`][29] (`` ` ``), `unquote` (`,`) and
+`unquote-splicing` (`,@`) to construct their outputs and to perform arbitrary
+computations.
 
 <!-- !test in macro and call -->
 
@@ -274,14 +274,14 @@ outputs and perform arbitrary computations.
 
     console.log(40 + 2);
 
-The function is called with a `this` context containing methods handy for
+The macro function is called with a `this` context containing methods handy for
 working with macro arguments, such as `this.evaluate`, which compiles and runs
 the argument and returns the result.
 
 <!-- !test in evaluate in macro -->
 
-    (macro m2 (function (x) (return `,(+ ((. this evaluate) x) 2))))
-    ((. console log) (m2 40))
+    (macro add2 (function (x) (return `,(+ ((. this evaluate) x) 2))))
+    ((. console log) (add2 40))
 
 <!-- !test out evaluate in macro -->
 
@@ -291,16 +291,17 @@ You can return multiple statements from a macro with `this.multi`.
 
 <!-- !test in multiple-return macro -->
 
-    (macro what (function (varName)
+    (macro log-and-delete (function (varName)
      (return ((. this multi)
               `((. console log) ((. JSON stringify) ,varName))
-              `(++ ,varName)))))
-    (what ever)
+              `(delete ,varName)))))
+
+    (log-and-delete someVariable)
 
 <!-- !test out multiple-return macro -->
 
-    console.log(JSON.stringify(ever));
-    ++ever;
+    console.log(JSON.stringify(someVariable));
+    delete someVariable;
 
 Returning `null` from a macro just means nothing.  This is handy for
 compilation side-effects or conditional compilation.
@@ -318,15 +319,15 @@ compilation side-effects or conditional compilation.
 
     yep();
 
-If you want macros that can share state between each other, just pass an
-[immediately-invoked function expression (IIFE)][30] to `macro` and return an
-object.  Each property of the object is interned as a macro.  The variables in
-the IIFE closure are shared between them.
+You can even make macros that share state: just pass an [immediately-invoked
+function expression (IIFE)][30] to `macro` and return an object.  Each property
+of the object will become a macro.  The variables in the IIFE closure are
+shared between them.
 
 <!-- !test in macros block -->
 
     (macro ((function ()
-            (= x 0)
+            (= x 0) ; this is visible to all of the macro functions
             (return (object increment (function () (return (++ x)))
                             decrement (function () (return (-- x)))
                             get       (function () (return x)))))))
@@ -337,18 +338,24 @@ the IIFE closure are shared between them.
 
     (decrement)
 
+    (get)
+
 <!-- !test out macros block -->
 
     1;
     2;
     3;
     2;
+    2;
 
 ### Macros as modules
 
 The second argument to `macro` needs to evaluate to a function, but it can be
-whatever. so you can put the macro function in a separate file and do `(macro
-someName (require "./file.js"))` to use it.
+whatever. so you can put the macro function in a separate file and do—
+
+    (macro someName (require "./file.js"))
+
+—to use it.
 
 This means you can publish eslisp macros on [npm][31].  The name prefix
 `eslisp-` is recommended.
