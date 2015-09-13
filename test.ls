@@ -231,18 +231,17 @@ test "switch statement" ->
                 """
 
 test "if-statement" ->
-  esl '(if (+ 1 0) (((. console log) "yes") (x)) (((. console error) "no")))'
+  esl '(if (+ 1 0) (block ((. console log) "yes") (x)) 0)'
     ..`@equals` """
       if (1 + 0) {
           console.log(\'yes\');
           x();
-      } else {
-          console.error(\'no\');
-      }
+      } else
+          0
       """
 
 test "if-statement without alternate" ->
-  esl '(if (+ 1 0) (((. console log) "yes") (x)))'
+  esl '(if (+ 1 0) (block ((. console log) "yes") (x)))'
     ..`@equals` """
       if (1 + 0) {
           console.log(\'yes\');
@@ -620,10 +619,11 @@ test "macro can ask for atom/string argument type and get text" ->
   esl '''
       (macro stringy (function (x)
        (if (. x atom)
-        ((return `,(+ "atom:" (. x atom))))
-        ((if (== (typeof x) "string")
-         ((return x))
-         ((return "An unexpected development!")))))))
+        (return `,(+ "atom:" (. x atom)))
+        (block
+         (if (== (typeof x) "string")
+          (return x)
+          (return "An unexpected development!"))))))
       (stringy a)
       (stringy "b")
       '''

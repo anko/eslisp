@@ -181,13 +181,9 @@ contents =
   \if : ({compile, compile-many}, test, consequent, alternate) ->
     type : \IfStatement
     test       : compile test
-    consequent :
-      type : \BlockStatement
-      body : compile-many consequent.contents! .map statementify
+    consequent : compile consequent
     alternate :
-      if alternate
-        type : \BlockStatement
-        body : compile-many alternate.contents! .map statementify
+      if alternate then compile that
       else null
 
   \?: : ({compile}, test, consequent, alternate) ->

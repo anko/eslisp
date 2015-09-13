@@ -155,19 +155,19 @@ alternate blocks respectively.
 <!-- !test in special form -->
 
     ; The "if" macro compiles to an if-statement.
-    (if ok                ; It treats the first argument as the conditional,
-        ((= x (! ok))     ; the second as a list of consequent statements,
-         (return x))
-        ((return false))) ; and the (optional) third as alternate statements.
+    (if ok              ; It treats the first argument as the conditional,
+        (block          ; the second as the consequent,
+          (= x (! ok))  ;     (note that blocks must be explicit)
+          (return x))
+        (return false)) ; and the (optional) third as the alternate.
 
 <!-- !test out special form -->
 
     if (ok) {
         var x = !ok;
         return x;
-    } else {
+    } else
         return false;
-    }
 
 Similarly, the `function` macro treats its first argument as a list of the
 function's argument names, and the rest as statements in the function body.
