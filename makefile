@@ -23,4 +23,4 @@ test-readme: all readme.markdown
 test-docs: all doc/how-macros-work.markdown
 	@txm doc/how-macros-work.markdown
 
-.PHONY: all clean test test-readme
+.PHONY: all clean test test-readme test-docs
