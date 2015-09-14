@@ -616,6 +616,10 @@ test "property access (dotting) chains literals" ->
   esl "(. a 1 2)"
     ..`@equals` "a[1][2];"
 
+test "property access (dotting) can be nested" ->
+  esl "(. a (. a (. b name)))"
+    ..`@equals` "a[a[b.name]];"
+
 test "property access (dotting) chains mixed literals and identifiers" ->
   esl "(. a b 2 a)"
     ..`@equals` "a.b[2].a;"

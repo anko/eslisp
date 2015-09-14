@@ -240,8 +240,6 @@ contents =
 
     is-computed-property = (ast-node) ->
       switch ast-node.type
-      | \MemberExpression =>
-        is-computed-property ast-node.object
       | \Identifier => false
       | otherwise => true
 
