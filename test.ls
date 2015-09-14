@@ -230,13 +230,23 @@ test "switch statement" ->
                 }
                 """
 
-test "if-statement" ->
-  esl '(if (+ 1 0) (block ((. console log) "yes") (x)) 0)'
+test "if-statement with blocks" ->
+  esl '(if (+ 1 0) (block ((. console log) "yes") (x)) (block 0))'
     ..`@equals` """
       if (1 + 0) {
           console.log(\'yes\');
           x();
-      } else
+      } else {
+          0;
+      }
+      """
+
+test "if-statement with expressions" ->
+  esl '(if (+ 1 0) (x) 0)'
+    ..`@equals` """
+      if (1 + 0)
+          x();
+      else
           0;
       """
 
