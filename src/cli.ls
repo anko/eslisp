@@ -16,7 +16,7 @@ print-version = ->
 print-usage = ->
   console.log do
     "Usage: eslc [-h] [-v] [FILE]\n" +
-    "  FILE           file to read (stdin if omitted)\n" +
+    "  FILE           file to read (if omitted, stdin is assumed)\n" +
     "  -v, --version  print version, exit\n" +
     "  -h, --help     print usage, exit"
 
@@ -32,6 +32,18 @@ parsed-options = nopt do
   options
   option-shorthands
   process.argv
+
+do
+  var exit-after
+
+  if parsed-options.version
+    print-version!
+    exit-after := true
+  if parsed-options.help
+    print-usage!
+    exit-after := true
+
+  if exit-after then process.exit!
 
 target-path = null
 
