@@ -122,6 +122,7 @@ contents =
   \+=   : chained-binary-expr \AssignmentExpression \+=
   \-=   : chained-binary-expr \AssignmentExpression \-=
   \*=   : chained-binary-expr \AssignmentExpression \*=
+  \/=   : chained-binary-expr \AssignmentExpression \/=
   \%=   : chained-binary-expr \AssignmentExpression \%=
   \>>=  : chained-binary-expr \AssignmentExpression \>>=
   \<<=  : chained-binary-expr \AssignmentExpression \<<=

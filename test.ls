@@ -170,9 +170,11 @@ test "function with no arguments" ->
   esl "(function () (return 1))"
     ..`@equals` "(function () {\n    return 1;\n});"
 
-test "assignment expression" -> # += and whatever are same code path
-  esl "(:= f (function (x) (return (+ x 1))))"
-    ..`@equals` "f = function (x) {\n    return x + 1;\n};"
+test "assignment expressions" ->
+  <[ += -= *= /= %=
+     &= |= ^= >>= <<= >>>= ]> .for-each ~>
+    esl "(#it x 1)"
+      ..`@equals` "x #it 1;"
 
 test "variable declaration statement" ->
   esl "(= f)"
