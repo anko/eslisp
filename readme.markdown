@@ -3,9 +3,9 @@
 An [S-expression][4] syntax for [ECMAScript][5]/JavaScript, with [Lisp-like
 hygienic macros][6] and modular syntax.
 
-This is not magic:  It's literally just an S-expression encoding of the
-[estree][7] AST format.  The macros are ordinary JS functions that return lists
-and run at compile-time, and can be put on [npm][8].
+This is not magic:  It's just an S-expression encoding of the [estree][7] AST
+format.  The macros are ordinary JS functions that return lists and run at
+compile-time, and can be put on [npm][8].
 
 > **Caution of moving floor**: Eslisp follows [semver][9] and we're still on
 > unstable (0.x.x).  Things may shift under your feet.
