@@ -319,68 +319,40 @@ contents =
 
   \try : ({compile, compile-many}:env, ...args) ->
 
-    block = args.shift!
-    unless block instanceof list
-      throw Error "Expected `try` block (first argument) to be a list"
+    is-part = (thing, clause-name) ->
+      first = thing.content.0
+      (first instanceof atom) && (first.text! is clause-name)
 
-    # The `catch`- and `finally`-clauses can come in either order
+    catch-part = null
+    finally-part = null
+    others = []
 
-    clause-a = args.shift!
-    clause-b = args.shift!
+    args.for-each ->
+      if it `is-part` \catch
+        if catch-part then throw Error "Duplicate `catch` clause"
+        catch-part := it.content.slice 1
+      else if it `is-part` \finally
+        if finally-part then throw Error "Duplicate `finally` clause"
+        finally-part := it.content.slice 1
+      else
+        others.push it
 
-    if args.length
-      throw Error "Unexpected fourth argument to `try` \
-                   (expected between 1 and 3)"
+    catch-clause = if catch-part
+      type : \CatchClause
+      param : compile catch-part.shift!
+      body : optionally-implicit-block-statement env, catch-part
+    else null
 
-    unless clause-a
-      throw Error "`try` has no catch- or finally-block \
-                   (expected either or both)"
-
-    read-clause = (clause, options={}) ->
-      return unless clause
-      contents-a = clause.contents!
-      type-a = contents-a.shift!
-      unless type-a instanceof atom and type-a.text! in <[ catch finally ]>
-        throw Error "First clause of `try` not labelled `catch` or `finally`"
-      switch type-a.text!
-      | \catch
-        if options.deny-catch then throw Error "Duplicate `catch` clause"
-
-        type : \catch
-        pattern : compile contents-a.shift!
-        body : optionally-implicit-block-statement env, contents-a
-
-      | \finally
-        if options.deny-finally then throw Error "Duplicate `finally` clause"
-
-        type : \finally
-        body : optionally-implicit-block-statement env, contents-a
-
-    var catch-clause, finally-clause
-    a = read-clause clause-a
-    switch a?type
-    | \catch   => catch-clause   := a
-    | \finally => finally-clause := a
-
-    b = read-clause clause-b, switch a.type # disallow same again
-                              | \catch   => { +deny-catch }
-                              | \finally => { +deny-finally }
-    switch b?type
-    | \catch   => catch-clause   := b
-    | \finally => finally-clause := b
+    finally-clause = if finally-part
+      optionally-implicit-block-statement env, finally-part
+    else null
 
     type : \TryStatement
     block :
       type : \BlockStatement
-      body : compile-many block.contents! .map statementify
-    handler :
-      if catch-clause
-        type  : \CatchClause
-        param : catch-clause.pattern
-        body  : catch-clause.body
-      else null
-    finalizer : if finally-clause then that.body
-                else null
+      body : compile-many others .map statementify
+    handler : catch-clause
+    finalizer : finally-clause
 
   \macro : (env, ...args) ->
 

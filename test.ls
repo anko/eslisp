@@ -353,11 +353,13 @@ test "throw statement" ->
 
 test "try-catch (with `catch` and `finally`)" ->
   esl '''
-      (try
-       ((yep) (nope))
-       (catch err
-        (a err) (b err))
-       (finally (x) (y)))
+      (try (yep)
+           (nope)
+           (catch err
+                  (a err)
+                  (b err))
+           (finally (x)
+                    (y)))
       '''
     ..`@equals` """
       try {
@@ -372,12 +374,24 @@ test "try-catch (with `catch` and `finally`)" ->
       }
       """
 
+test "try-catch (with empty body, `catch` and `finally`)" ->
+  esl '''
+      (try (catch err)
+           (finally))
+      '''
+    ..`@equals` """
+      try {
+      } catch (err) {
+      } finally {
+      }
+      """
+
 test "try-catch (with `catch` and `finally` as explicit blocks)" ->
   esl '''
-      (try
-       ((yep) (nope))
-       (catch err (block (a err) (b err)))
-       (finally (block (x) (y))))
+      (try (yep)
+           (nope)
+           (catch err (block (a err) (b err)))
+           (finally (block (x) (y))))
       '''
     ..`@equals` """
       try {
@@ -394,11 +408,10 @@ test "try-catch (with `catch` and `finally` as explicit blocks)" ->
 
 test "try-catch (with `catch` and `finally` in opposite order)" ->
   esl '''
-      (try
-       ((yep) (nope))
-       (finally (x) (y))
-       (catch err
-        (a err) (b err)))
+      (try (yep)
+           (nope)
+           (finally (x) (y))
+           (catch err (a err) (b err)))
       '''
     ..`@equals` """
       try {
@@ -415,10 +428,9 @@ test "try-catch (with `catch` and `finally` in opposite order)" ->
 
 test "try-catch (`catch`; no `finally`)" ->
   esl '''
-      (try
-       ((yep) (nope))
-       (catch err
-        (a err) (b err)))
+      (try (yep)
+           (nope)
+           (catch err (a err) (b err)))
       '''
     ..`@equals` """
       try {
@@ -432,9 +444,9 @@ test "try-catch (`catch`; no `finally`)" ->
 
 test "try-catch (`finally`; no `catch`)" ->
   esl '''
-      (try
-       ((yep) (nope))
-       (finally (x) (y)))
+      (try (yep)
+           (nope)
+           (finally (x) (y)))
       '''
     ..`@equals` """
       try {
