@@ -85,21 +85,21 @@ test "n-ary modulus" ->
   esl "(% 1 2 3)"
     ..`@equals` "1 % (2 % 3);"
 
-test "increment-after expression" ->
+test "prefix increment expression" ->
   esl "(_++ x)"
     ..`@equals` "x++;"
 
-test "increment-before expression" ->
+test "postfix incremente expression" ->
   esl "(++_ x) (++ x)"
     ..`@equals` "++x;\n++x;"
 
-test "decrement-after expression" ->
-  esl "(_-- x)"
-    ..`@equals` "x--;"
-
-test "decrement-before expression" ->
+test "prefix decrement expression" ->
   esl "(--_ x) (-- x)"
     ..`@equals` "--x;\n--x;"
+
+test "postfix decrement expression" ->
+  esl "(_-- x)"
+    ..`@equals` "x--;"
 
 test "chainable logical expressions" ->
   esl "(&& 1 2 3) (|| 1 2 3)"
