@@ -1,7 +1,7 @@
 # eslisp [![](https://img.shields.io/npm/v/eslisp.svg?style=flat-square)][1] [![](https://img.shields.io/travis/anko/eslisp.svg?style=flat-square)][2] [![](https://img.shields.io/badge/chat-gitter_%E2%86%92-blue.svg?style=flat-square)][3]
 
 An [S-expression][4] syntax for [ECMAScript][5]/JavaScript, with [Lisp-like
-hygienic macros][6] and modular syntax.
+hygienic macros][6].  Minimal core, maximally customisable.
 
 This is not magic:  It's just an S-expression encoding of the [estree][7] AST
 format.  The macros are ordinary JS functions that return lists and run at
@@ -9,9 +9,6 @@ compile-time, and can be put on [npm][8].
 
 > **Caution of moving floor**: Eslisp follows [semver][9] and we're still on
 > unstable (0.x.x).  Things may shift under your feet.
-> 
-> Until 1.0.0, patch version bumps usually imply bugfixes or new features, and
-> minor versions bumps break the API.
 
 <!-- !test program ./bin/eslc | head -c -1 -->
 
@@ -362,37 +359,48 @@ whatever. so you can put the macro function in a separate file and do—
 —to use it.
 
 This means you can publish eslisp macros on [npm][34].  The name prefix
-`eslisp-` is recommended.
+`eslisp-` is recommended.  [Some exist already.][35]
 
 ## Try it
 
-Clone this repo and `npm install` to get the compiler in `bin/eslc`.  Pipe
-eslisp to it. Receive ECMAScript.
+### Global install
 
-    echo '((. console log) "Yo!")' | ./bin/eslc
+If you want `eslc` in your [`$PATH`][36], `npm install --global eslisp`.  (You
+might need `sudo`.)  Then `eslc` program takes eslisp code as input and outputs
+JavaScript.
 
-If you want `eslc` in your [`$PATH`][35], `npm install --global`.
+    echo '((. console log) "Yo!")' | eslc
 
-To remove it cleanly, `npm uninstall --global`.
+Optionally, pipe further to `node` to run it.
+
+To remove it cleanly, `npm uninstall --global eslisp`.
+
+### Local install
+
+If you want the compiler in `node_modules/.bin/eslc`, do `npm install eslisp`.
+
+You can also use eslisp as a module: it exports a function that takes a string
+of eslisp code as input and outputs a string of JavaScript, throwing errors if
+it sees them.
 
 ## How does it work
 
 In brief:  A table of predefined macros is used to turn S-expressions into
-[SpiderMonkey AST][36], which is fed to [escodegen][37], which outputs JS.
+[SpiderMonkey AST][37], which is fed to [escodegen][38], which outputs JS.
 Some of those macros allow defining further macros, which get added to the
 table and work from then on like the predefined ones.
 
-For more, read [the source][38] and ask questions.
+For more, read [the source][39] and ask questions.
 
 ## Bugs, discussion & contributing
 
-Create a [github issue][39], or say hi [in gitter chat][40].
+Create a [github issue][40], or say hi [in gitter chat][41].
 
-I'll assume your contributions to also be under the [ISC license][41].
+I'll assume your contributions to also be under the [ISC license][42].
 
 ## License
 
-[ISC][42].
+[ISC][43].
 
 [1]: https://www.npmjs.com/package/eslisp
 [2]: https://travis-ci.org/anko/eslisp
@@ -428,11 +436,12 @@ I'll assume your contributions to also be under the [ISC license][41].
 [32]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
 [33]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
 [34]: https://www.npmjs.com/
-[35]: http://en.wikipedia.org/wiki/PATH_(variable)
-[36]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[37]: https://github.com/estools/escodegen
-[38]: src/
-[39]: https://github.com/anko/eslisp/issues/new
-[40]: https://gitter.im/anko/eslisp
-[41]: http://opensource.org/licenses/ISC
+[35]: https://www.npmjs.com/search?q=eslisp-
+[36]: http://en.wikipedia.org/wiki/PATH_(variable)
+[37]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[38]: https://github.com/estools/escodegen
+[39]: src/
+[40]: https://github.com/anko/eslisp/issues/new
+[41]: https://gitter.im/anko/eslisp
 [42]: http://opensource.org/licenses/ISC
+[43]: http://opensource.org/licenses/ISC
