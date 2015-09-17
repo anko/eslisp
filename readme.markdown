@@ -88,11 +88,15 @@ coolest thing since mint ice cream.  Do I even need to say that?
 
 Further documentation in [`doc/`][24]:
 
--   [Comparison against other JS-lisps][25]
--   [Tutorial for module packaging and distribution][26]
--   [Tutorial for macros][27]
+-   [Language basics reference][25]
+-   [Macro-writing tutorial][26]
+-   [Module packaging and distribution tutorial][27]
+-   [Comparison against other JS-lisps][28]
 
 ## Brief tutorial
+
+This is a quick overview of the core language.  See [the basics reference][29]
+or the [test suite][30] for a more complete document.
 
 ### Building blocks
 
@@ -258,10 +262,10 @@ Macros are functions that run at compile-time.  Whatever they return becomes
 part of the compiled code.  User-defined macros and pre-defined compiler ones
 are treated equivalently.
 
-**There's a [fuller tutorial to eslisp macros in the `doc/` directory][28].**
+**There's a [fuller tutorial to eslisp macros in the `doc/` directory][31].**
 These are just some highlights.
 
-Macros can use [`quasiquote`][29] (`` ` ``), `unquote` (`,`) and
+Macros can use [`quasiquote`][32] (`` ` ``), `unquote` (`,`) and
 `unquote-splicing` (`,@`) to construct their outputs and to perform arbitrary
 computations.
 
@@ -320,7 +324,7 @@ compilation side-effects or conditional compilation.
     yep();
 
 You can even make macros that share state: just pass an [immediately-invoked
-function expression (IIFE)][30] to `macro` and return an object.  Each property
+function expression (IIFE)][33] to `macro` and return an object.  Each property
 of the object will become a macro.  The variables in the IIFE closure are
 shared between them.
 
@@ -357,7 +361,7 @@ whatever. so you can put the macro function in a separate file and do—
 
 —to use it.
 
-This means you can publish eslisp macros on [npm][31].  The name prefix
+This means you can publish eslisp macros on [npm][34].  The name prefix
 `eslisp-` is recommended.
 
 ## Try it
@@ -367,30 +371,28 @@ eslisp to it. Receive ECMAScript.
 
     echo '((. console log) "Yo!")' | ./bin/eslc
 
-[The tests][32] are basically a language tutorial.
-
-If you want `eslc` in your [`$PATH`][33], `npm install --global`.
+If you want `eslc` in your [`$PATH`][35], `npm install --global`.
 
 To remove it cleanly, `npm uninstall --global`.
 
 ## How does it work
 
-A table of predefined macros is used to turn S-expressions into [SpiderMonkey
-AST][34], which is fed to [escodegen][35], which outputs JS.  Some of those
-macros allow defining further macros, which get added to the table and
-henceforth work just like the predefined ones do.
+In brief:  A table of predefined macros is used to turn S-expressions into
+[SpiderMonkey AST][36], which is fed to [escodegen][37], which outputs JS.
+Some of those macros allow defining further macros, which get added to the
+table and work from then on like the predefined ones.
 
-The [brief comparison to other JS lisp-likes][36] might be interesting too.
+For more, read [the source][38] and ask questions.
 
-## Bugs & contributing
+## Bugs, discussion & contributing
 
-Create a [github issue][37], or say hi [in gitter chat][38].
+Create a [github issue][39], or say hi [in gitter chat][40].
 
-I'll assume your contributions to also be under the [ISC license][39].
+I'll assume your contributions to also be under the [ISC license][41].
 
 ## License
 
-[ISC][40].
+[ISC][42].
 
 [1]: https://www.npmjs.com/package/eslisp
 [2]: https://travis-ci.org/anko/eslisp
@@ -416,19 +418,21 @@ I'll assume your contributions to also be under the [ISC license][39].
 [22]: http://www.catb.org/jargon/html/H/hack-value.html
 [23]: http://c2.com/cgi/wiki?LispMacro
 [24]: doc/
-[25]: doc/comparison-to-other-js-lisps.markdown
-[26]: doc/ditributing-modules.markdown
-[27]: doc/how-macros-work.markdown
-[28]: doc/how-macros-work.markdown
-[29]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
-[30]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
-[31]: https://www.npmjs.com/
-[32]: https://github.com/anko/eslisp/blob/master/test.ls
-[33]: http://en.wikipedia.org/wiki/PATH_(variable)
-[34]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[35]: https://github.com/estools/escodegen
-[36]: doc/comparison-to-other-js-lisps.markdown
-[37]: https://github.com/anko/eslisp/issues/new
-[38]: https://gitter.im/anko/eslisp
-[39]: http://opensource.org/licenses/ISC
-[40]: http://opensource.org/licenses/ISC
+[25]: doc/basics-reference.markdown
+[26]: doc/how-macros-work.markdown
+[27]: doc/ditributing-modules.markdown
+[28]: doc/comparison-to-other-js-lisps.markdown
+[29]: doc/basics-reference.markdown
+[30]: test.ls
+[31]: doc/how-macros-work.markdown
+[32]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
+[33]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
+[34]: https://www.npmjs.com/
+[35]: http://en.wikipedia.org/wiki/PATH_(variable)
+[36]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[37]: https://github.com/estools/escodegen
+[38]: src/
+[39]: https://github.com/anko/eslisp/issues/new
+[40]: https://gitter.im/anko/eslisp
+[41]: http://opensource.org/licenses/ISC
+[42]: http://opensource.org/licenses/ISC
