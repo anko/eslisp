@@ -603,6 +603,11 @@ test "object macro can be passed strings as keys too" ->
   esl '(object "a" 1 "b" 2)'
     ..`@equals` "({\n    'a': 1,\n    'b': 2\n});"
 
+test "object macro's value parts can be expressions" ->
+  esl '(object "a" (+ 1 2) "b" (f x))'
+    ..`@equals` "({\n    'a': 1 + 2,\n    'b': f(x)\n});"
+# dynamic *keys* would be ES6
+
 test "macro producing an object won't get confused for atom" ->
   esl "(macro obj (function () (return '(object a 1))))
        (obj)"
