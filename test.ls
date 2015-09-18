@@ -512,6 +512,11 @@ test "macros mask others defined before with the same name" ->
        (m)"
     ..`@equals` "console.log('hi');"
 
+test "macros can be masked in the current scope by assigning null" ->
+  esl "(macro array)
+       (array 1 2)"
+    ..`@equals` "array(1, 2);"
+
 test "macros can be defined inside function bodies" ->
   esl "(= f (function (x)
          (macro x (function () (return 5)))

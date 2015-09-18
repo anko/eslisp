@@ -370,19 +370,32 @@ contents =
 
     switch args.length
     | 1 =>
-      es-ast = env.compile args.0
+      form = args.0
+      switch
+      | form instanceof atom
 
-      result = compile-as-macro es-ast
+        # Mask any macro of that name in the current scope
 
-      switch typeof! result
-      | \Object =>
-        for k, v of result
-          import-macro env, k, v
-      | \Null => fallthrough
-      | \Undefined => # do nothing
-      | otherwise =>
-        throw Error "Invalid macro source #that (expected to get an Object, \
-                     or a name argument and a Function)"
+        import-compilerspace-macro env, form.text!, null
+
+      | otherwise
+
+        # Attempt to compile the argument, hopefully into an object,
+        # define macros from its keys
+
+        es-ast = env.compile form
+
+        result = compile-as-macro es-ast
+
+        switch typeof! result
+        | \Object =>
+          for k, v of result
+            import-macro env, k, v
+        | \Null => fallthrough
+        | \Undefined => # do nothing
+        | otherwise =>
+          throw Error "Invalid macro source #that (expected to get an Object, \
+                       or a name argument and a Function)"
     | 2 =>
       [ name, form ] = args
 
