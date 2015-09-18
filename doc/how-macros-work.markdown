@@ -123,7 +123,22 @@ your use-case to just return arrays and objects, you can always do that.
 
 ## Scope
 
-### Nesting and redefinition
+### Aliasing
+
+If you don't like the names of predefined macros, or you for any reason want to
+use a different name, you can pass two identifiers to `macro` to alias the
+second to the first.
+
+<!-- !test in macro aliasing -->
+
+    (macro plus +)
+    (plus 0 1)
+
+<!-- !test out macro aliasing -->
+
+    0 + 1;
+
+### Nesting, redefinition and masking
 
 Redefinition of a macro masks the older one.
 
@@ -152,7 +167,26 @@ list.
     });
     console.log(1);
 
-### Macros inside macros
+You can also deliberately mask a macro with *nothing*, which means that macro
+is treated as if it didn't exist.  This likewise persists only at the current
+nesting level.
+
+<!-- !test in scoped macro masking -->
+
+    (macro ninja (function () (return `stealthMode))) ; define macro
+    (if seriousBusiness                               ; in inner scope...
+        (block (macro ninja)                          ;   mask it
+               (ninja)))                              ;   function call
+    (ninja)                                           ; macro call
+
+<!-- !test out scoped macro masking -->
+
+    if (seriousBusiness) {
+        ninja();
+    }
+    stealthMode;
+
+### Using macros inside macros
 
 Macros defined with `macro` do not capture user-defined macros—they effectively
 exist in a new, independent scope.

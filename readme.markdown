@@ -263,6 +263,24 @@ are treated equivalently.
 **There's a [fuller tutorial to eslisp macros in the `doc/` directory][32].**
 These are just some highlights.
 
+You can alias macros to names you find convenient, or mask any you don't want
+to use.
+
+<!-- !test in macro aliasing -->
+
+    (macro a array)
+    (a 1)
+    (array 1)     ; The original still works though...
+
+    (macro array) ; ...unless we deliberately mask it
+    (array 1)
+
+<!-- !test out macro aliasing -->
+
+    [1];
+    [1];
+    array(1);
+
 Macros can use [`quasiquote`][33] (`` ` ``), `unquote` (`,`) and
 `unquote-splicing` (`,@`) to construct their outputs and to perform arbitrary
 computations.
