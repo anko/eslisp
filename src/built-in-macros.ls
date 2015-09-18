@@ -2,7 +2,12 @@
 { atom, list, string } = require \./ast
 { is-expression } = require \esutils .ast
 statementify = require \./es-statementify
-{ import-macro, import-capmacro, multiple-statements } = require \./import-macro
+{
+  import-macro
+  import-capmacro
+  import-compilerspace-macro
+  multiple-statements
+} = require \./import-macro
 
 chained-binary-expr = (type, operator) ->
   macro = (env, ...args) ->
@@ -381,10 +386,27 @@ contents =
     | 2 =>
       [ name, form ] = args
 
-      userspace-macro = form |> env.compile |> compile-as-macro
+      switch
+      | form instanceof atom
 
-      name .= text!
-      import-macro env, name, userspace-macro
+        name = name.text!
+        target-name = form.text!
+
+        alias-target-macro = env.find-macro do
+          env.macro-table
+          target-name
+
+        if not alias-target-macro
+          throw Error "Macro alias target `#target-name` is not defined"
+
+        import-compilerspace-macro env, name, alias-target-macro
+
+      | form instanceof list
+
+        userspace-macro = form |> env.compile |> compile-as-macro
+
+        name .= text!
+        import-macro env, name, userspace-macro
 
     | otherwise =>
       throw Error "Bad number of arguments to macro constructor \

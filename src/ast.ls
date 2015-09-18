@@ -135,6 +135,7 @@ class list
           compile-to-js
           macro-table
           import-target-macro-tables
+          find-macro
         }
 
       r = that.apply null, ([ env ] ++ rest)

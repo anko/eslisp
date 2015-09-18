@@ -175,18 +175,26 @@ import-capmacro = (env, name, func) ->
           throw Error errors.0
 
         sm-ast
+  import-compilerspace-macro env, name, compilerspace-macro
+
+# Only used directly by aliases
+import-compilerspace-macro = (env, name, func) ->
 
   # If the import target macro table is available, import the macro to that.
   # Otherwise, import it to the usual table.
 
   import-into = ->
-    it.parent.contents[name] = compilerspace-macro
+    it.parent.contents[name] = func
 
   if env.import-target-macro-tables
     that |> each import-into
   else
     import-into env.macro-table
 
+
 module.exports = {
-  import-macro, import-capmacro, make-multiple-statements : multiple-statements
+  import-macro,
+  import-capmacro,
+  import-compilerspace-macro,
+  make-multiple-statements : multiple-statements
 }

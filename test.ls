@@ -525,6 +525,11 @@ test "macros go out of scope at the end of the nesting level" ->
        (x)"
     ..`@equals` "var f = function (x) {\n    return 5;\n};\nx();"
 
+test "macro constructor given 2 atoms aliases the second to the first" ->
+  esl "(macro list array)
+       (list a 1 b 2)"
+    ..`@equals` "[\n    a,\n    1,\n    b,\n    2\n];"
+
 test "dead simple quasiquote" ->
   esl "(macro q (function () (return `(+ 2 3))))
        (q)"
