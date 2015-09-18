@@ -4,10 +4,11 @@ An [S-expression][4] syntax for [ECMAScript][5]/JavaScript, with [Lisp-like
 hygienic macros][6].  Minimal core, maximally customisable.
 
 This is not magic:  It's just an S-expression encoding of the [estree][7] AST
-format.  The macros are ordinary JS functions that return lists and run at
-compile-time, and can be put on [npm][8].
+format.  The macros are ordinary JS functions that return arrays but just exist
+at compile-time.  Macros can be put on [npm][8] to distribute your own language
+features, [like this][9].
 
-> **Caution of moving floor**: Eslisp follows [semver][9] and we're still on
+> **Caution of moving floor**: Eslisp follows [semver][10] and we're still on
 > unstable (0.x.x).  Things may shift under your feet.
 
 <!-- !test program ./bin/eslc | head -c -1 -->
@@ -45,7 +46,7 @@ compile-time, and can be put on [npm][8].
 ## Philosophy
 
 -   **Small core, close to JS**.  This core eslisp corresponds closely with the
-    [estree][10] abstract syntax tree format, and hence matches output JS
+    [estree][11] abstract syntax tree format, and hence matches output JS
     clearly.  It's purely a syntax adapter unless you use macros.
 
 -   **Maximum user control**.  Users must be able to easily extend the language
@@ -54,21 +55,21 @@ compile-time, and can be put on [npm][8].
 
     User-defined macros are treated like built-in ones, and are just ordinary
     JS functions.  This means you can write them in anything that compiles to
-    JavaScript, put them on [npm][11], and `require` them.
+    JavaScript, put them on [npm][12], and `require` them.
 
 
 ## Why?
 
-I wanted JavaScript to be [homoiconic][12] and have modular macros written in
-the same language.  I feel like this is the [adjacent possible][13] in that
-direction.  [Sweet.js][14] exists for macros, but theyre awkward to write and
-aren't JavaScript.  [Various JavaScript lisps][15] exist, but most have
+I wanted JavaScript to be [homoiconic][13] and have modular macros written in
+the same language.  I feel like this is the [adjacent possible][14] in that
+direction.  [Sweet.js][15] exists for macros, but theyre awkward to write and
+aren't JavaScript.  [Various JavaScript lisps][16] exist, but most have
 featuritis from trying too hard to be Lisp (rather than just being a JS
 syntax), and none have macros that are just JS functions.
 
-I want a language that I can adapt.  When I need [anaphoric conditionals][16],
-or [conditional compilation][17] or file content inlining (like [brfs][18]), or
-a [domain-specific language][19] for my favourite library, or something insane
+I want a language that I can adapt.  When I need [anaphoric conditionals][17],
+or [conditional compilation][18] or file content inlining (like [brfs][19]), or
+a [domain-specific language][20] for my favourite library, or something insane
 that hacks NASA and runs all my while-loops through `grep` during compilation
 for some freak reason, I want to be able to create that language feature myself
 or `require` it from npm if it exists, and hence make the language better for
@@ -77,23 +78,23 @@ that job, and for others doing it in the future.
 That's the dream anyway.
 
 S-expressions are also quite conceptually beautiful; they're just nested lists,
-minimally representing the [abstract syntax tree][20], and it's widely known
-that [they rock][21], so let's use what works.
+minimally representing the [abstract syntax tree][21], and it's widely known
+that [they rock][22], so let's use what works.
 
-This has great [hack value][22] too of course.  [Lisp macros][23] are the
+This has great [hack value][23] too of course.  [Lisp macros][24] are the
 coolest thing since mint ice cream.  Do I even need to say that?
 
-Further documentation in [`doc/`][24]:
+Further documentation in [`doc/`][25]:
 
--   [Language basics reference][25]
--   [Macro-writing tutorial][26]
--   [Module packaging and distribution tutorial][27]
--   [Comparison against other JS-lisps][28]
+-   [Language basics reference][26]
+-   [Macro-writing tutorial][27]
+-   [Module packaging and distribution tutorial][28]
+-   [Comparison against other JS-lisps][29]
 
 ## Brief tutorial
 
-This is a quick overview of the core language.  See [the basics reference][29]
-or the [test suite][30] for a more complete document.
+This is a quick overview of the core language.  See [the basics reference][30]
+or the [test suite][31] for a more complete document.
 
 ### Building blocks
 
@@ -259,10 +260,10 @@ Macros are functions that run at compile-time.  Whatever they return becomes
 part of the compiled code.  User-defined macros and pre-defined compiler ones
 are treated equivalently.
 
-**There's a [fuller tutorial to eslisp macros in the `doc/` directory][31].**
+**There's a [fuller tutorial to eslisp macros in the `doc/` directory][32].**
 These are just some highlights.
 
-Macros can use [`quasiquote`][32] (`` ` ``), `unquote` (`,`) and
+Macros can use [`quasiquote`][33] (`` ` ``), `unquote` (`,`) and
 `unquote-splicing` (`,@`) to construct their outputs and to perform arbitrary
 computations.
 
@@ -321,7 +322,7 @@ compilation side-effects or conditional compilation.
     yep();
 
 You can even make macros that share state: just pass an [immediately-invoked
-function expression (IIFE)][33] to `macro` and return an object.  Each property
+function expression (IIFE)][34] to `macro` and return an object.  Each property
 of the object will become a macro.  The variables in the IIFE closure are
 shared between them.
 
@@ -358,14 +359,14 @@ whatever. so you can put the macro function in a separate file and do—
 
 —to use it.
 
-This means you can publish eslisp macros on [npm][34].  The name prefix
-`eslisp-` is recommended.  [Some exist already.][35]
+This means you can publish eslisp macros on [npm][35].  The name prefix
+`eslisp-` is recommended.  [Some exist already.][36]
 
 ## Try it
 
 ### Global install
 
-If you want `eslc` in your [`$PATH`][36], `npm install --global eslisp`.  (You
+If you want `eslc` in your [`$PATH`][37], `npm install --global eslisp`.  (You
 might need `sudo`.)  Then `eslc` program takes eslisp code as input and outputs
 JavaScript.
 
@@ -386,21 +387,21 @@ it sees them.
 ## How does it work
 
 In brief:  A table of predefined macros is used to turn S-expressions into
-[SpiderMonkey AST][37], which is fed to [escodegen][38], which outputs JS.
+[SpiderMonkey AST][38], which is fed to [escodegen][39], which outputs JS.
 Some of those macros allow defining further macros, which get added to the
 table and work from then on like the predefined ones.
 
-For more, read [the source][39] and ask questions.
+For more, read [the source][40] and ask questions.
 
 ## Bugs, discussion & contributing
 
-Create a [github issue][40], or say hi [in gitter chat][41].
+Create a [github issue][41], or say hi [in gitter chat][42].
 
-I'll assume your contributions to also be under the [ISC license][42].
+I'll assume your contributions to also be under the [ISC license][43].
 
 ## License
 
-[ISC][43].
+[ISC][44].
 
 [1]: https://www.npmjs.com/package/eslisp
 [2]: https://travis-ci.org/anko/eslisp
@@ -410,38 +411,39 @@ I'll assume your contributions to also be under the [ISC license][42].
 [6]: http://stackoverflow.com/questions/267862/what-makes-lisp-macros-so-special
 [7]: https://github.com/estree/estree
 [8]: https://www.npmjs.com/
-[9]: http://semver.org/spec/v2.0.0.html
-[10]: https://www.npmjs.com/
+[9]: https://www.npmjs.com/search?q=eslisp-
+[10]: http://semver.org/spec/v2.0.0.html
 [11]: https://www.npmjs.com/
-[12]: http://en.wikipedia.org/wiki/Homoiconicity
-[13]: http://www.wsj.com/articles/SB10001424052748703989304575503730101860838
-[14]: http://sweetjs.org/
-[15]: doc/comparison-to-other-js-lisps.markdown
-[16]: https://en.wikipedia.org/wiki/Anaphoric_macro
-[17]: http://en.wikipedia.org/wiki/Conditional_compilation
-[18]: https://github.com/substack/brfs
-[19]: http://en.wikipedia.org/wiki/Domain-specific_language
-[20]: http://en.wikipedia.org/wiki/Abstract_syntax_tree
-[21]: http://blog.rongarret.info/2015/05/why-lisp.html
-[22]: http://www.catb.org/jargon/html/H/hack-value.html
-[23]: http://c2.com/cgi/wiki?LispMacro
-[24]: doc/
-[25]: doc/basics-reference.markdown
-[26]: doc/how-macros-work.markdown
-[27]: doc/ditributing-modules.markdown
-[28]: doc/comparison-to-other-js-lisps.markdown
-[29]: doc/basics-reference.markdown
-[30]: test.ls
-[31]: doc/how-macros-work.markdown
-[32]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
-[33]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
-[34]: https://www.npmjs.com/
-[35]: https://www.npmjs.com/search?q=eslisp-
-[36]: http://en.wikipedia.org/wiki/PATH_(variable)
-[37]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[38]: https://github.com/estools/escodegen
-[39]: src/
-[40]: https://github.com/anko/eslisp/issues/new
-[41]: https://gitter.im/anko/eslisp
-[42]: http://opensource.org/licenses/ISC
+[12]: https://www.npmjs.com/
+[13]: http://en.wikipedia.org/wiki/Homoiconicity
+[14]: http://www.wsj.com/articles/SB10001424052748703989304575503730101860838
+[15]: http://sweetjs.org/
+[16]: doc/comparison-to-other-js-lisps.markdown
+[17]: https://en.wikipedia.org/wiki/Anaphoric_macro
+[18]: http://en.wikipedia.org/wiki/Conditional_compilation
+[19]: https://github.com/substack/brfs
+[20]: http://en.wikipedia.org/wiki/Domain-specific_language
+[21]: http://en.wikipedia.org/wiki/Abstract_syntax_tree
+[22]: http://blog.rongarret.info/2015/05/why-lisp.html
+[23]: http://www.catb.org/jargon/html/H/hack-value.html
+[24]: http://c2.com/cgi/wiki?LispMacro
+[25]: doc/
+[26]: doc/basics-reference.markdown
+[27]: doc/how-macros-work.markdown
+[28]: doc/ditributing-modules.markdown
+[29]: doc/comparison-to-other-js-lisps.markdown
+[30]: doc/basics-reference.markdown
+[31]: test.ls
+[32]: doc/how-macros-work.markdown
+[33]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
+[34]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
+[35]: https://www.npmjs.com/
+[36]: https://www.npmjs.com/search?q=eslisp-
+[37]: http://en.wikipedia.org/wiki/PATH_(variable)
+[38]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[39]: https://github.com/estools/escodegen
+[40]: src/
+[41]: https://github.com/anko/eslisp/issues/new
+[42]: https://gitter.im/anko/eslisp
 [43]: http://opensource.org/licenses/ISC
+[44]: http://opensource.org/licenses/ISC
