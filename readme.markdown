@@ -8,8 +8,8 @@ format.  The macros are ordinary JS functions that return arrays but just exist
 at compile-time.  Macros can be put on [npm][8] to distribute your own language
 features, [like this][9].
 
-> **Caution of moving floor**: Eslisp follows [semver][10] and we're still on
-> unstable (0.x.x).  Things may shift under your feet.
+> :warning: **Note the 0.x.x [semver][10].**  The API may shift under your
+> feet.
 
 <!-- !test program ./bin/eslc | head -c -1 -->
 
