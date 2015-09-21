@@ -122,22 +122,7 @@ import-capmacro = (env, name, func) ->
 
 # Only used directly by aliases
 import-compilerspace-macro = (env, name, func) ->
-
-  # The func argument can also be null in order to mask the macro of the given
-  # name in this scope.  This works because the `find-macro` operation will
-  # quit when it finds a null in the macro table, returning the result that
-  # such a macro was not found.
-
-  # If the import target macro table is available, import the macro to that.
-  # Otherwise, import it to the usual table.
-
-  import-into = ->
-    it.parent.contents[name] = func
-
-  if env.import-target-macro-tables
-    that |> each import-into
-  else
-    import-into env.macro-table
+  env.import-macro name, func
 
 
 module.exports = {

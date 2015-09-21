@@ -97,4 +97,18 @@ class env
 
   find-macro : (name) ~> find-macro @macro-table, name
 
+  import-macro : (name, func) ~>
+
+    # The func argument can also be null in order to mask the macro of the
+    # given name in this scope.  This works because the `find-macro` operation
+    # will quit when it finds a null in the macro table, returning the result
+    # that such a macro was not found.
+
+    # If the import target macro table is available, import the macro to that.
+    # Otherwise, import it to the usual table.
+    if @import-target-macro-tables
+      that .for-each (.parent.contents[name] = func)
+    else
+      @macro-table.parent.contents[name] = func
+
 module.exports = env
