@@ -1,3 +1,8 @@
+# This module defines how the compilation environment object behaves.  These
+# are the ones being passed around to macros and other functions involved in
+# compilation.  Environment objects most importantly store the macro table of a
+# compilation scope.
+
 { concat-map, unfoldr, map, reverse, fold } = require \prelude-ls
 es-generate = require \escodegen .generate _
 
