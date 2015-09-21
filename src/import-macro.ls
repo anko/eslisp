@@ -72,19 +72,16 @@ macro-env = (env) ->
   # Create the functions to be exposed for use in a macro's body based on the
   # given compilation environment
 
-  evaluate = ->
+  evaluate : ->
     it |> to-compiler-form |> env.compile |> env.compile-to-js |> eval
-  multi    = (...args) -> multiple-statements args
-  gensym = ->
+  multi : (...args) -> multiple-statements args
+  gensym : ->
     if arguments.length
       throw Error "Got #that arguments to `gensym`; expected none."
     atom "$#{uuid!.replace /-/g, \_}"
     # RFC4122 v4 UUIDs are based on random bits.  Hyphens become
     # underscores to make the UUID a valid JS identifier.
-
-  is-expr = -> it |> to-compiler-form |> env.compile |> is-expression
-
-  { evaluate, multi, gensym, is-expr }
+  is-expr : -> it |> to-compiler-form |> env.compile |> is-expression
 
 import-macro = (env, name, func) ->
   root-env = env.derive-root!
