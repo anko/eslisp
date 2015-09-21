@@ -1,5 +1,4 @@
 { obj-to-lists, zip, concat-map } = require \prelude-ls
-es-generate = (require \escodegen).generate _
 
 ast-errors = require \./esvalid-partial
 
@@ -7,19 +6,6 @@ looks-like-number = (atom-text) ->
   atom-text.match /^\d+(\.\d+)?$/
 looks-like-negative-number = (atom-text) ->
   atom-text.match /^-\d+(\.\d+)?$/
-
-# Recursively search a macro table and its parents for a macro with a given
-# name.  Returns `null` if unsuccessful; a macro representing the function
-# if successful.
-find-macro = (macro-table, name) ->
-  switch macro-table.contents[name]
-  | null => null                          # deliberately masks parent; fail
-  | undefined =>                          # not defined at this level
-    if macro-table.parent
-      find-macro macro-table.parent, name # ask parent
-    else return null                      # no parent to ask; fail
-  | otherwise => that                     # defined at this level; succeed
-
 class string
   (@content-text) ~>
 
@@ -99,18 +85,7 @@ class list
   as-sm : ->
     type : \ArrayExpression elements : @content.map (.as-sm!)
 
-  compile : (parent-macro-table, import-target-macro-tables) ->
-
-    # The import-target-macro-tables argument is for the situation when a macro
-    # returns another macro.  In such a case, the returned macro should be
-    # added to the tables specified (the scope the macro that created it was
-    # in, as well as the scope of other statements during that compile) not to
-    # the table representing the scope of the outer macro's contents.
-
-    # If that's confusing, take a few deep breaths and read it again.  Welcome
-    # to the blissful land of Lisp, where everything is recursive somehow.
-
-    macro-table = contents : {}, parent : parent-macro-table
+  compile : (env) ->
 
     return null if @content.length is 0
 
@@ -118,27 +93,12 @@ class list
 
     return null unless head
 
+    local-env = env.derive!
+
     if head instanceof atom
-    and find-macro macro-table, head.text!
+    and local-env.find-macro local-env.macro-table, head.text!
 
-      env = do
-        compile = -> # compile to SpiderMonkey AST
-          if it.compile?
-            it.compile macro-table
-          else it
-        compile-many = -> it |> concat-map compile |> (.filter (isnt null))
-        compile-to-js = -> es-generate it
-
-        {
-          compile
-          compile-many
-          compile-to-js
-          macro-table
-          import-target-macro-tables
-          find-macro
-        }
-
-      r = that.apply null, ([ env ] ++ rest)
+      r = that.apply null, ([ local-env ] ++ rest)
 
       check-for-ast-errors = ->
         if ast-errors it
@@ -155,7 +115,7 @@ class list
     else
       # TODO compile-time check if callee has sensible type
       type : \CallExpression
-      callee : head.compile macro-table
-      arguments : rest.map (.compile macro-table)
+      callee : head.compile local-env
+      arguments : rest.map (.compile local-env)
 
 module.exports = { atom, string, list }

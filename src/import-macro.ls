@@ -92,7 +92,7 @@ find-root = ({parent}:macro-table) -> | parent => find-root that
 
 import-macro = (env, name, func) ->
 
-  root-env = ^^env
+  root-env = env.derive!
     ..macro-table = find-root env.macro-table
     ..import-target-macro-tables =
       (env.import-target-macro-tables || [ env.macro-table ])
@@ -133,6 +133,8 @@ import-capmacro = (env, name, func) ->
   compile = ->
     if it.compile?
 
+      local-env = env.derive!
+
       # Use the previously stored macro scope
       table-to-read-from = flattened-macro-table
 
@@ -145,7 +147,11 @@ import-capmacro = (env, name, func) ->
       tables-to-import-into
         ..push flattened-macro-table
 
-      it.compile table-to-read-from, tables-to-import-into
+      local-env
+        ..macro-table = flattened-macro-table
+        ..import-target-macro-tables = tables-to-import-into
+
+      it.compile local-env
     else it
   compile-many = -> it |> concat-map compile |> (.filter (isnt null))
 
