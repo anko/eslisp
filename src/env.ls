@@ -27,6 +27,9 @@ flatten-macro-table = (table) ->
 
 clone-array = (.slice 0)
 
+find-root = ({parent}:macro-table) -> | parent => find-root that
+                                      | _      => macro-table
+
 class env
 
   (root-table, import-target-macro-tables) ~>
@@ -87,6 +90,11 @@ class env
       ..push flattened-macro-table
 
     env table-to-read-from, tables-to-import-into
+
+  derive-root : ~>
+    root-table = find-root @macro-table
+    import-targets = (@import-target-macro-tables || [ @macro-table ])
+    env root-table, import-targets
 
   find-macro : find-macro
 

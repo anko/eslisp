@@ -87,16 +87,8 @@ macro-env = (env) ->
 
   { evaluate, multi, gensym, is-expr }
 
-find-root = ({parent}:macro-table) -> | parent => find-root that
-                                      | _      => macro-table
-
 import-macro = (env, name, func) ->
-
-  root-env = env.derive!
-    ..macro-table = find-root env.macro-table
-    ..import-target-macro-tables =
-      (env.import-target-macro-tables || [ env.macro-table ])
-
+  root-env = env.derive-root!
   import-capmacro root-env, name, func
 
 import-capmacro = (env, name, func) ->
