@@ -8,6 +8,18 @@ looks-like-number = (atom-text) ->
 looks-like-negative-number = (atom-text) ->
   atom-text.match /^-\d+(\.\d+)?$/
 
+# Recursively search a macro table and its parents for a macro with a given
+# name.  Returns `null` if unsuccessful; a macro representing the function
+# if successful.
+find-macro = (macro-table, name) ->
+  switch macro-table.contents[name]
+  | null => null                          # deliberately masks parent; fail
+  | undefined =>                          # not defined at this level
+    if macro-table.parent
+      find-macro macro-table.parent, name # ask parent
+    else return null                      # no parent to ask; fail
+  | otherwise => that                     # defined at this level; succeed
+
 class string
   (@content-text) ~>
 
@@ -99,18 +111,6 @@ class list
     # to the blissful land of Lisp, where everything is recursive somehow.
 
     macro-table = contents : {}, parent : parent-macro-table
-
-    # Recursively search a macro table and its parents for a macro with a given
-    # name.  Returns `null` if unsuccessful; a macro representing the function
-    # if successful.
-    find-macro = (macro-table, name) ->
-      switch macro-table.contents[name]
-      | null => null                          # deliberately masks parent; fail
-      | undefined =>                          # not defined at this level
-        if macro-table.parent
-          find-macro macro-table.parent, name # ask parent
-        else return null                      # no parent to ask; fail
-      | otherwise => that                     # defined at this level; succeed
 
     return null if @content.length is 0
 
