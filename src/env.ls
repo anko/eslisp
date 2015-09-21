@@ -1,4 +1,4 @@
-{ concat-map } = require \prelude-ls
+{ concat-map, unfoldr, map, reverse, fold } = require \prelude-ls
 es-generate = require \escodegen .generate _
 
 # Recursively search a macro table and its parents for a macro with a given
@@ -12,6 +12,20 @@ find-macro = (macro-table, name) ->
       find-macro macro-table.parent, name # ask parent
     else return null                      # no parent to ask; fail
   | otherwise => that                     # defined at this level; succeed
+
+flatten-macro-table = (table) ->
+  table
+  |> unfoldr -> [ it, it.parent ] if it # get chain of nested macro tables
+  |> map (.contents)                    # get their contents
+  |> reverse                            # they're backwards, so reverse
+  |> fold (<<<), {}                     # import each from oldest to newest
+  |> -> # wrap as expected
+    parent :
+      contents : it
+      parent : null
+    contents : {}
+
+clone-array = (.slice 0)
 
 class env
 
@@ -41,6 +55,33 @@ class env
   compile-to-js : -> es-generate it
 
   derive : ~> env @macro-table, @import-target-macro-tables
+
+  derive-flattened : ~>
+
+    # This method creates a derived environment with its macro table
+    # "flattened" to keep a safe local copy of the current compilation
+    # environment.  This preserves lexical scoping.
+
+    # To expand a bit more on that:  This fixes situations where a macro, which
+    # the now-defined macro uses, is redefined later.  The redefinition should
+    # not affect this macro's behaviour, so we have to hold on to a copy of the
+    # environment as it was when we defined this.
+
+    flattened-macro-table = flatten-macro-table @macro-table
+
+    # Use the previously stored macro scope
+    table-to-read-from = flattened-macro-table
+
+    # Import macros both into the outer scope...
+    tables-to-import-into =
+      if @import-target-macro-tables then clone-array that
+      else [ @macro-table ]
+
+    # ... and the current compilation's scope
+    tables-to-import-into
+      ..push flattened-macro-table
+
+    env table-to-read-from, tables-to-import-into
 
   find-macro : find-macro
 

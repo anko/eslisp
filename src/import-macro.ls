@@ -99,65 +99,10 @@ import-macro = (env, name, func) ->
 
   import-capmacro root-env, name, func
 
-flatten-macro-table = (table) ->
-  table
-  |> unfoldr -> [ it, it.parent ] if it # get chain of nested macro tables
-  |> map (.contents)                    # get their contents
-  |> reverse                            # they're backwards, so reverse
-  |> fold (<<<), {}                     # import each from oldest to newest
-  |> -> # wrap as expected
-    parent :
-      contents : it
-      parent : null
-    contents : {}
-
 import-capmacro = (env, name, func) ->
 
-  #console.log "importing macro #name"
-  #console.log "into" (env.import-target-macro-tables || env.macro-table).parent
+  env := env.derive-flattened!
 
-  # The macro table of the current environment is what should be used when
-  # the macro is called.  This preserves lexical scoping.
-
-  # To expand a bit more on that:  This fixes situations where a macro, which
-  # the now-defined macro uses, is redefined later.  The redefinition should
-  # not affect this macro's behaviour, so we have to hold on to a copy of the
-  # environment as it was when we defined this.
-
-  flattened-macro-table = flatten-macro-table env.macro-table
-
-  clone-array = (.slice 0)
-
-  # Emulate the usual compile functions, but using the flattened macro table
-  # from this environment.
-  compile = ->
-    if it.compile?
-
-      local-env = env.derive!
-
-      # Use the previously stored macro scope
-      table-to-read-from = flattened-macro-table
-
-      # Import macros both into the outer scope...
-      tables-to-import-into =
-        if env.import-target-macro-tables then clone-array that
-        else [ env.macro-table ]
-
-      # ... and the current compilation's scope
-      tables-to-import-into
-        ..push flattened-macro-table
-
-      local-env
-        ..macro-table = flattened-macro-table
-        ..import-target-macro-tables = tables-to-import-into
-
-      it.compile local-env
-    else it
-  compile-many = -> it |> concat-map compile |> (.filter (isnt null))
-
-  # Note that the first argument (normally containing the compilation
-  # environment) is ignored.  `compile` and `compile-many` inside here refer
-  # to the ones that use the flattened macro table.
   compilerspace-macro = (_, ...args) ->
     args .= map to-macro-form
     userspace-macro-result = func.apply (macro-env env), args
@@ -166,10 +111,10 @@ import-capmacro = (env, name, func) ->
 
     return switch
     | internal-ast-form is null => null
-    | typeof! internal-ast-form is \Array => compile-many internal-ast-form
+    | typeof! internal-ast-form is \Array => env.compile-many internal-ast-form
     | otherwise =>
 
-      sm-ast = compile internal-ast-form
+      sm-ast = env.compile internal-ast-form
 
       switch sm-ast
       | null => null # happens if internal-ast-form was only macros
