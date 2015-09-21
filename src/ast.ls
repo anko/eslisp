@@ -1,5 +1,3 @@
-{ obj-to-lists, zip, concat-map } = require \prelude-ls
-
 ast-errors = require \./esvalid-partial
 
 looks-like-number = (atom-text) ->
