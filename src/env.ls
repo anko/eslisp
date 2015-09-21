@@ -54,7 +54,12 @@ class env
 
   compile-to-js : -> es-generate it
 
-  derive : ~> env @macro-table, @import-target-macro-tables
+  derive : ~>
+    # Create a derived environment with this one as its parent.  This
+    # implements macro scope; macros defined in the new environment aren't
+    # visible in the outer one.
+
+    env @macro-table, @import-target-macro-tables
 
   derive-flattened : ~>
 
