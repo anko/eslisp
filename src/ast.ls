@@ -94,7 +94,7 @@ class list
     local-env = env.derive!
 
     if head instanceof atom
-    and local-env.find-macro local-env.macro-table, head.text!
+    and local-env.find-macro head.text!
 
       r = that.apply null, ([ local-env ] ++ rest)
 

@@ -37,7 +37,6 @@ class env
     @macro-table = contents : {} parent : root-table
     @root-table = root-table
 
-
     # The import-target-macro-tables argument is for the situation when a macro
     # returns another macro.  In such a case, the returned macro should be
     # added to the tables specified (the scope the macro that created it was
@@ -96,6 +95,6 @@ class env
     import-targets = (@import-target-macro-tables || [ @macro-table ])
     env root-table, import-targets
 
-  find-macro : find-macro
+  find-macro : (name) ~> find-macro @macro-table, name
 
 module.exports = env
