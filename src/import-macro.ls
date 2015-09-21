@@ -1,7 +1,6 @@
 # This module deals with importing macros into macro tables (which are mappings
 # of names to AST-transforming functions).
 
-{ map, fold, concat-map, unfoldr, reverse, each } = require \prelude-ls
 { atom, list, string } = require \./ast
 uuid = require \uuid .v4
 ast-errors = require \./esvalid-partial
