@@ -1,5 +1,6 @@
-# This module deals with importing macros into macro tables (which are mappings
-# of names to AST-transforming functions).
+# This module deals with transforming data between the form that is passed to
+# user macros and returned from them, and the internal compiler AST form used
+# otherwise.  Also, deals with inserting macros into compilation environments.
 
 { atom, list, string } = require \./ast
 uuid = require \uuid .v4
