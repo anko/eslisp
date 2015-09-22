@@ -405,9 +405,7 @@ contents =
         name = name.text!
         target-name = form.text!
 
-        alias-target-macro = env.find-macro do
-          env.macro-table
-          target-name
+        alias-target-macro = env.find-macro target-name
 
         if not alias-target-macro
           throw Error "Macro alias target `#target-name` is not defined"
