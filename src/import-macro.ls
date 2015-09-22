@@ -83,11 +83,9 @@ macro-env = (env) ->
     # underscores to make the UUID a valid JS identifier.
   is-expr : -> it |> to-compiler-form |> env.compile |> is-expression
 
-import-macro = (env, name, func) ->
-  root-env = env.derive-root!
-  import-capmacro root-env, name, func
-
-import-capmacro = (env, name, func) ->
+compilerify-macro = (env, func) ->
+  # Converts a userspace macro (which takes and returns lists and objects) into
+  # a compilerspace macro (which takes and returns compiler AST nodes).
 
   env := env.derive-flattened!
 
@@ -114,7 +112,13 @@ import-capmacro = (env, name, func) ->
           throw Error errors.0
 
         sm-ast
-  import-compilerspace-macro env, name, compilerspace-macro
+
+import-macro = (env, name, func) ->
+  root-env = env.derive-root!
+  import-capmacro root-env, name, func
+
+import-capmacro = (env, name, func) ->
+  import-compilerspace-macro env, name, compilerify-macro env, func
 
 # Only used directly by aliases
 import-compilerspace-macro = (env, name, func) ->
