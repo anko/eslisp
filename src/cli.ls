@@ -21,12 +21,14 @@ print-usage = ->
     "  -h, --help     print usage, exit"
 
 options =
-  version : Boolean
-  help : Boolean
+  version   : Boolean
+  help      : Boolean
+  transform : Array
 
 option-shorthands =
   v : \--version
   h : \--help
+  t : \--transform
 
 parsed-options = nopt do
   options
@@ -55,7 +57,11 @@ parsed-options.argv.remain
     else
       target-path := it
 
-compile-and-show = -> console.log esl it
+compiler-opts = {}
+if parsed-options.transform
+  compiler-opts.transform-macros = that .map require
+
+compile-and-show = -> console.log esl it, compiler-opts
 
 if target-path
   e, esl-code <- fs.read-file target-path, encoding : \utf8
