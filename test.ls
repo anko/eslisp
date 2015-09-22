@@ -991,3 +991,32 @@ test "multiple invocations of the compiler are separate" ->
   esl "(macro what (function () (return 'hi)))"
   esl "(what)"
     .. `@equals` "what();" # instead of "hi;"
+
+test "transform-macro can replace contents" ->
+  wrapper = -> [ { atom : \* }, { atom : 3 }, { atom : 4 } ]
+  esl "(+ 1 2)" transform-macros : [ wrapper ]
+    .. `@equals` "3 * 4;"
+
+test "transform-macro can receive arguments" ->
+  wrapper = (...args) ->
+    [ { atom : "hi" } ].concat args
+  esl "(+ 1 2) (+ 3 4)" transform-macros : [ wrapper ]
+    .. `@equals` "hi(1 + 2, 3 + 4);"
+
+test "transform-macro can multi-return" ->
+  wrapper = (...args) ->
+    @multi [ { atom : "hi" } ], [ { atom : "yo" }, 1 ]
+  esl "" transform-macros : [ wrapper ]
+    .. `@equals` "hi();\nyo(1);"
+
+test "multiple transform-macro can be used" ->
+  wrapper-passthrough = (...args) -> @multi.apply null args
+  esl "(+ 1 2)" transform-macros : [ wrapper-passthrough, wrapper-passthrough ]
+    .. `@equals` "1 + 2;"
+
+test "multiple transform-macro are applied in order" ->
+  wrap1 = (...args) -> [ { atom : \one } ].concat args
+  wrap2 = (...args) -> [ { atom : \two } ].concat args
+  wrap3 = (...args) -> [ { atom : \three } ].concat args
+  esl "zero" transform-macros : [ wrap1, wrap2, wrap3 ]
+    .. `@equals` "three(two(one(zero)));"

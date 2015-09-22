@@ -2,7 +2,8 @@ string-to-ast = require \./parse
 ast-to-estree = require \./translate
 estree-to-js  = (require \escodegen).generate _
 
-module.exports = (input) ->
+module.exports = (input, options={}) ->
+
   input .= to-string!
 
   # Ignore first line if it starts with a shebang
@@ -10,5 +11,5 @@ module.exports = (input) ->
 
   "(#input\n)" # Implicit list of everything (trailing \n terminates comments)
   |> string-to-ast
-  |> ast-to-estree
+  |> ast-to-estree _, transform-macros : options.transform-macros
   |> estree-to-js

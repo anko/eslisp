@@ -125,10 +125,22 @@ import-capmacro = (env, name, func) ->
 import-compilerspace-macro = (env, name, func) ->
   env.import-macro name, func
 
+# Only used by transform macros, which run on the initial AST
+create-transform-macro = (env, func) ->
+  (...args) ->
+    args .= map to-macro-form
+    userspace-macro-result = func.apply (macro-env env), args
+
+    compilerspace-macro-result = to-compiler-form userspace-macro-result
+
+    if compilerspace-macro-result instanceof Array
+      return compilerspace-macro-result
+    else return [ compilerspace-macro-result ]
 
 module.exports = {
   import-macro,
   import-capmacro,
   import-compilerspace-macro,
+  create-transform-macro,
   make-multiple-statements : multiple-statements
 }
