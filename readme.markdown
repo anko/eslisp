@@ -144,6 +144,8 @@ arguments as the rest:
     a.b[5].c['yo'];
     1 + 2;
 
+If the `(. a b)` syntax feels tedious, you might like the [eslisp-camelify][32] transform macro, which lets you write `a.b` instead.
+
 If the first element of a list isn't the name of a macro which is in scope, it
 compiles to a function call:
 
@@ -260,7 +262,7 @@ Macros are functions that run at compile-time.  Whatever they return becomes
 part of the compiled code.  User-defined macros and pre-defined compiler ones
 are treated equivalently.
 
-**There's a [fuller tutorial to eslisp macros in the `doc/` directory][32].**
+**There's a [fuller tutorial to eslisp macros in the `doc/` directory][33].**
 These are just some highlights.
 
 You can alias macros to names you find convenient, or mask any you don't want
@@ -281,7 +283,7 @@ to use.
     [1];
     array(1);
 
-Macros can use [`quasiquote`][33] (`` ` ``), `unquote` (`,`) and
+Macros can use [`quasiquote`][34] (`` ` ``), `unquote` (`,`) and
 `unquote-splicing` (`,@`) to construct their outputs and to perform arbitrary
 computations.
 
@@ -340,7 +342,7 @@ compilation side-effects or conditional compilation.
     yep();
 
 You can even make macros that share state: just pass an [immediately-invoked
-function expression (IIFE)][34] to `macro` and return an object.  Each property
+function expression (IIFE)][35] to `macro` and return an object.  Each property
 of the object will become a macro.  The variables in the IIFE closure are
 shared between them.
 
@@ -377,14 +379,14 @@ whatever. so you can put the macro function in a separate file and do—
 
 —to use it.
 
-This means you can publish eslisp macros on [npm][35].  The name prefix
-`eslisp-` is recommended.  [Some exist already.][36]
+This means you can publish eslisp macros on [npm][36].  The name prefix
+`eslisp-` is recommended.  [Some exist already.][37]
 
 ## Try it
 
 ### Global install
 
-If you want `eslc` in your [`$PATH`][37], `npm install --global eslisp`.  (You
+If you want `eslc` in your [`$PATH`][38], `npm install --global eslisp`.  (You
 might need `sudo`.)  Then `eslc` program takes eslisp code as input and outputs
 JavaScript.
 
@@ -405,21 +407,21 @@ it sees them.
 ## How does it work
 
 In brief:  A table of predefined macros is used to turn S-expressions into
-[SpiderMonkey AST][38], which is fed to [escodegen][39], which outputs JS.
+[SpiderMonkey AST][39], which is fed to [escodegen][40], which outputs JS.
 Some of those macros allow defining further macros, which get added to the
 table and work from then on like the predefined ones.
 
-For more, read [the source][40] and ask questions.
+For more, read [the source][41] and ask questions.
 
 ## Bugs, discussion & contributing
 
-Create a [github issue][41], or say hi [in gitter chat][42].
+Create a [github issue][42], or say hi [in gitter chat][43].
 
-I'll assume your contributions to also be under the [ISC license][43].
+I'll assume your contributions to also be under the [ISC license][44].
 
 ## License
 
-[ISC][44].
+[ISC][45].
 
 [1]: https://www.npmjs.com/package/eslisp
 [2]: https://travis-ci.org/anko/eslisp
@@ -452,16 +454,17 @@ I'll assume your contributions to also be under the [ISC license][43].
 [29]: doc/comparison-to-other-js-lisps.markdown
 [30]: doc/basics-reference.markdown
 [31]: test.ls
-[32]: doc/how-macros-work.markdown
-[33]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
-[34]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
-[35]: https://www.npmjs.com/
-[36]: https://www.npmjs.com/search?q=eslisp-
-[37]: http://en.wikipedia.org/wiki/PATH_(variable)
-[38]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[39]: https://github.com/estools/escodegen
-[40]: src/
-[41]: https://github.com/anko/eslisp/issues/new
-[42]: https://gitter.im/anko/eslisp
-[43]: http://opensource.org/licenses/ISC
+[32]: https://www.npmjs.com/package/eslisp-camelify
+[33]: doc/how-macros-work.markdown
+[34]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
+[35]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
+[36]: https://www.npmjs.com/
+[37]: https://www.npmjs.com/search?q=eslisp-
+[38]: http://en.wikipedia.org/wiki/PATH_(variable)
+[39]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[40]: https://github.com/estools/escodegen
+[41]: src/
+[42]: https://github.com/anko/eslisp/issues/new
+[43]: https://gitter.im/anko/eslisp
 [44]: http://opensource.org/licenses/ISC
+[45]: http://opensource.org/licenses/ISC

@@ -15,10 +15,13 @@ print-version = ->
 
 print-usage = ->
   console.log do
-    "Usage: eslc [-h] [-v] [FILE]\n" +
+    "Usage: eslc [-h] [-v] [-t require-path] [FILE]\n" +
     "  FILE           file to read (if omitted, stdin is assumed)\n" +
-    "  -v, --version  print version, exit\n" +
-    "  -h, --help     print usage, exit"
+    "  -v, --version    print version, exit\n" +
+    "  -h, --help       print usage, exit\n" +
+    "  -t, --transform  macro to wrap whole input in\n" +
+    "                     given path is passed to `require`\n" +
+    "                     can be specified multiple times"
 
 options =
   version   : Boolean

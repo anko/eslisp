@@ -77,8 +77,7 @@ that represents code.  Let's rewrite the previous hello-assigning macro:
         (function (name) (return `(= ,name "hello"))))
 
 That does exactly the same thing, but it contains less of the `array`/`object`
-fluff, so it's clearer to read.  The `array` constructor is replaced with a ``
-` `` (backtick).  The `=` atom no longer needs to be written explicitly as
+fluff, so it's clearer to read.  The `array` constructor is replaced with a `` ` `` (backtick).  The `=` atom no longer needs to be written explicitly as
 `(object atom =)` and there's now a `,` (comma) before `name`.
 
 In various other Lisp family languages that eslisp is inspired by, the backtick
@@ -234,6 +233,20 @@ reset the macro environment.
 
 In summary: Use `macro`, except when you know you need `capmacro`.
 
+## Transform macros
+
+If you want to wrap *a whole file* in a macro (or many macros) and do some
+radical global transformations, that's what the compiler's `--transform`/`-t`
+flag is about.
+
+Transform macros are written just like any other macro, but when specified like
+that from the command line (e.g. `eslc -t eslisp-propertify`), they're each run
+in a separate compilation environment, so they can't interfere with each other
+and don't unnecessarily stick around in the macro table.
+
+For examples of how to write them, check out [eslisp-camelify][1] or
+[eslisp-propertify][2].
+
 ## Macro helpers (stuff in `this`)
 
 When macros are called, the function associated with them is called with a
@@ -282,7 +295,7 @@ There are much subtler uses for it than that though…
 
 ### `this.gensym`
 
-Generates a new atom with a unique name (a [UUID][2], actually).  Every call to
+Generates a new atom with a unique name (a [UUID][3], actually).  Every call to
 `this.gensym` produces a unique name.
 
 Good for when you just need a unique name for some "scratch" variable that
@@ -315,8 +328,7 @@ shouldn't conflict with anything else.
     a = b;
     b = $779e98ee_d2cf_413c_b608_c0aa93722ef4;
 
-
-A lot like [Common Lisp's `gensym`][1].
+A lot like [Common Lisp's `gensym`][4].
 
 ### `this.isExpr`
 
@@ -355,5 +367,7 @@ implicitly return the last thing in their bodies if it's an expression.
         return a + b;
     });
 
-[1]: https://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node110.html
-[2]: http://en.wikipedia.org/wiki/Universally_unique_identifier
+[1]: https://github.com/anko/eslisp-camelify
+[2]: https://github.com/anko/eslisp-propertify
+[3]: http://en.wikipedia.org/wiki/Universally_unique_identifier
+[4]: https://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node110.html

@@ -4,6 +4,17 @@ This page explains how to read eslisp code and what all the built-in macros do.
 If you're particularly interested in how macros work, see [the macro
 tutorial][1].
 
+## The compiler
+
+The eslisp package comes with a compiler program `eslc`, which reads eslisp
+code on stdin and emits corresponding JavaScript on stdout.
+
+The only particularly interesting flag you can give it is `--transform`/`-t`,
+which specifies a [*transform macro*][2] for changing something about the
+entire program.  Examples include supporting dash-separated variables
+([eslisp-camelify][3]) or shorthand property access ([eslisp-propertify][4]).
+These are just for sugar; you can use them if you want.
+
 ## Syntax
 
 Eslisp code consists of **S-expressions**.  These are **lists** that may
@@ -45,7 +56,7 @@ Whitespace is ignored outside of strings, so these 3 programs are equivalent:
     (these mean (the
                  same) thing)
 
-This means you can indent your code as you wish.  There are [conventions][2]
+This means you can indent your code as you wish.  There are [conventions][5]
 that other languages using S-expression syntax use, which may make it easier
 for others to read your code.  This tutorial will stick to those conventions.
 
@@ -187,7 +198,7 @@ Variable declaration in eslisp uses the `=` macro, and assignment is `:=`.
     var y = 1;
     y = 2;
 
-The other [assignment operators][3] are the same as in JS.
+The other [assignment operators][6] are the same as in JS.
 
 <!-- !test in shorthand assignment -->
 
@@ -250,7 +261,7 @@ Property access uses the `.` macro.
     a[1]['b'].c;
 
 If you wish you could just write those as `a.b.c` in eslisp code, use the
-[*eslisp-propertify*][4] user-macro.
+[*eslisp-propertify*][7] user-macro.
 
 For *computed* property access, use the `get` macro.
 
@@ -468,14 +479,17 @@ appear at any position.  At the end is probably most readable.
 
 If you can think of any better way to write any of the above, or wish you could
 write something in a way that you can't in core eslisp, check out [how macros
-work][5] to learn how to introduce your own.
+work][8] to learn how to introduce your own.
 
 Even if you don't care about writing your own language features, you might like
 to look into what user macros already exist, and if some of them might be
 useful to you.
 
 [1]: how-macros-work.markdown
-[2]: http://dept-info.labri.fr/~strandh/Teaching/PFS/Common/Strandh-Tutorial/indentation.html
-[3]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Assignment_Operators
-[4]: https://github.com/anko/eslisp-propertify
-[5]: how-macros-work.markdown
+[2]: https://github.com/anko/eslisp/blob/master/doc/how-macros-work.markdown#transform-macros
+[3]: https://www.npmjs.com/package/eslisp-camelify
+[4]: https://www.npmjs.com/package/eslisp-propertify
+[5]: http://dept-info.labri.fr/~strandh/Teaching/PFS/Common/Strandh-Tutorial/indentation.html
+[6]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Assignment_Operators
+[7]: https://github.com/anko/eslisp-propertify
+[8]: how-macros-work.markdown
