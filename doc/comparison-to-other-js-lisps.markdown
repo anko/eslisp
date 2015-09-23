@@ -35,15 +35,16 @@ Currently not actively maintained.
 
 [**ClojureScript**][8] is a heavy approach; a full [Clojure][9] compiler
 targeting JavaScript.  Unlike eslisp, it requires the [JVM][10] and totally
-overrides JS' semantics.
+overrides JS' semantics.  (The non-JVM [self-hosted implementation][11] does
+not yet support macros at the time of writing.)
 
-[**Parenscript**][11] similarly requires a Common Lisp compiler.  It uses CL
+[**Parenscript**][12] similarly requires a Common Lisp compiler.  It uses CL
 idioms, but is implemented instead as a CL library, allowing it to make a
 little more effort than ClojureScript to produce readable JavaScript output.
 
 ## Lisp interpreters in JS
 
-[**SLip**][12], [**Javathcript**][13], [**Fargo**][14] (and many others) are
+[**SLip**][13], [**Javathcript**][14], [**Fargo**][15] (and many others) are
 interpreters; they work on internal code representations and so have limited
 interoperability with other JavaScript.
 
@@ -57,7 +58,8 @@ interoperability with other JavaScript.
 [8]: https://github.com/clojure/clojurescript
 [9]: http://clojure.org/
 [10]: http://en.wikipedia.org/wiki/Java_virtual_machine
-[11]: https://common-lisp.net/project/parenscript/
-[12]: http://lisperator.net/slip/
-[13]: http://kybernetikos.github.io/Javathcript/
-[14]: https://github.com/jcoglan/fargo
+[11]: https://github.com/swannodette/cljs-bootstrap
+[12]: https://common-lisp.net/project/parenscript/
+[13]: http://lisperator.net/slip/
+[14]: http://kybernetikos.github.io/Javathcript/
+[15]: https://github.com/jcoglan/fargo
