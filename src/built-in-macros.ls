@@ -231,12 +231,25 @@ contents =
     right : compile right
     body : optionally-implicit-block-statement env, body
 
-  \break : ->
+  \break : ({compile}, arg) ->
     type : \BreakStatement
-    label : null # TODO?
-  \continue : ->
+    label : if arg then compile arg else null
+  \continue : ({compile}, arg) ->
     type : \ContinueStatement
-    label : null # TODO?
+    label : if arg then compile arg else null
+
+  \label : ({compile}, ...args) ->
+    if args.length not in [ 1 2 ]
+      throw Error "Expected `label` macro to get 1 or 2 arguments, but got \
+                   #{args.length}"
+    [ label, body ] = args
+
+    body = if body then statementify compile body
+                   else type : \EmptyStatement
+
+    type  : \LabeledStatement
+    label : compile label
+    body  : body
 
   \return : ({compile}, arg) ->
     type : \ReturnStatement

@@ -192,6 +192,26 @@ test "break and continue statements" ->
   esl "(break) (continue)"
     ..`@equals` "break;\ncontinue;"
 
+test "break to label" ->
+  esl "(break label)"
+    ..`@equals` "break label;"
+
+test "continue to label" ->
+  esl "(continue label)"
+    ..`@equals` "continue label;"
+
+test "stand-alone label" ->
+  esl "(label x)"
+    ..`@equals` "x:;"
+
+test "labeled statement" ->
+  esl "(label foo (while (-- n)))"
+    ..`@equals` "foo:\n    while (--n) {\n    }"
+
+test "labeled expression" ->
+  esl "(label label (* x 4))"
+    ..`@equals` "label:\n    x * 4;"
+
 test "return statement" ->
   esl "(return \"hello there\")"
     ..`@equals` "return 'hello there';"
