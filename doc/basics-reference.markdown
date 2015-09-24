@@ -435,6 +435,24 @@ implicit ones are allowed, if you want to.
         hello(n - 1);
     }
 
+If you want labeled statements, use `label`.  You can `break` or `continue` to
+labels as you'd expect.
+
+<!-- !test in while loop with label -->
+
+    (label x
+           (while (-- n)
+                  (while (-- n2) (break x))))
+
+<!-- !test out while loop with label -->
+
+    x:
+        while (--n) {
+            while (--n2) {
+                break x;
+            }
+        }
+
 ### Exceptions
 
 The `throw` macro compiles to a throw-statement.
