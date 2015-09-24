@@ -188,9 +188,9 @@ Variable declaration in eslisp uses the `=` macro, and assignment is `:=`.
 
 <!-- !test in declaration and assignment -->
 
-    (= x)
-    (= y 1)
-    (:= y 2)
+    (var x)
+    (var y 1)
+    (= y 2)
 
 <!-- !test out declaration and assignment -->
 
@@ -269,7 +269,7 @@ For *computed* property access, use the `get` macro.
 
     (get a b)
     (get a b c 1)
-    (:= (get a b) 5)
+    (= (get a b) 5)
 
 <!-- !test out computed property access macro -->
 
@@ -358,8 +358,8 @@ macro compiles to a return-statement.
 
 <!-- !test in function expression -->
 
-    (= f (function (a b)
-                   (return (* 5 a b))))
+    (var f (function (a b)
+                     (return (* 5 a b))))
 
 <!-- !test out function expression -->
 
@@ -374,7 +374,7 @@ conditional and the rest to be statements in the block.
 
 <!-- !test in while loop -->
 
-    (= n 10)
+    (var n 10)
     (while (-- n)
      (hello n)
      (hello (- n 1)))
@@ -394,7 +394,7 @@ condition and update expressions, and the rest to the loop body.
 
 <!-- !test in for loop -->
 
-    (for (= x 0) (< x 10) (++ x)
+    (for (var x 0) (< x 10) (++ x)
      (hello n))
 
 <!-- !test out for loop -->
@@ -408,7 +408,7 @@ header, the second to be the right, and the rest to be body statements.
 
 <!-- !test in for-in loop -->
 
-    (forin (= x) xs
+    (forin (var x) xs
            ((. console.log) (get xs x)))
 
 <!-- !test out for-in loop -->
@@ -422,7 +422,7 @@ implicit ones are allowed, if you want to.
 
 <!-- !test in while loop with explicit block -->
 
-    (= n 10)
+    (var n 10)
     (while (-- n)
      (block (hello n)
             (hello (- n 1))))

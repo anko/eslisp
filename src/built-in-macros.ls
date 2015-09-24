@@ -123,7 +123,7 @@ contents =
   \=== : chained-binary-expr \BinaryExpression \===
   \!== : chained-binary-expr \BinaryExpression \!==
 
-  \:=   : chained-binary-expr \AssignmentExpression \=
+  \=    : chained-binary-expr \AssignmentExpression \=
   \+=   : chained-binary-expr \AssignmentExpression \+=
   \-=   : chained-binary-expr \AssignmentExpression \-=
   \*=   : chained-binary-expr \AssignmentExpression \*=
@@ -162,7 +162,7 @@ contents =
         value : compile v
         key : compile k
 
-  \= : do
+  \var : do
     declaration = ({compile}, ...args) ->
       if args.length > 2
         throw Error "Expected variable declaration to get 1 or 2 arguments, \

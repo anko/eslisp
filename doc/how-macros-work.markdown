@@ -21,7 +21,7 @@ say it just in case.  The returned array becomes a list, the returned object
 becomes an atom, the string becomes (surprise) still a string, and whatever is
 in the `name` argument is plugged in between.
 
-It's basically a template for code of the form `(= <something-goes-here>
+It's basically a template for code of the form `(var <something-goes-here>
 "hello")`.
 
 Let's save that in `declareAsHello.js` and `require` it from eslisp code
@@ -49,9 +49,9 @@ The function then runs, returning this array:
 
     [{ atom : '=' }, { atom : "yo" }, 'hello']
 
-The compiler reads the objects as atoms and the array as a list, and adds the
-result into the code at that point.  So it's as if you'd written `(= yo
-"hello)`.  That compiles to JavaScript to become
+The compiler reads the objects as atoms and the array as a list, and adds
+the result into the code at that point.  So it's as if you'd written `(var
+yo "hello)`.  That compiles to JavaScript to become
 
     var yo = 'hello';
 
@@ -59,8 +59,8 @@ Yey!
 
 We could of course have written the macro function in eslisp instead:
 
-    (:= (. module exports)
-        (function (name) (return (array (object atom "=") name "hello"))))
+    (= (. module exports)
+       (function (name) (return (array (object atom "=") name "hello"))))
 
 That compiles to the same JS before.  You can write macros in any language you
 want, as long as you can compile it to JS before `require`-ing it from eslisp.
@@ -73,12 +73,13 @@ about that next:
 To make macros clearer to read, eslisp has special syntax for returning stuff
 that represents code.  Let's rewrite the previous hello-assigning macro:
 
-    (:= (. module exports)
-        (function (name) (return `(= ,name "hello"))))
+    (= (. module exports) (function (name) (return `(= ,name "hello"))))
 
-That does exactly the same thing, but it contains less of the `array`/`object`
-fluff, so it's clearer to read.  The `array` constructor is replaced with a `` ` `` (backtick).  The `=` atom no longer needs to be written explicitly as
-`(object atom =)` and there's now a `,` (comma) before `name`.
+That does exactly the same thing, but it contains less of the
+`array`/`object` fluff, so it's clearer to read.  The `array` constructor
+is replaced with a `` ` `` (backtick).  The `=` atom no longer needs to be
+written explicitly as `(object atom =)` and there's now a `,` (comma)
+before `name`.
 
 In various other Lisp family languages that eslisp is inspired by, the backtick
 is called a *quasiquote* and the comma is called *unquote*.  There's a lot of
@@ -104,8 +105,8 @@ of some numbers, you could do
     (macro mean
      (function ()
       ; convert arguments to Array
-      (= args ((. Array prototype slice call) arguments 0))
-      (= total (. args length))
+      (var args ((. Array prototype slice call) arguments 0))
+      (var total (. args length))
       (return `(/ (+ ,@args) ,total))))
 
     (mean 1 2 3) ; call it
@@ -309,17 +310,17 @@ shouldn't conflict with anything else.
     ; Generate the assignments needed to swap the values of two variables
     (macro swap
      (function (varA varB)
-      (= swapVar ((. this gensym))) ; Generate a new symbol we can use
+      (var swapVar ((. this gensym))) ; Generate a new symbol we can use
       (return ((. this multi)
 
                ; Save a's value in the swap variable
-               `(= ,swapVar a)
+               `(var ,swapVar a)
 
                ; Assign b's value to a
-               `(:= a b)
+               `(= a b)
 
                ; Assign the swap variable's value to b
-               `(:= b ,swapVar)))))
+               `(= b ,swapVar)))))
     (swap x y)
 
 <!-- !test out gensym swap -->
@@ -343,13 +344,13 @@ implicitly return the last thing in their bodies if it's an expression.
 <!-- !test in implicit-return function -->
 
     (macro fn (function ()
-      (= args ((. Array prototype slice call) arguments))
-      (= fnArgs (. args 0))
-      (= fnBody ((. args slice) 1))
+      (var args ((. Array prototype slice call) arguments))
+      (var fnArgs (. args 0))
+      (var fnBody ((. args slice) 1))
 
-      (= lastInBody ((. fnBody pop))) ; pop off last thing in body
+      (var lastInBody ((. fnBody pop))) ; pop off last thing in body
 
-      (= lastConverted
+      (var lastConverted
        (?: ((. this isExpr) lastInBody) ; if it's an expression
            `(return ,lastInBody)        ; convert it to a return statement
            lastInBody))                 ; otherwise just return it as-is

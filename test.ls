@@ -177,11 +177,11 @@ test "assignment expressions" ->
       ..`@equals` "x #it 1;"
 
 test "variable declaration statement" ->
-  esl "(= f)"
+  esl "(var f)"
     ..`@equals` "var f;"
 
 test "variable declaration and assignment" ->
-  esl "(= f (function (x) (return (+ x 1))))"
+  esl "(var f (function (x) (return (+ x 1))))"
     ..`@equals` "var f = function (x) {\n    return x + 1;\n};"
 
 test "empty statement" ->
@@ -293,21 +293,21 @@ test "do/while loop with explicit body" ->
     ..`@equals` "do {\n    console.log('ok');\n    console.log('still ok');\n} while (--n);"
 
 test "for loop with implicit body" ->
-  esl '(for (= x 1) (< x 10) (++ x) ((. console log) "ok")
+  esl '(for (var x 1) (< x 10) (++ x) ((. console log) "ok")
                                     ((. console log) "still ok"))'
     ..`@equals` "for (var x = 1; x < 10; ++x) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "for loop with explicit body" ->
-  esl '(for (= x 1) (< x 10) (++ x) (block ((. console log) "ok")
+  esl '(for (var x 1) (< x 10) (++ x) (block ((. console log) "ok")
                                            ((. console log) "still ok")))'
     ..`@equals` "for (var x = 1; x < 10; ++x) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "for loop with no body" ->
-  esl '(for (= x 1) (< x 10) (++ x))'
+  esl '(for (var x 1) (< x 10) (++ x))'
     ..`@equals` "for (var x = 1; x < 10; ++x) {\n}"
 
 test "for loop with null update" ->
-  esl '(for (= x 1) (< x 10) () ((. console log) "ok")
+  esl '(for (var x 1) (< x 10) () ((. console log) "ok")
                                 ((. console log) "still ok"))'
     ..`@equals` "for (var x = 1; x < 10;) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
@@ -317,11 +317,11 @@ test "for loop with null init, update and test" ->
     ..`@equals` "for (;;) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "for-in loop with implicit body" ->
-  esl '(forin (= x) xs ((. console log) x))'
+  esl '(forin (var x) xs ((. console log) x))'
     ..`@equals` "for (var x in xs) {\n    console.log(x);\n}"
 
 test "for-in loop with explicit body" ->
-  esl '(forin (= x) xs (block ((. console log) x)))'
+  esl '(forin (var x) xs (block ((. console log) x)))'
     ..`@equals` "for (var x in xs) {\n    console.log(x);\n}"
 
 test "multiple statements in program" ->
@@ -518,13 +518,13 @@ test "macros can be masked in the current scope by assigning null" ->
     ..`@equals` "array(1, 2);"
 
 test "macros can be defined inside function bodies" ->
-  esl "(= f (function (x)
+  esl "(var f (function (x)
          (macro x (function () (return 5)))
          (return (x))))"
     ..`@equals` "var f = function (x) {\n    return 5;\n};"
 
 test "macros go out of scope at the end of the nesting level" ->
-  esl "(= f (function (x)
+  esl "(var f (function (x)
          (macro x (function () (return 5)))
          (return (x))))
        (x)"
@@ -556,7 +556,7 @@ test "macros can quasiquote to unquote arguments into output" ->
 
 test "macros can unquote modified arguments too" ->
   esl "(macro rand (function (upper)
-                  (= x (* 2
+                  (var x (* 2
                           ((. this evaluate) upper)))
                   (return `(* ,x ((. Math random))))))
        (rand 5)"
@@ -590,8 +590,8 @@ test "quasiquote can contain nested lists" ->
       (macro mean
        (function ()
         ; Convert arguments into array
-        (= args ((. Array prototype slice call) arguments 0))
-        (= total (. args length))
+        (var args ((. Array prototype slice call) arguments 0))
+        (var total (. args length))
         (return `(/ (+ ,@args) ,total))))
        (mean 1 2 3)
       '''
@@ -631,8 +631,8 @@ test "macro producing a function" ->
 
 test "macros can operate on their arguments variable" ->
   esl "(macro functionBackwards (function ()
-        (= body (. arguments 0))
-        (= args ((. Array prototype slice call) arguments 1))
+        (var body (. arguments 0))
+        (var args ((. Array prototype slice call) arguments 1))
         (return `(function ,@args ,body))))
        (functionBackwards (return (+ x 1)) (x))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
@@ -696,7 +696,7 @@ test "macro given nothing produces no output" ->
 test "when returned from an IIFE, macros can share state" ->
   esl """
       (macro
-       ((function () (= x 0)
+       ((function () (var x 0)
         (return (object plusPrev  (function (n)
                                   (return (+= x ((. this evaluate) n)) x))
                         timesPrev (function (n)
@@ -706,7 +706,7 @@ test "when returned from an IIFE, macros can share state" ->
    ..`@equals` "2;\n4;"
 
 test "macro can return multiple statements with `multi`" ->
-  esl "(macro declareTwo (function () (return ((. this multi) '(= x 0) '(= y 1)))))
+  esl "(macro declareTwo (function () (return ((. this multi) '(var x 0) '(var y 1)))))
        (declareTwo)"
    ..`@equals` "var x = 0;\nvar y = 1;"
 
@@ -727,7 +727,7 @@ test "macro can ask for atom/string argument type and get text" ->
 test "macro can generate symbol with unique name" ->
   code = esl '''
     (macro declare (function ()
-     (return `(= ,((. this gensym)) null))))
+     (return `(var ,((. this gensym)) null))))
     (declare)
     (declare)
     (declare)
@@ -752,7 +752,7 @@ test "macro can create atoms by returning an object with key `atom`" ->
 
   esl '''
       (macro get-content (function (x)
-       (= contentAtom (object atom "content"))
+       (var contentAtom (object atom "content"))
        (return `(. ,x ,contentAtom))))
       (get-content a)
       '''
@@ -771,7 +771,7 @@ test "macro returning atom with empty or null name fails" ->
 test "compiler types are converted to JS ones when passed to macros" ->
   r = esl '''
       (macro check-these (function ()
-       (= type
+       (var type
         (function (x)
          (return
           ((. ((. (object) toString call) x) slice)
@@ -866,13 +866,13 @@ test "macros required from separate modules can access complation env" ->
 test "macro can create implicit last-expr returning function shorthand" ->
   esl '''
     (macro fn (function ()
-     (= args ((. Array prototype slice call) arguments))
-     (= fnArgs (. args  0))
-     (= fnBody ((. args slice) 1))
+     (var args ((. Array prototype slice call) arguments))
+     (var fnArgs (. args  0))
+     (var fnBody ((. args slice) 1))
 
-     (= last ((. fnBody pop)))
+     (var last ((. fnBody pop)))
 
-     (= lastConverted
+     (var lastConverted
       (?: ((. this isExpr) last)
           `(return ,last)
           last))
@@ -882,7 +882,7 @@ test "macro can create implicit last-expr returning function shorthand" ->
      (return `(function ,fnArgs ,@fnBody))))
 
     (fn (x) (+ x 1))
-    (fn (x) (= x 1))
+    (fn (x) (var x 1))
     '''
     ..`@equals` """
       (function (x) {
@@ -918,7 +918,7 @@ test "IIFE given to macro can itself contain other macros" ->
 test "macro-generating macro" -> # yes srsly
   esl '''
     (macro define-with-name (function (x)
-      (return `(macro ,x (function () (return `(= hello 5)))))))
+      (return `(macro ,x (function () (return `(var hello 5)))))))
     (define-with-name what)
     (what)
     '''

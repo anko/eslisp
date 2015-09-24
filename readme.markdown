@@ -22,7 +22,7 @@ features, [like this][9].
                   statement
                   null))))
 
-    (= fib ; Fibonacci number sequence
+    (var fib ; Fibonacci number sequence
        (function (x)
         (debug ((. console log) (+ "resolving number " x)))
         (switch x
@@ -166,7 +166,7 @@ These can of course be nested:
 <!-- !test in nested macros -->
 
     ; The "=" macro compiles to a variable declaration.
-    (= x (+ 1 (* 2 3)))
+    (var x (+ 1 (* 2 3)))
 
     ; Calling the result of a property access expression
     ((. console log) "hi")
@@ -184,7 +184,7 @@ Conditionals are built with the `if` macro:
 
     ; The "if" macro compiles to an if-statement
     (if ok                  ; argument 1 becomes the conditional
-        (block (= x (! ok)) ; argument 2 the consequent
+        (block (var x (! ok)) ; argument 2 the consequent
                (return x))
         (return false))     ; argument 3 (optional) the alternate
 
@@ -206,7 +206,7 @@ function's argument names, and the rest as statements in the function body.
 
 <!-- !test in func and call -->
 
-    (= f (function (x)
+    (var f (function (x)
           (a x)
           (return (+ x 2))))
     (f 40)
@@ -223,7 +223,7 @@ While-loops similarly.
 
 <!-- !test in while loop -->
 
-    (= n 10)
+    (var n 10)
     (while (-- n)   ; first argument is loop conditional
      (hello n)      ; the rest are loop-body statements
      (hello (- n 1)))
@@ -241,7 +241,7 @@ ones are allowed, if you want to.
 
 <!-- !test in while loop with explicit block -->
 
-    (= n 10)
+    (var n 10)
     (while (-- n)
      (block (hello n)
             (hello (- n 1))))
@@ -349,7 +349,7 @@ shared between them.
 <!-- !test in macros block -->
 
     (macro ((function ()
-            (= x 0) ; this is visible to all of the macro functions
+            (var x 0) ; this is visible to all of the macro functions
             (return (object increment (function () (return (++ x)))
                             decrement (function () (return (-- x)))
                             get       (function () (return x)))))))
