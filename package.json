@@ -1,6 +1,6 @@
 {
   "name": "eslisp",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "minimal S-expression syntax and macro system for JavaScript",
   "main": "./lib",
   "scripts": {
