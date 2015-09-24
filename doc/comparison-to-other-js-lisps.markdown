@@ -15,7 +15,7 @@ unlike eslisp, it accepts extensive syntactic sugar and its macros (though
 featureful) are cumbersome to write.
 
 [**LispyScript**][3] adds syntactic sugar quite aggressively.  Its "macros"
-are really just subsitution templates: they can't do computation, which allows
+are really just substitution templates: they can't do computation, which allows
 only extremely simple uses.
 
 ## Subsets of other lisps in JS
