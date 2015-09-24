@@ -244,20 +244,49 @@ contents =
 
   \. : do
 
-    is-computed-property = (ast-node) ->
-      switch ast-node.type
-      | \Identifier => false
-      | otherwise => true
+    # Terminology:
+    #
+    #  - a _computed_ member expression involves square brackets, like `a[b]`.
+    #  - a _non-computed_ member expression involves a dot like `a.b`.
+
+    # Assumptions:
+    #
+    # - The estree spec requires a non-computed member expression's property to
+    #   be an Identifer node.
+    # - There's no reason we'd ever want to write `a["b"]`, as that is
+    #   completely equivalent to `a.b` and easier to read.
+
+    make-member-expression = ({compile}:env, object, property) ->
+
+      var computed
+      var property-compiled
+
+      # Compile the property to an estree node, so we can decide what to do
+      # with it
+      property-as-estree = compile property
+
+      # Ensure that a string literal is converted to an identifer and compiled
+      # into a non-computed member expression
+      if property-as-estree.type is \Literal
+      and typeof property-as-estree.value is \string
+        computed := false
+        property-compiled := type : \Identifier name : property-as-estree.value
+      else # And everything else to a computed member expression
+        computed := true
+        property-compiled := property-as-estree
+
+      type : \MemberExpression
+      computed : computed
+      object   : compile object
+      property : property-compiled
 
     dot = ({compile}:env, ...args) ->
       | args.length is 1 => compile args.0
-      | args.length is 2
-        property-compiled = compile args.1
-        type : \MemberExpression
-        computed : is-computed-property property-compiled
-        object   : compile args.0
-        property : property-compiled
+      | args.length is 2 => make-member-expression env, args.0, args.1
       | arguments.length > 2
+        # With still more arguments, recurse such that we get a "linked list"
+        # of member expressions, where each is the object of the next.
+
         [ ...initial, last ] = args
         dot do
           env
@@ -265,25 +294,6 @@ contents =
           dot env, compile last
       | otherwise =>
         throw Error "dot called with no arguments"
-
-  \get : do
-    get = ({compile}:env, ...args) ->
-      | args.length is 1 => compile args.0
-      | args.length is 2
-        property-compiled = compile args.1
-        type : \MemberExpression
-        computed : true # `get` is always computed
-        object   : compile args.0
-        property : property-compiled
-      | arguments.length > 2
-        [ ...initial, last ] = args
-        get do
-          env
-          get.apply null ([ env ] ++ initial)
-          get env, compile last
-      | otherwise =>
-        throw Error "dot called with no arguments"
-
 
   \function : ({compile, compile-many}:env, params, ...body) ->
     type : \FunctionExpression
