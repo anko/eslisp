@@ -184,7 +184,7 @@ names.
 
 ### Variable declaration and assignment
 
-Variable declaration in eslisp uses the `=` macro, and assignment is `:=`.
+Variable declaration in eslisp uses the `var` macro, and assignment is `=`.
 
 <!-- !test in declaration and assignment -->
 
