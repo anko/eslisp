@@ -641,6 +641,10 @@ test "dot chains strings as non-computed members" ->
   esl '(. a "b" "c")'
     ..`@equals` "a.b.c;"
 
+test "dot given string which is invalid identifier becomes computed" ->
+  esl '(. a "b-c")'
+    ..`@equals` "a['b-c'];"
+
 test "dot chains identifiers as computed members" ->
   esl '(. a b c)'
     ..`@equals` "a[b][c];"

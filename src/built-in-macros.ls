@@ -9,6 +9,8 @@ statementify = require \./es-statementify
   multiple-statements
 } = require \./import-macro
 
+ast-errors = require \./esvalid-partial
+
 chained-binary-expr = (type, operator) ->
   macro = (env, ...args) ->
     | args.length is 1 => env.compile args.0
@@ -267,11 +269,21 @@ contents =
 
       # Ensure that a string literal is converted to an identifer and compiled
       # into a non-computed member expression
-      if property-as-estree.type is \Literal
-      and typeof property-as-estree.value is \string
-        computed := false
-        property-compiled := type : \Identifier name : property-as-estree.value
-      else # And everything else to a computed member expression
+      switch
+      | property-as-estree.type is \Literal and typeof property-as-estree.value is \string =>
+
+        # Convert it into an identifier
+        possible-identifier =
+          type : \Identifier
+          name : property-as-estree.value
+
+        # Only if it's a valid identifier, do we compile to non-computed
+        if not ast-errors possible-identifier
+          computed := false
+          property-compiled := possible-identifier
+          break
+        fallthrough
+      | _ => # And everything else to a computed member expression
         computed := true
         property-compiled := property-as-estree
 
