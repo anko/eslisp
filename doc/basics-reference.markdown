@@ -136,6 +136,68 @@ That's all.
 Macros are functions that only exist at compile-time.  A minimal set needed to
 generate arbitrary JavaScript are built in to eslisp.
 
+### Summary
+
+#### Operators
+
+[Arithmetic ops][6]: `+` `-` `*` `/` `%`
+<br>Bitwise: `&` `|` `<<` `>>` `>>>` `~`
+<br>Logic: `&&` `||` `!`
+<br>Comparison: `==`=== `!=` `!==` `<` `>` `>=` `<=`
+<br>[Assignment][7]: `=` `+=` `-=` `*=` `/=` `%=` `<<=` `>>=` `>>>=` `&=` `|=` `^=`
+<br>[Increment / decrement][8]: `++` `--` `++_` `--_` `_++` `_--`
+
+### General
+
+| name       | description                  |
+| ---------- | ---------------------------- |
+| `array`    | array literal                |
+| `object`   | object literal               |
+| `regex`    | regular expression literal   |
+| `var`      | variable declaration         |
+| `.`        | member expression            |
+| `get`      | *computed* member expression |
+| `switch`   | switch statement             |
+| `if`       | conditional statement        |
+| `?:`       | ternary expression           |
+| `while`    | while loop                   |
+| `dowhile`  | do-while loop                |
+| `for`      | for loop                     |
+| `forin`    | for-in loop                  |
+| `break`    | break statement              |
+| `continue` | continue statement           |
+| `label`    | labeled statement            |
+| `label`    | labeled statement            |
+| `function` | function expression          |
+| `return`   | return statement             |
+| `new`      | new-expression               |
+| `debugger` | debugger statement           |
+| `throw`    | throw statement              |
+| `try`      | try-catch statement          |
+
+#### Structural
+
+| name    | description               |
+| ------- | ------------------------- |
+| `seq`   | comma sequence expression |
+| `block` | block statement           |
+
+#### Macro-related
+
+| name         | description                           |
+| ------------ | ------------------------------------- |
+| `macro`      | macro directive                       |
+| `capmacro`   | environment-capturing macro directive |
+| `quote`      | quotation operator                    |
+| `quasiquote` | quasiquote                            |
+
+These are only valid inside `quasiquote`:
+
+| name               | description      |
+| ------------------ | ---------------- |
+| `unquote`          | unquote          |
+| `unquote-splicing` | unquote-splicing |
+
 ### Operators
 
 #### Arithmetic
@@ -182,7 +244,7 @@ names.
     a instanceof B;
     delete x;
 
-### Variable declaration and assignment
+### Declaration and assignment
 
 Variable declaration in eslisp uses the `var` macro, and assignment is `=`.
 
@@ -198,7 +260,7 @@ Variable declaration in eslisp uses the `var` macro, and assignment is `=`.
     var y = 1;
     y = 2;
 
-The other [assignment operators][6] are the same as in JS.
+The other [assignment operators][9] are the same as in JS.
 
 <!-- !test in shorthand assignment -->
 
@@ -261,7 +323,7 @@ Property access uses the `.` macro.
     a[1]['b'].c;
 
 If you wish you could just write those as `a.b.c` in eslisp code, use the
-[*eslisp-propertify*][7] user-macro.
+[*eslisp-propertify*][10] user-macro.
 
 For *computed* property access, use the `get` macro.
 
@@ -497,7 +559,7 @@ appear at any position.  At the end is probably most readable.
 
 If you can think of any better way to write any of the above, or wish you could
 write something in a way that you can't in core eslisp, check out [how macros
-work][8] to learn how to introduce your own.
+work][11] to learn how to introduce your own.
 
 Even if you don't care about writing your own language features, you might like
 to look into what user macros already exist, and if some of them might be
@@ -508,6 +570,9 @@ useful to you.
 [3]: https://www.npmjs.com/package/eslisp-camelify
 [4]: https://www.npmjs.com/package/eslisp-propertify
 [5]: http://dept-info.labri.fr/~strandh/Teaching/PFS/Common/Strandh-Tutorial/indentation.html
-[6]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Assignment_Operators
-[7]: https://github.com/anko/eslisp-propertify
-[8]: how-macros-work.markdown
+[6]: #arithmetic
+[7]: #declaration-and-assignment
+[8]: #increment-and-decrement
+[9]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Assignment_Operators
+[10]: https://github.com/anko/eslisp-propertify
+[11]: how-macros-work.markdown
