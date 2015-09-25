@@ -183,18 +183,19 @@ Conditionals are built with the `if` macro:
 <!-- !test in special form -->
 
     ; The "if" macro compiles to an if-statement
-    (if ok                  ; argument 1 becomes the conditional
-        (block (var x (! ok)) ; argument 2 the consequent
-               (return x))
-        (return false))     ; argument 3 (optional) the alternate
+    (if lunchtime                 ; argument 1 becomes the conditional
+        (block
+          (var lunch (find food)) ; argument 2 the consequent
+          (lunch))
+        (writeMoreCode))          ; argument 3 (optional) the alternate
 
 <!-- !test out special form -->
 
-    if (ok) {
-        var x = !ok;
-        return x;
+    if (lunchtime) {
+        var lunch = find(food);
+        lunch();
     } else
-        return false;
+        writeMoreCode();
 
 Note how the block statement (`(block ...)`) has to be made explicit.  Because
 it's so common, other macros that accept a block statement as their last

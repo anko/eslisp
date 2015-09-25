@@ -25,9 +25,9 @@ test "plain literal" ->
   esl "3"
     ..`@equals` "3;"
 
-test "plain somewhat number-looking variable" ->
-  esl "3asd5"
-    ..`@equals` "3asd5;"
+test "plain literal with trailing digits" ->
+  esl "asd39"
+    ..`@equals` "asd39;"
 
 test "plain string literal" ->
   esl '"ok then"'
@@ -189,16 +189,16 @@ test "empty statement" ->
     ..`@equals` ""
 
 test "break and continue statements" ->
-  esl "(break) (continue)"
-    ..`@equals` "break;\ncontinue;"
+  esl "(while true (break) (continue))"
+    ..`@equals` "while (true) {\n    break;\n    continue;\n}"
 
 test "break to label" ->
-  esl "(break label)"
-    ..`@equals` "break label;"
+  esl "(label x (while true (break x)))"
+    ..`@equals` "x:\n    while (true) {\n        break x;\n    }"
 
 test "continue to label" ->
-  esl "(continue label)"
-    ..`@equals` "continue label;"
+  esl "(label x (while true (continue x)))"
+    ..`@equals` "x:\n    while (true) {\n        continue x;\n    }"
 
 test "stand-alone label" ->
   esl "(label x)"
@@ -213,8 +213,8 @@ test "labeled expression" ->
     ..`@equals` "label:\n    x * 4;"
 
 test "return statement" ->
-  esl "(return \"hello there\")"
-    ..`@equals` "return 'hello there';"
+  esl "(function () (return \"hello there\"))"
+    ..`@equals` "(function () {\n    return 'hello there';\n});"
 
 test "member expression" ->
   esl "(. console log)"
@@ -240,7 +240,7 @@ test "switch statement" ->
   esl '''
       (switch (y)
               ((== x 5) ((. console log) "hi") (break))
-              (default  (return false)))
+              (default  (yes)))
       '''
     ..`@equals` """
                 switch (y()) {
@@ -248,7 +248,7 @@ test "switch statement" ->
                     console.log('hi');
                     break;
                 default:
-                    return false;
+                    yes();
                 }
                 """
 

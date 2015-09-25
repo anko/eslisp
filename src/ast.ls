@@ -1,5 +1,3 @@
-ast-errors = require \./esvalid-partial
-
 looks-like-number = (atom-text) ->
   atom-text.match /^\d+(\.\d+)?$/
 looks-like-negative-number = (atom-text) ->
@@ -96,19 +94,7 @@ class list
     if head instanceof atom
     and local-env.find-macro head.text!
 
-      r = that.apply null, ([ local-env ] ++ rest)
-
-      check-for-ast-errors = ->
-        if ast-errors it
-          that.for-each -> console.error it
-          #throw Error "Invalid AST"
-
-      if typeof! r is \Array
-        r.for-each check-for-ast-errors
-      else
-        check-for-ast-errors r
-
-      r
+      that.apply null, ([ local-env ] ++ rest)
 
     else
       # TODO compile-time check if callee has sensible type

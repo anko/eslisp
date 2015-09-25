@@ -6,6 +6,8 @@ environment      = require \./env
 
 { create-transform-macro } = require \./import-macro
 
+{ errors } = require \esvalid
+
 module.exports = (ast, options) ->
 
   transform-macros = (options.transform-macros || []) .map (func) ->
@@ -23,8 +25,18 @@ module.exports = (ast, options) ->
   transform-macros .for-each (macro) ->
     statements := macro.apply null, statements
 
-  type : \Program
-  body : statements
-         |> concat-map (.compile root-env)
-         |> (.filter (isnt null)) # because macro definitions emit null
-         |> (.map statementify)
+  program-ast =
+    type : \Program
+    body : statements
+           |> concat-map (.compile root-env)
+           |> (.filter (isnt null)) # because macro definitions emit null
+           |> (.map statementify)
+
+  err = errors program-ast
+  if err.length
+    first-error = err.0
+    console.error "[Error] #{first-error.message}\n\
+                   Node: #{JSON.stringify first-error.node}"
+    throw first-error
+  else
+    return program-ast

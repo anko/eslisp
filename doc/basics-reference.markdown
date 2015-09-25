@@ -471,7 +471,7 @@ header, the second to be the right, and the rest to be body statements.
 <!-- !test in for-in loop -->
 
     (forin (var x) xs
-           ((. console.log) (get xs x)))
+           ((. console log) (get xs x)))
 
 <!-- !test out for-in loop -->
 
