@@ -71,4 +71,15 @@ if target-path
   if e then throw e
   compile-and-show esl-code
 else
-  process.stdin .pipe concat compile-and-show
+  # see https://nodejs.org/api/repl.html
+  repl = require \repl
+  vm = require \vm
+  repl.start do
+    prompt: "eslisp> "
+    eval: (cmd, context, filename, callback) ->
+      # NOTE: will fail on older nodejs due to paren wrapping logic; see
+      # SO http://stackoverflow.com/questions/19182057/node-js-repl-funny-behavior-with-custom-eval-function
+      # GH https://github.com/nodejs/node-v0.x-archive/commit/9ef9a9dee54a464a46739b14e8a348bec673c5a5
+      esl cmd, compilerOpts
+      |> vm.runInThisContext
+      |> callback null, _
