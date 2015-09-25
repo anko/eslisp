@@ -390,9 +390,14 @@ If you want `eslc` in your [`$PATH`][38], `npm install --global eslisp`.  (You
 might need `sudo`.)  Then `eslc` program takes eslisp code as input and outputs
 JavaScript.
 
+The compiler runs as a [REPL][39] if given no arguments, though it doesn't
+(yet) support macros in that mode.
+
+You can also just pipe data to it to compile it if you want.
+
     echo '((. console log) "Yo!")' | eslc
 
-Optionally, pipe further to `node` to run it.
+Or pass a filename, like `eslc myprogram.esl`.
 
 To remove it cleanly, `npm uninstall --global eslisp`.
 
@@ -407,21 +412,21 @@ it sees them.
 ## How does it work
 
 In brief:  A table of predefined macros is used to turn S-expressions into
-[SpiderMonkey AST][39], which is fed to [escodegen][40], which outputs JS.
+[SpiderMonkey AST][40], which is fed to [escodegen][41], which outputs JS.
 Some of those macros allow defining further macros, which get added to the
 table and work from then on like the predefined ones.
 
-For more, read [the source][41] and ask questions.
+For more, read [the source][42] and ask questions.
 
 ## Bugs, discussion & contributing
 
-Create a [github issue][42], or say hi [in gitter chat][43].
+Create a [github issue][43], or say hi [in gitter chat][44].
 
-I'll assume your contributions to also be under the [ISC license][44].
+I'll assume your contributions to also be under the [ISC license][45].
 
 ## License
 
-[ISC][45].
+[ISC][46].
 
 [1]: https://www.npmjs.com/package/eslisp
 [2]: https://travis-ci.org/anko/eslisp
@@ -461,10 +466,11 @@ I'll assume your contributions to also be under the [ISC license][44].
 [36]: https://www.npmjs.com/
 [37]: https://www.npmjs.com/search?q=eslisp-
 [38]: http://en.wikipedia.org/wiki/PATH_(variable)
-[39]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[40]: https://github.com/estools/escodegen
-[41]: src/
-[42]: https://github.com/anko/eslisp/issues/new
-[43]: https://gitter.im/anko/eslisp
-[44]: http://opensource.org/licenses/ISC
+[39]: https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop
+[40]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[41]: https://github.com/estools/escodegen
+[42]: src/
+[43]: https://github.com/anko/eslisp/issues/new
+[44]: https://gitter.im/anko/eslisp
 [45]: http://opensource.org/licenses/ISC
+[46]: http://opensource.org/licenses/ISC
