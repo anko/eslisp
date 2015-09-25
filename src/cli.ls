@@ -71,8 +71,11 @@ if target-path
   if e then throw e
   compile-and-show esl-code
 else
+  # Non-interactive stdin: pipe and compile
   if not process.stdin.isTTY
     process.stdin .pipe concat compile-and-show
+
+  # Interactive stdin: start repl
   else
     # see https://nodejs.org/api/repl.html
     repl = require \repl
