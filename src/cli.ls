@@ -4,6 +4,8 @@ spawn   = (require \child_process).spawn
 esl     = require \./index
 require! <[ fs path nopt ]>
 
+{ InvalidAstError } = require \esvalid
+
 print-version = ->
   try
     console.log (require \../package.json .version)
@@ -64,7 +66,38 @@ compiler-opts = {}
 if parsed-options.transform
   compiler-opts.transform-macros = that .map require
 
-compile-and-show = -> console.log esl it, compiler-opts
+compile-and-show = (code) ->
+  code .= to-string!
+  try
+    console.log esl code, compiler-opts
+  catch err
+    if err instanceof InvalidAstError
+      console.error "[Error]" err.message
+      point-at-problem code, err.node
+    else throw err
+
+# Use the node's location data (if present) to show the lines on which the
+# problem occurred.
+point-at-problem = (input, problematic-node) ->
+  { location } = problematic-node
+  switch typeof! location
+  | \String =>
+    stringified-node = JSON.stringify do
+      problematic-node
+      (k, v) -> if k is \location then undefined else v
+    console.error "  #stringified-node"
+    console.error "  [ #location ]"
+  | \Object =>
+    { start, end } = location
+    line = input
+      .split "\n"
+      .slice (start.line - 1), end.line
+      .join "\n"
+    underline = " " * (start.offset - 1) +
+                "^" * (end.offset - start.offset)
+    console.error "  " + line
+    console.error "  " + underline
+  | _ => throw Error "Internal error: unexpected location type"
 
 if target-path
   e, esl-code <- fs.read-file target-path, encoding : \utf8
@@ -91,6 +124,13 @@ else
         # NOTE: will fail on older nodejs due to paren wrapping logic; see
         # SO http://stackoverflow.com/questions/19182057/node-js-repl-funny-behavior-with-custom-eval-function
         # GH https://github.com/nodejs/node-v0.x-archive/commit/9ef9a9dee54a464a46739b14e8a348bec673c5a5
-        stateful-compiler cmd
-        |> vm.run-in-this-context
-        |> callback null, _
+        try
+          stateful-compiler cmd
+          |> vm.run-in-this-context
+          |> callback null, _
+        catch err
+          if err instanceof InvalidAstError
+            console.error "[Error]" err.message
+            point-at-problem cmd, err.node
+            callback null
+          else throw err

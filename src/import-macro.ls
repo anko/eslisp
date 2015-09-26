@@ -118,8 +118,7 @@ compilerify-macro = (env, func) ->
 
         errors = ast-errors sm-ast
         if errors
-          console.error "AST error at" sm-ast
-          throw Error errors.0
+          throw errors.0
 
         sm-ast
 

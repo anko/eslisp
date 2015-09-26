@@ -31,8 +31,6 @@ module.exports = (root-env, ast, options={}) ->
   err = errors program-ast
   if err.length
     first-error = err.0
-    console.error "[Error] #{first-error.message}\n\
-                   Node: #{JSON.stringify first-error.node}"
     throw first-error
   else
     return program-ast
