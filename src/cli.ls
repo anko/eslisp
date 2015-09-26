@@ -2,7 +2,7 @@ concat  = require \concat-stream
 { zip } = require \prelude-ls
 spawn   = (require \child_process).spawn
 esl     = require \./index
-require! <[ fs path nopt ]>
+require! <[ fs path nopt chalk ]>
 
 { InvalidAstError } = require \esvalid
 
@@ -72,9 +72,14 @@ compile-and-show = (code) ->
     console.log esl code, compiler-opts
   catch err
     if err instanceof InvalidAstError
-      console.error "[Error]" err.message
+      console.error (chalk.red "[Error]") + " " + err.message
       point-at-problem code, err.node
     else throw err
+
+string-splice = (string, start, end, inserted-text="") ->
+    (string.slice 0, start) +
+      inserted-text +
+      (string.slice end, string.length)
 
 # Use the node's location data (if present) to show the lines on which the
 # problem occurred.
@@ -86,17 +91,32 @@ point-at-problem = (input, problematic-node) ->
       problematic-node
       (k, v) -> if k is \location then undefined else v
     console.error "  #stringified-node"
-    console.error "  [ #location ]"
+    console.error chalk.yellow "  [ #location ]"
   | \Object =>
     { start, end } = location
-    line = input
+    lines = input
       .split "\n"
       .slice (start.line - 1), end.line
       .join "\n"
-    underline = " " * (start.offset - 1) +
-                "^" * (end.offset - start.offset)
-    console.error "  " + line
-    console.error "  " + underline
+
+    # Subtract 1 from both offsets because of open-paren that's implicitly
+    # added to the input
+    # inputs.
+    start-offset = start.offset - 1
+    end-offset   = end.offset   - 1
+
+    highlighted-part = chalk.black.bg-yellow (lines.slice start-offset, end-offset)
+
+    highlighted-lines = string-splice do
+      lines
+      start-offset
+      end-offset
+      highlighted-part
+
+    console.error "At line #{chalk.green start.line}, \
+                   offset #{chalk.green start-offset}:"
+    console.error "\n#highlighted-lines\n"
+
   | _ => throw Error "Internal error: unexpected location type"
 
 if target-path
@@ -130,7 +150,7 @@ else
           |> callback null, _
         catch err
           if err instanceof InvalidAstError
-            console.error "[Error]" err.message
+            console.error (chalk.red "[Error]") + " " + err.message
             point-at-problem cmd, err.node
             callback null
           else throw err

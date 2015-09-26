@@ -42,6 +42,7 @@
     "tmp": "0.0.27"
   },
   "dependencies": {
+    "chalk": "^1.1.1",
     "concat-stream": "^1.4.7",
     "escodegen": "^1.4.1",
     "esutils": "^2.0.2",
