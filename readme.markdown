@@ -144,7 +144,7 @@ arguments as the rest:
     a.b[5].c['yo'];
     1 + 2;
 
-If the `(. a b)` syntax feels tedious, you might like the [eslisp-camelify][32] transform macro, which lets you write `a.b` instead.
+If the `(. a b)` syntax feels tedious, you might like the [eslisp-propertify][32] transform macro, which lets you write `a.b` instead.
 
 If the first element of a list isn't the name of a macro which is in scope, it
 compiles to a function call:
@@ -460,7 +460,7 @@ I'll assume your contributions to also be under the [ISC license][45].
 [29]: doc/comparison-to-other-js-lisps.markdown
 [30]: doc/basics-reference.markdown
 [31]: test.ls
-[32]: https://www.npmjs.com/package/eslisp-camelify
+[32]: https://www.npmjs.com/package/eslisp-propertify
 [33]: doc/how-macros-work.markdown
 [34]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
 [35]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
