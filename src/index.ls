@@ -2,7 +2,10 @@ string-to-ast = require \./parse
 ast-to-estree = require \./translate
 estree-to-js  = (require \escodegen).generate _
 
-module.exports = (input, options={}) ->
+root-macro-table = require \./built-in-macros
+environment = require \./env
+
+compile = (root-env, input, options={}) ->
 
   input .= to-string!
 
@@ -11,5 +14,17 @@ module.exports = (input, options={}) ->
 
   "(#input\n)" # Implicit list of everything (trailing \n terminates comments)
   |> string-to-ast
-  |> ast-to-estree _, transform-macros : options.transform-macros
+  |> ast-to-estree root-env, _, transform-macros : options.transform-macros
   |> estree-to-js
+
+
+make-stateful-compiler = (options={}) ->
+  root-env = environment root-macro-table
+  return compile root-env, _, options
+
+compile-once = (input, options={}) ->
+  root-env = environment root-macro-table
+  return compile root-env, input, options
+
+module.exports = compile-once
+  ..stateful = make-stateful-compiler

@@ -3,7 +3,7 @@
 # compilation.  Environment objects most importantly store the macro table of a
 # compilation scope.
 
-{ concat-map, unfoldr, map, reverse, fold } = require \prelude-ls
+{ keys, concat-map, unfoldr, map, reverse, fold } = require \prelude-ls
 es-generate = require \escodegen .generate _
 
 # Recursively search a macro table and its parents for a macro with a given

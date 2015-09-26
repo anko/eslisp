@@ -77,6 +77,11 @@ else
 
   # Interactive stdin: start repl
   else
+
+    # Create a stateful instance of the compiler that holds on to a root macro
+    # environment.  This lets typed-in macros persist for the session.
+    stateful-compiler = esl.stateful compiler-opts
+
     # see https://nodejs.org/api/repl.html
     repl = require \repl
     vm = require \vm
@@ -86,6 +91,6 @@ else
         # NOTE: will fail on older nodejs due to paren wrapping logic; see
         # SO http://stackoverflow.com/questions/19182057/node-js-repl-funny-behavior-with-custom-eval-function
         # GH https://github.com/nodejs/node-v0.x-archive/commit/9ef9a9dee54a464a46739b14e8a348bec673c5a5
-        esl cmd, compiler-opts
+        stateful-compiler cmd
         |> vm.run-in-this-context
         |> callback null, _
