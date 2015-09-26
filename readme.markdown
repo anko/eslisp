@@ -383,6 +383,14 @@ whatever. so you can put the macro function in a separate file and do—
 This means you can publish eslisp macros on [npm][36].  The name prefix
 `eslisp-` is recommended.  [Some exist already.][37]
 
+### Trasnformation macros
+
+When running `eslc` from the command line, to apply a transformation macro to
+an eslisp file during compilation, supply the `--transform macro-name`
+argument. For example,
+
+    eslc --transform eslisp-propertify myprogram.esl
+
 ## Try it
 
 ### Global install
