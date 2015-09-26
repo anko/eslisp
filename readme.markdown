@@ -383,23 +383,26 @@ whatever. so you can put the macro function in a separate file and do—
 This means you can publish eslisp macros on [npm][36].  The name prefix
 `eslisp-` is recommended.  [Some exist already.][37]
 
-### Trasnformation macros
+### Transformation macros
 
 When running `eslc` from the command line, to apply a transformation macro to
-an eslisp file during compilation, supply the `--transform macro-name`
+an eslisp file during compilation, supply the `--transform <macro-name>`
 argument. For example,
 
     eslc --transform eslisp-propertify myprogram.esl
+
+uses [eslisp-propertify][38] to convert all atoms containg dots into member
+expressions.  The flag can be specified multiple times.
 
 ## Try it
 
 ### Global install
 
-If you want `eslc` in your [`$PATH`][38], `npm install --global eslisp`.  (You
+If you want `eslc` in your [`$PATH`][39], `npm install --global eslisp`.  (You
 might need `sudo`.)  Then `eslc` program takes eslisp code as input and outputs
 JavaScript.
 
-The compiler runs as a [REPL][39] if given no arguments, though it doesn't
+The compiler runs as a [REPL][40] if given no arguments, though it doesn't
 (yet) support macros in that mode.
 
 You can also just pipe data to it to compile it if you want.
@@ -421,21 +424,21 @@ it sees them.
 ## How does it work
 
 In brief:  A table of predefined macros is used to turn S-expressions into
-[SpiderMonkey AST][40], which is fed to [escodegen][41], which outputs JS.
+[SpiderMonkey AST][41], which is fed to [escodegen][42], which outputs JS.
 Some of those macros allow defining further macros, which get added to the
 table and work from then on like the predefined ones.
 
-For more, read [the source][42] and ask questions.
+For more, read [the source][43] and ask questions.
 
 ## Bugs, discussion & contributing
 
-Create a [github issue][43], or say hi [in gitter chat][44].
+Create a [github issue][44], or say hi [in gitter chat][45].
 
-I'll assume your contributions to also be under the [ISC license][45].
+I'll assume your contributions to also be under the [ISC license][46].
 
 ## License
 
-[ISC][46].
+[ISC][47].
 
 [1]: https://www.npmjs.com/package/eslisp
 [2]: https://travis-ci.org/anko/eslisp
@@ -474,12 +477,13 @@ I'll assume your contributions to also be under the [ISC license][45].
 [35]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
 [36]: https://www.npmjs.com/
 [37]: https://www.npmjs.com/search?q=eslisp-
-[38]: http://en.wikipedia.org/wiki/PATH_(variable)
-[39]: https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop
-[40]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[41]: https://github.com/estools/escodegen
-[42]: src/
-[43]: https://github.com/anko/eslisp/issues/new
-[44]: https://gitter.im/anko/eslisp
-[45]: http://opensource.org/licenses/ISC
+[38]: https://www.npmjs.com/package/eslisp-propertify
+[39]: http://en.wikipedia.org/wiki/PATH_(variable)
+[40]: https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop
+[41]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[42]: https://github.com/estools/escodegen
+[43]: src/
+[44]: https://github.com/anko/eslisp/issues/new
+[45]: https://gitter.im/anko/eslisp
 [46]: http://opensource.org/licenses/ISC
+[47]: http://opensource.org/licenses/ISC
