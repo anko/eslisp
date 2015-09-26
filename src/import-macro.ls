@@ -15,6 +15,12 @@ statementify = require \./es-statementify
 class multiple-statements
   (@statements) ~>
 
+# This is what gets given to the internal AST  nodes as their source
+# location data.
+#
+# TODO show actual location of parent macro return statement
+const macro-location-string = "returned from macro"
+
 # macro function form → internal compiler-form
 #
 # To make user-defined macros simpler to write, they may return just plain JS
@@ -27,7 +33,10 @@ to-compiler-form = (ast) ->
 
   # Lists' contents need to be converted, in case they've got
   # non-compiler-form stuff inside them.
-  if ast instanceof list then return list ast.contents!map to-compiler-form
+  if ast instanceof list
+    return list do
+      ast.contents!map to-compiler-form
+      ast.location
 
   # Multiple-statements just become an array of their contents, but like
   # lists, those contents might need conversion.
@@ -38,18 +47,18 @@ to-compiler-form = (ast) ->
   switch typeof! ast
 
     # Arrays represent lists
-    | \Array  => list ast.map to-compiler-form
+    | \Array  => list (ast.map to-compiler-form), macro-location-string
 
     # Objects are expected to represent atoms
     | \Object =>
-      if ast.atom then atom ("" + ast.atom)
+      if ast.atom then atom ("" + ast.atom), macro-location-string
       else throw Error "Macro returned object without `atom` property, or atom property set to empty string (got #{JSON.stringify ast})"
 
     # Strings become strings as you'd expect
-    | \String => string ast
+    | \String => string ast, macro-location-string
 
     # Numbers become atoms
-    | \Number => atom ("" + ast)
+    | \Number => atom ("" + ast), macro-location-string
 
     # Undefined and null represent nothing
     | \Undefined => fallthrough
@@ -79,7 +88,7 @@ macro-env = (env) ->
   gensym : ->
     if arguments.length
       throw Error "Got #that arguments to `gensym`; expected none."
-    atom "$#{uuid!.replace /-/g, \_}"
+    atom "$#{uuid!.replace /-/g, \_}", macro-location-string
     # RFC4122 v4 UUIDs are based on random bits.  Hyphens become
     # underscores to make the UUID a valid JS identifier.
   is-expr : -> it |> to-compiler-form |> env.compile |> is-expression

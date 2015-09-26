@@ -69,7 +69,7 @@ quote = ->
     throw Error "Too many arguments to quote; \
                  expected 1 but got #{arguments.length}"
   if it then it.as-sm!
-  else list!as-sm! # empty list
+  else (list [], "returned from macro") .as-sm! # empty list
 
 optionally-implicit-block-statement = ({compile, compile-many}, body) ->
   switch body.length
@@ -509,7 +509,7 @@ contents =
       | ast instanceof list
         [head, ...rest] = ast.contents!
         switch
-        | not head? => [ quote list [] ] # empty list
+        | not head? => [ quote (list [], "returned from macro") ] # empty list
         | head instanceof atom =>
           switch head.text!
           | \unquote          => unquote         .apply null rest
