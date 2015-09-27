@@ -725,6 +725,10 @@ test "when returned from an IIFE, macros can share state" ->
        """
    ..`@equals` "2;\n4;"
 
+test "macro constructor called with no arguments is an error" ->
+  -> esl "(macro)"
+   ..`@throws` Error
+
 test "macro can return multiple statements with `multi`" ->
   esl "(macro declareTwo (function () (return ((. this multi) '(var x 0) '(var y 1)))))
        (declareTwo)"
