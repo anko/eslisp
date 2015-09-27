@@ -1027,6 +1027,11 @@ test "transform-macro can replace contents" ->
   esl "(+ 1 2)" transform-macros : [ wrapper ]
     .. `@equals` "3 * 4;"
 
+test "transform-macro can return null" ->
+  wrapper = -> null
+  esl "(+ 1 2)" transform-macros : [ wrapper ]
+    .. `@equals` ""
+
 test "transform-macro can receive arguments" ->
   wrapper = (...args) ->
     [ { atom : "hi" } ].concat args

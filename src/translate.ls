@@ -19,7 +19,8 @@ module.exports = (root-env, ast, options={}) ->
   statements = ast.content
 
   transform-macros .for-each (macro) ->
-    statements := macro.apply null, statements
+    statements := (macro.apply null, statements)
+      .filter (isnt null)
 
   program-ast =
     type : \Program
