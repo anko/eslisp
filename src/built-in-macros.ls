@@ -81,6 +81,31 @@ optionally-implicit-block-statement = ({compile, compile-many}, body) ->
     type : \BlockStatement
     body : compile-many body .map statementify
 
+# Here's a helper that extracts the common parts to macros for
+# FunctionExpressions and FunctionDeclarations since they're so similar.
+function-type = (type) ->
+  ({compile, compile-many}:env, ...args) ->
+    # The first optional atom argument gives the id that should be attached to
+    # the function expression.  The next argument is the function's argument
+    # list.  All further arguments are statements for the body.
+
+    var id, params
+
+    arg1 = args.shift!
+
+    if arg1 instanceof atom
+      id := type : \Identifier name : arg1.text!
+      params := args.shift! .contents!map compile
+    else
+      # Let's assume it's a list then
+      id := null
+      params := arg1.contents!map compile
+
+    type : type
+    id : id
+    params : params
+    body : optionally-implicit-block-statement env, args
+
 contents =
   \+ : n-ary-expr \+
   \- : n-ary-expr \-
@@ -298,28 +323,9 @@ contents =
         throw Error "dot called with no arguments"
 
 
-  \function : ({compile, compile-many}:env, ...args) ->
+  \function : function-type \FunctionExpression
 
-    # The first optional atom argument gives the id that should be attached to
-    # the function expression.  The next argument is the function's argument
-    # list.  All further arguments are statements for the body.
-
-    var id, params
-
-    arg1 = args.shift!
-
-    if arg1 instanceof atom
-      id := type : \Identifier name : arg1.text!
-      params := args.shift! .contents!map compile
-    else
-      # Let's assume it's a list then
-      id := null
-      params := arg1.contents!map compile
-
-    type : \FunctionExpression
-    id : id
-    params : params
-    body : optionally-implicit-block-statement env, args
+  \declarefunction : function-type \FunctionDeclaration
 
   \new : ({compile}, ...args) ->
     [ newTarget, ...newArgs ] = args

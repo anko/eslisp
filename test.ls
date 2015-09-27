@@ -170,6 +170,14 @@ test "function expression with name" ->
   esl "(function f (x) (return (+ x 1)))"
     ..`@equals` "(function f(x) {\n    return x + 1;\n});"
 
+test "function declaration" ->
+  esl "(declarefunction f (x) (return (+ x 1)))"
+    ..`@equals` "function f(x) {\n    return x + 1;\n}"
+
+test "function declaration without name throws error" ->
+  -> esl "(declarefunction (x) (return (+ x 1)))"
+    ..`@throws` Error
+
 test "function with no arguments" ->
   esl "(function () (return 1))"
     ..`@equals` "(function () {\n    return 1;\n});"

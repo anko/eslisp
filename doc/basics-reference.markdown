@@ -149,31 +149,32 @@ generate arbitrary JavaScript are built in to eslisp.
 
 ### General
 
-| name       | description                  |
-| ---------- | ---------------------------- |
-| `array`    | array literal                |
-| `object`   | object literal               |
-| `regex`    | regular expression literal   |
-| `var`      | variable declaration         |
-| `.`        | member expression            |
-| `get`      | *computed* member expression |
-| `switch`   | switch statement             |
-| `if`       | conditional statement        |
-| `?:`       | ternary expression           |
-| `while`    | while loop                   |
-| `dowhile`  | do-while loop                |
-| `for`      | for loop                     |
-| `forin`    | for-in loop                  |
-| `break`    | break statement              |
-| `continue` | continue statement           |
-| `label`    | labeled statement            |
-| `label`    | labeled statement            |
-| `function` | function expression          |
-| `return`   | return statement             |
-| `new`      | new-expression               |
-| `debugger` | debugger statement           |
-| `throw`    | throw statement              |
-| `try`      | try-catch statement          |
+| name              | description                  |
+| ----------------- | ---------------------------- |
+| `array`           | array literal                |
+| `object`          | object literal               |
+| `regex`           | regular expression literal   |
+| `var`             | variable declaration         |
+| `.`               | member expression            |
+| `get`             | *computed* member expression |
+| `switch`          | switch statement             |
+| `if`              | conditional statement        |
+| `?:`              | ternary expression           |
+| `while`           | while loop                   |
+| `dowhile`         | do-while loop                |
+| `for`             | for loop                     |
+| `forin`           | for-in loop                  |
+| `break`           | break statement              |
+| `continue`        | continue statement           |
+| `label`           | labeled statement            |
+| `label`           | labeled statement            |
+| `function`        | function expression          |
+| `declarefunction` | function declaration         |
+| `return`          | return statement             |
+| `new`             | new-expression               |
+| `debugger`        | debugger statement           |
+| `throw`           | throw statement              |
+| `try`             | try-catch statement          |
 
 #### Structural
 
@@ -414,6 +415,8 @@ the `default`-case clause.
 
 ### Functions
 
+#### Function expressions
+
 The `function` macro creates function expressions.  Its first argument becomes
 the argument list, and the rest become statements in its body.  The `return`
 macro compiles to a return-statement.
@@ -429,7 +432,6 @@ macro compiles to a return-statement.
         return 5 * (a * b);
     };
 
-
 You can also give a name to a function expression as the optional first
 argument, if you so wish.
 
@@ -442,6 +444,20 @@ argument, if you so wish.
     var f = function tea() {
         return 'T';
     };
+
+#### Function declarations
+
+These work much like function expressions above, but require a name.
+
+<!-- !test in function declaration -->
+
+    (declarefunction tea () (return "T"))
+
+<!-- !test out function declaration -->
+
+    function tea() {
+        return 'T';
+    }
 
 ### Loops
 
