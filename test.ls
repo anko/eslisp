@@ -166,6 +166,10 @@ test "function expression" ->
   esl "(function (x) (return (+ x 1)))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
 
+test "function expression with name" ->
+  esl "(function f (x) (return (+ x 1)))"
+    ..`@equals` "(function f(x) {\n    return x + 1;\n});"
+
 test "function with no arguments" ->
   esl "(function () (return 1))"
     ..`@equals` "(function () {\n    return 1;\n});"

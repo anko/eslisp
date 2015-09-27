@@ -429,6 +429,20 @@ macro compiles to a return-statement.
         return 5 * (a * b);
     };
 
+
+You can also give a name to a function expression as the optional first
+argument, if you so wish.
+
+<!-- !test in named function expression -->
+
+    (var f (function tea () (return "T")))
+
+<!-- !test out named function expression -->
+
+    var f = function tea() {
+        return 'T';
+    };
+
 ### Loops
 
 While-loops (with the `while` macro) take the first argument to be the loop
