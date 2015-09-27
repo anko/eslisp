@@ -1007,6 +1007,21 @@ test "invalid AST returned by macro throws error" ->
         '''
     Error
 
+test "macro multi-returning array with bad values throws descriptive error" ->
+  try
+    # `console.log` is invalid as a variable name, but if used as if it were
+    # one, without checking if the AST makes sense, this will compile to
+    # valid JavaScript code of `console.log('hi');`!
+    esl '''
+      (macro breaking (function () (return ((. this multi) "hi" null))))
+      (breaking)
+      '''
+  catch e
+    e.message `@equals` "Multi-returning macro return array contained `null`"
+    return
+
+  @fail!
+
 test "macro return intermediates may be invalid if fixed by later macro" ->
   # `...` is an invalid variable name, but since it's corrected by a later
   # macro before evaluation, that's fine.

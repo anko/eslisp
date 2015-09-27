@@ -107,7 +107,11 @@ compilerify-macro = (env, func) ->
 
     return switch
     | internal-ast-form is null => null
-    | typeof! internal-ast-form is \Array => env.compile-many internal-ast-form
+    | typeof! internal-ast-form is \Array =>
+      internal-ast-form.for-each ->
+        if not it?
+          throw Error "Multi-returning macro return array contained `#it`"
+      env.compile-many internal-ast-form
     | otherwise =>
 
       sm-ast = env.compile internal-ast-form
