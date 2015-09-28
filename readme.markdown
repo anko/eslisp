@@ -17,13 +17,13 @@ features, [like this][9].
 
     ; Only include given statement if `$DEBUG` environment variable is set
     (macro debug
-     (function (statement)
+     (lambda (statement)
       (return (?: (. process env DEBUG)
                   statement
                   null))))
 
     (var fib ; Fibonacci number sequence
-       (function (x)
+       (lambda (x)
         (debug ((. console log) (+ "resolving number " x)))
         (switch x
          (0 (return 0))
@@ -202,12 +202,13 @@ it's so common, other macros that accept a block statement as their last
 argument have sugar for this: they just assume you meant the rest to be in a
 block.
 
-For example. the `function` macro treats its first argument as a list of the
-function's argument names, and the rest as statements in the function body.
+For example. the `lambda` macro (which creates function expressions) treats its
+first argument as a list of the function's argument names, and the rest as
+statements in the body.
 
 <!-- !test in func and call -->
 
-    (var f (function (x)
+    (var f (lambda (x)
           (a x)
           (return (+ x 2))))
     (f 40)
@@ -290,7 +291,7 @@ computations.
 
 <!-- !test in macro and call -->
 
-    (macro m (function (x) (return `(+ ,x 2))))
+    (macro m (lambda (x) (return `(+ ,x 2))))
     ((. console log) (m 40))
 
 <!-- !test out macro and call -->
@@ -303,7 +304,7 @@ the argument and returns the result.
 
 <!-- !test in evaluate in macro -->
 
-    (macro add2 (function (x) (return `,(+ ((. this evaluate) x) 2))))
+    (macro add2 (lambda (x) (return `,(+ ((. this evaluate) x) 2))))
     ((. console log) (add2 40))
 
 <!-- !test out evaluate in macro -->
@@ -314,7 +315,7 @@ You can return multiple statements from a macro with `this.multi`.
 
 <!-- !test in multiple-return macro -->
 
-    (macro log-and-delete (function (varName)
+    (macro log-and-delete (lambda (varName)
      (return ((. this multi)
               `((. console log) ((. JSON stringify) ,varName))
               `(delete ,varName)))))
@@ -332,7 +333,7 @@ compilation side-effects or conditional compilation.
 <!-- !test in nothing-returning macro -->
 
     ; Only include statement if `$DEBUG` environment variable is set
-    (macro debug (function (statement)
+    (macro debug (lambda (statement)
      (return (?: (. process env DEBUG) statement null))))
 
     (debug ((. console log) "debug output"))
@@ -349,11 +350,11 @@ shared between them.
 
 <!-- !test in macros block -->
 
-    (macro ((function ()
-            (var x 0) ; this is visible to all of the macro functions
-            (return (object increment (function () (return (++ x)))
-                            decrement (function () (return (-- x)))
-                            get       (function () (return x)))))))
+    (macro ((lambda ()
+            (var x 0) ; visible to all of the macro functions
+            (return (object increment (lambda () (return (++ x)))
+                            decrement (lambda () (return (-- x)))
+                            get       (lambda () (return x)))))))
 
     (increment)
     (increment)
