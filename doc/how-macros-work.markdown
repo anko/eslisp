@@ -60,7 +60,7 @@ Yey!
 We could of course have written the macro function in eslisp instead:
 
     (= (. module exports)
-       (function (name) (return (array (object atom "=") name "hello"))))
+       (lambda (name) (return (array (object atom "=") name "hello"))))
 
 That compiles to the same JS before.  You can write macros in any language you
 want, as long as you can compile it to JS before `require`-ing it from eslisp.
@@ -73,7 +73,7 @@ about that next:
 To make macros clearer to read, eslisp has special syntax for returning stuff
 that represents code.  Let's rewrite the previous hello-assigning macro:
 
-    (= (. module exports) (function (name) (return `(= ,name "hello"))))
+    (= (. module exports) (lambda (name) (return `(= ,name "hello"))))
 
 That does exactly the same thing, but it contains less of the
 `array`/`object` fluff, so it's clearer to read.  The `array` constructor
@@ -103,7 +103,7 @@ For example, if you want to create a shorthand `mean` for calculating the mean
 of some numbers, you could do
 
     (macro mean
-     (function ()
+     (lambda ()
       ; convert arguments to Array
       (var args ((. Array prototype slice call) arguments 0))
       (var total (. args length))
@@ -150,11 +150,11 @@ list.
 <!-- !test in function-expression scope macro -->
 
     ; Define at root scope
-    (macro one (function () (return '1)))
+    (macro one (lambda () (return '1)))
 
-    (function ()
+    (lambda ()
       ; Redefine the macro in an inner scope
-      (macro one (function () (return '1.1))) ; "very large value of 1"
+      (macro one (lambda () (return '1.1))) ; "very large value of 1"
 
       ((. console log) (one)))
 
@@ -173,7 +173,7 @@ nesting level.
 
 <!-- !test in scoped macro masking -->
 
-    (macro ninja (function () (return `stealthMode))) ; define macro
+    (macro ninja (lambda () (return `stealthMode))) ; define macro
     (if seriousBusiness                               ; in inner scope...
         (block (macro ninja)                          ;   mask it
                (ninja)))                              ;   function call
@@ -194,10 +194,10 @@ exist in a new, independent scope.
 <!-- !test in non-capturing macro -->
 
     ; Define a macro "ok".
-    (macro ok (function () (return 'null)))
+    (macro ok (lambda () (return 'null)))
 
     ; Define a non-capturing macro that expects "ok" not to be defined.
-    (macro callOk (function (x)
+    (macro callOk (lambda (x)
       (return `(ok)))) ; expects this to compile to calling a function "ok"
 
     ; Which it does, despite a macro "ok" being defined!
@@ -218,10 +218,10 @@ reset the macro environment.
 <!-- !test in capturing macro -->
 
     ; Define a macro "ok".C
-    (macro ok (function () (return 'null)))
+    (macro ok (lambda () (return 'null)))
 
     ; Define a capturing macro.
-    (capmacro callOk (function (x)
+    (capmacro callOk (lambda (x)
       (return `(ok)))) ; expects this to compile to calling the macro "ok"
                        ; (NOT the function "ok"!)
 
@@ -262,7 +262,7 @@ call it with multiple arguments and return that.
 <!-- !test in increment twice -->
 
     (macro incrementTwice
-     (function (x) (return ((. this multi) `(++ ,x) `(++ ,x)))))
+     (lambda (x) (return ((. this multi) `(++ ,x) `(++ ,x)))))
 
     (incrementTwice hello)
 
@@ -282,7 +282,7 @@ For example, you might want to pre-compute some expression.
 <!-- !test in precompute -->
 
     (macro precompute
-     (function (list) (return `,((. this evaluate) list))))
+     (lambda (list) (return `,((. this evaluate) list))))
 
     (precompute (+ 1 2 (* 5 (. Math PI))))
 
@@ -309,7 +309,7 @@ shouldn't conflict with anything else.
 
     ; Generate the assignments needed to swap the values of two variables
     (macro swap
-     (function (varA varB)
+     (lambda (varA varB)
       (var swapVar ((. this gensym))) ; Generate a new symbol we can use
       (return ((. this multi)
 
@@ -343,7 +343,7 @@ implicitly return the last thing in their bodies if it's an expression.
 
 <!-- !test in implicit-return function -->
 
-    (macro fn (function ()
+    (macro fn (lambda ()
       (var args ((. Array prototype slice call) arguments))
       (var fnArgs (. args 0))
       (var fnBody ((. args slice) 1))
@@ -358,7 +358,7 @@ implicitly return the last thing in their bodies if it's an expression.
       ((. fnBody push) lastConverted) ; push the maybe-converted thing back on
 
       ; return the function definition
-      (return `(function ,fnArgs ,@fnBody))))
+      (return `(lambda ,fnArgs ,@fnBody))))
 
     (fn (a b) (+ a b))
 
