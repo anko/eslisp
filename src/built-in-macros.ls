@@ -323,9 +323,9 @@ contents =
         throw Error "dot called with no arguments"
 
 
-  \function : function-type \FunctionExpression
+  \lambda : function-type \FunctionExpression
 
-  \declarefunction : function-type \FunctionDeclaration
+  \function : function-type \FunctionDeclaration
 
   \new : ({compile}, ...args) ->
     [ newTarget, ...newArgs ] = args

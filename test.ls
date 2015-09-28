@@ -163,23 +163,23 @@ test "sequence expression (comma-separated expressions)" ->
     ..`@equals` "x, y, z;"
 
 test "function expression" ->
-  esl "(function (x) (return (+ x 1)))"
+  esl "(lambda (x) (return (+ x 1)))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
 
 test "function expression with name" ->
-  esl "(function f (x) (return (+ x 1)))"
+  esl "(lambda f (x) (return (+ x 1)))"
     ..`@equals` "(function f(x) {\n    return x + 1;\n});"
 
 test "function declaration" ->
-  esl "(declarefunction f (x) (return (+ x 1)))"
+  esl "(function f (x) (return (+ x 1)))"
     ..`@equals` "function f(x) {\n    return x + 1;\n}"
 
 test "function declaration without name throws error" ->
-  -> esl "(declarefunction (x) (return (+ x 1)))"
+  -> esl "(function (x) (return (+ x 1)))"
     ..`@throws` Error
 
 test "function with no arguments" ->
-  esl "(function () (return 1))"
+  esl "(lambda () (return 1))"
     ..`@equals` "(function () {\n    return 1;\n});"
 
 test "assignment expressions" ->
@@ -193,7 +193,7 @@ test "variable declaration statement" ->
     ..`@equals` "var f;"
 
 test "variable declaration and assignment" ->
-  esl "(var f (function (x) (return (+ x 1))))"
+  esl "(var f (lambda (x) (return (+ x 1))))"
     ..`@equals` "var f = function (x) {\n    return x + 1;\n};"
 
 test "empty statement" ->
@@ -225,7 +225,7 @@ test "labeled expression" ->
     ..`@equals` "label:\n    x * 4;"
 
 test "return statement" ->
-  esl "(function () (return \"hello there\"))"
+  esl "(lambda () (return \"hello there\"))"
     ..`@equals` "(function () {\n    return 'hello there';\n});"
 
 test "member expression" ->
@@ -245,7 +245,7 @@ test "member, then call with arguments" ->
     ..`@equals` "console.log('hi');"
 
 test "func with member and call in it" ->
-  esl "(function (x) ((. console log) x))"
+  esl "(lambda (x) ((. console log) x))"
     ..`@equals` "(function (x) {\n    console.log(x);\n});"
 
 test "switch statement" ->
@@ -361,12 +361,12 @@ test "multiple statements in program" ->
     ..`@equals` "console.log('hello');\nconsole.log('world');"
 
 test "function with implicit block body" ->
-  esl '(function (x) ((. console log) "hello") \
+  esl '(lambda (x) ((. console log) "hello") \
                    ((. console log) "world"))'
     ..`@equals` "(function (x) {\n    console.log(\'hello\');\n    console.log(\'world\');\n});"
 
 test "function with explicit block body" ->
-  esl '(function (x) (block
+  esl '(lambda (x) (block
                       ((. console log) "hello") \
                       ((. console log) "world")))'
     ..`@equals` "(function (x) {\n    console.log(\'hello\');\n    console.log(\'world\');\n});"
@@ -507,40 +507,40 @@ test "quoting atoms produces an object representing it" ->
 
 test "macro constructor given object imports properties as macros" ->
   esl '''
-      (macro (object a (function () (return '"hi a"))
-                     b (function () (return '"hi b"))))
+      (macro (object a (lambda () (return '"hi a"))
+                     b (lambda () (return '"hi b"))))
       (a) (b)
       '''
    ..`@equals` "'hi a';\n'hi b';"
 
 test "simple quoting macro" ->
-  esl "(macro random (function () (return '((. Math random)))))
+  esl "(macro random (lambda () (return '((. Math random)))))
        (+ (random) (random))"
     ..`@equals` "Math.random() + Math.random();"
 
 test "simple unquoting macro" ->
-  esl "(macro three (function () (return `,(+ 1 2))))
+  esl "(macro three (lambda () (return `,(+ 1 2))))
        (three)"
     ..`@equals` "3;"
 
 test "empty-list-returning macro" ->
-  esl "(macro nothing (function () (return '())))
+  esl "(macro nothing (lambda () (return '())))
        (nothing)"
     ..`@equals` ""
 
 test "empty-list-returning macro (using quasiquote)" ->
-  esl "(macro nothing (function () (return `())))
+  esl "(macro nothing (lambda () (return `())))
        (nothing)"
     ..`@equals` ""
 
 test "nothing-returning macro" ->
-  esl "(macro nothing (function () (return undefined)))
+  esl "(macro nothing (lambda () (return undefined)))
        (nothing)"
     ..`@equals` ""
 
 test "macros mask others defined before with the same name" ->
-  esl "(macro m (function () (return ())))
-       (macro m (function () (return '((. console log) \"hi\"))))
+  esl "(macro m (lambda () (return ())))
+       (macro m (lambda () (return '((. console log) \"hi\"))))
        (m)"
     ..`@equals` "console.log('hi');"
 
@@ -550,14 +550,14 @@ test "macros can be masked in the current scope by assigning null" ->
     ..`@equals` "array(1, 2);"
 
 test "macros can be defined inside function bodies" ->
-  esl "(var f (function (x)
-         (macro x (function () (return 5)))
+  esl "(var f (lambda (x)
+         (macro x (lambda () (return 5)))
          (return (x))))"
     ..`@equals` "var f = function (x) {\n    return 5;\n};"
 
 test "macros go out of scope at the end of the nesting level" ->
-  esl "(var f (function (x)
-         (macro x (function () (return 5)))
+  esl "(var f (lambda (x)
+         (macro x (lambda () (return 5)))
          (return (x))))
        (x)"
     ..`@equals` "var f = function (x) {\n    return 5;\n};\nx();"
@@ -568,26 +568,26 @@ test "macro constructor given 2 atoms aliases the second to the first" ->
     ..`@equals` "[\n    a,\n    1,\n    b,\n    2\n];"
 
 test "dead simple quasiquote" ->
-  esl "(macro q (function () (return `(+ 2 3))))
+  esl "(macro q (lambda () (return `(+ 2 3))))
        (q)"
     ..`@equals` "2 + 3;"
 
 test "quasiquote is like quote if no unquotes contained" ->
-  esl "(macro rand (function ()
+  esl "(macro rand (lambda ()
                   (return `(* 5
                       ((. Math random))))))
        (rand)"
     ..`@equals` "5 * Math.random();"
 
 test "macros can quasiquote to unquote arguments into output" ->
-  esl "(macro rand (function (upper)
+  esl "(macro rand (lambda (upper)
                   (return `(* ,upper
                       ((. Math random))))))
        (rand 5)"
     ..`@equals` "5 * Math.random();"
 
 test "macros can unquote modified arguments too" ->
-  esl "(macro rand (function (upper)
+  esl "(macro rand (lambda (upper)
                   (var x (* 2
                           ((. this evaluate) upper)))
                   (return `(* ,x ((. Math random))))))
@@ -596,31 +596,31 @@ test "macros can unquote modified arguments too" ->
 
 
 test "macros can evaluate arguments and operate on them further" ->
-  esl "(macro increment (function (x)
+  esl "(macro increment (lambda (x)
                   (return (+ 1 ((. this evaluate) x)))))
        (increment 1)"
     ..`@equals` "2;"
 
 test "macros can unquote arrays into quasiquoted lists (non-splicing)" ->
-  esl "(macro what (function (x)
+  esl "(macro what (lambda (x)
                   (return `(,x))))
        (what (+ 2 3))"
     ..`@equals` "(2 + 3)();"
 
 test "macros can splice arrays into quasiquoted lists" ->
-  esl "(macro sumOf (function (xs) (return `(+ ,@xs))))
+  esl "(macro sumOf (lambda (xs) (return `(+ ,@xs))))
        (sumOf (1 2 3))"
     ..`@equals` "1 + (2 + 3);"
 
 test "macros can splice in empty arrays" ->
-  esl "(macro sumOf (function (xs) (return `(+ 1 2 ,@xs))))
+  esl "(macro sumOf (lambda (xs) (return `(+ 1 2 ,@xs))))
        (sumOf ())"
     ..`@equals` "1 + 2;"
 
 test "quasiquote can contain nested lists" ->
   esl '''
       (macro mean
-       (function ()
+       (lambda ()
         ; Convert arguments into array
         (var args ((. Array prototype slice call) arguments 0))
         (var total (. args length))
@@ -651,21 +651,21 @@ test "object macro's value parts can be expressions" ->
 # dynamic *keys* would be ES6
 
 test "macro producing an object won't get confused for atom" ->
-  esl "(macro obj (function () (return '(object a 1))))
+  esl "(macro obj (lambda () (return '(object a 1))))
        (obj)"
     ..`@equals` "({ a: 1 });"
 
 test "macro producing a function" ->
-  esl "(macro increase (function (n)
-                      (return `(function (x) (return (+ x ,n))))))
+  esl "(macro increase (lambda (n)
+                      (return `(lambda (x) (return (+ x ,n))))))
        (increase 3)"
     ..`@equals` "(function (x) {\n    return x + 3;\n});"
 
 test "macros can operate on their arguments variable" ->
-  esl "(macro functionBackwards (function ()
+  esl "(macro functionBackwards (lambda ()
         (var body (. arguments 0))
         (var args ((. Array prototype slice call) arguments 1))
-        (return `(function ,@args ,body))))
+        (return `(lambda ,@args ,body))))
        (functionBackwards (return (+ x 1)) (x))"
     ..`@equals` "(function (x) {\n    return x + 1;\n});"
 
@@ -714,8 +714,8 @@ test "regex can be given atoms with escaped spaces and slashes" ->
     ..`@equals` "/abc *\\//g;"
 
 test "macro deliberately breaking hygiene for function argument anaphora" ->
-  esl "(macro : (function (body)
-       (return `(function (it) ,body))))
+  esl "(macro : (lambda (body)
+       (return `(lambda (it) ,body))))
         (: (return (. it x)))"
     ..`@equals` "(function (it) {\n    return it.x;\n});"
 
@@ -728,10 +728,10 @@ test "macro given nothing produces no output" ->
 test "when returned from an IIFE, macros can share state" ->
   esl """
       (macro
-       ((function () (var x 0)
-        (return (object plusPrev  (function (n)
+       ((lambda () (var x 0)
+        (return (object plusPrev  (lambda (n)
                                   (return (+= x ((. this evaluate) n)) x))
-                        timesPrev (function (n)
+                        timesPrev (lambda (n)
                                   (return (*= x ((. this evaluate) n)) x)))))))
       (plusPrev 2) (timesPrev 2)
        """
@@ -743,18 +743,18 @@ test "macro constructor called with no arguments is an error" ->
 
 test "macro constructor loading from IIFE can load nothing" ->
   esl """
-      (macro ((function ())))
+      (macro ((lambda ())))
        """
    ..`@equals` ""
 
 test "macro can return multiple statements with `multi`" ->
-  esl "(macro declareTwo (function () (return ((. this multi) '(var x 0) '(var y 1)))))
+  esl "(macro declareTwo (lambda () (return ((. this multi) '(var x 0) '(var y 1)))))
        (declareTwo)"
    ..`@equals` "var x = 0;\nvar y = 1;"
 
 test "macro can ask for atom/string argument type and get text" ->
   esl '''
-      (macro stringy (function (x)
+      (macro stringy (lambda (x)
        (if (. x atom)
         (return `,(+ "atom:" (. x atom)))
         (block
@@ -768,7 +768,7 @@ test "macro can ask for atom/string argument type and get text" ->
 
 test "macro can generate symbol with unique name" ->
   code = esl '''
-    (macro declare (function ()
+    (macro declare (lambda ()
      (return `(var ,((. this gensym)) null))))
     (declare)
     (declare)
@@ -793,7 +793,7 @@ test "macro can create atoms by returning an object with key `atom`" ->
   # Quasiquoting compiles to this anyway.
 
   esl '''
-      (macro get-content (function (x)
+      (macro get-content (lambda (x)
        (var contentAtom (object atom "content"))
        (return `(. ,x ,contentAtom))))
       (get-content a)
@@ -805,16 +805,16 @@ test "macro returning atom with empty or null name fails" ->
   <[ "" null undefined ]>.for-each ->
     self.throws do
       -> esl """
-          (macro mac (function () (return (object atom #it))))
+          (macro mac (lambda () (return (object atom #it))))
           (mac)
           """
       Error
 
 test "compiler types are converted to JS ones when passed to macros" ->
   r = esl '''
-      (macro check-these (function ()
+      (macro check-these (lambda ()
        (var type
-        (function (x)
+        (lambda (x)
          (return
           ((. ((. (object) toString call) x) slice)
            8 -1))))
@@ -907,7 +907,7 @@ test "macros required from separate modules can access complation env" ->
 
 test "macro can create implicit last-expr returning function shorthand" ->
   esl '''
-    (macro fn (function ()
+    (macro fn (lambda ()
      (var args ((. Array prototype slice call) arguments))
      (var fnArgs (. args  0))
      (var fnBody ((. args slice) 1))
@@ -921,7 +921,7 @@ test "macro can create implicit last-expr returning function shorthand" ->
 
      ((. fnBody push) lastConverted)
 
-     (return `(function ,fnArgs ,@fnBody))))
+     (return `(lambda ,fnArgs ,@fnBody))))
 
     (fn (x) (+ x 1))
     (fn (x) (var x 1))
@@ -942,25 +942,25 @@ test "macro function can be returned from IIFE" ->
   # immediately call it.  It returns another function, and *that* becomes the
   # macro.
   esl '''
-    (macro say-hi ((function ()
-      (return (function () (return "hi"))))))
+    (macro say-hi ((lambda ()
+      (return (lambda () (return "hi"))))))
     (say-hi)
     '''
     ..`@equals` "'hi';"
 
 test "IIFE given to macro can itself contain other macros" ->
   esl '''
-    (macro say-hi ((function ()
-      (macro x (function() (return '"hi")))
-      (return (function () (return (x)))))))
+    (macro say-hi ((lambda ()
+      (macro x (lambda() (return '"hi")))
+      (return (lambda () (return (x)))))))
     (say-hi)
     '''
     ..`@equals` "'hi';"
 
 test "macro-generating macro" -> # yes srsly
   esl '''
-    (macro define-with-name (function (x)
-      (return `(macro ,x (function () (return `(var hello 5)))))))
+    (macro define-with-name (lambda (x)
+      (return `(macro ,x (lambda () (return `(var hello 5)))))))
     (define-with-name what)
     (what)
     '''
@@ -968,8 +968,8 @@ test "macro-generating macro" -> # yes srsly
 
 test "macro generating macro and macro call" -> # yes srsly squared
   esl '''
-    (macro define-and-call (function (x)
-      (return ((. this multi) `(macro what (function () (return `(hello))))
+    (macro define-and-call (lambda (x)
+      (return ((. this multi) `(macro what (lambda () (return `(hello))))
                               `(what)))))
     (define-and-call)
     '''
@@ -979,8 +979,8 @@ test "macros do not capture macros from the outer env by default" ->
   # A macro's environment is ordinarily the clean root macro table; it ignores
   # user-defined macros.
   esl '''
-    (macro f (function () (return '"hello")))
-    (macro g (function () (return '(f))))
+    (macro f (lambda () (return '"hello")))
+    (macro g (lambda () (return '(f))))
     (g)
     '''
     ..`@equals` "f();"
@@ -989,8 +989,8 @@ test "capmacro allows macros capture from outer env" ->
   # To create a macro that *does* capture the current macro environment, use
   # `capmacro`.
   esl '''
-    (capmacro f (function () (return '"hello")))
-    (capmacro g (function () (return '(f))))
+    (capmacro f (lambda () (return '"hello")))
+    (capmacro g (lambda () (return '(f))))
     (g)
     '''
     ..`@equals` "'hello';"
@@ -1000,9 +1000,9 @@ test "capturing macros are referentially transparent" ->
   # called.  This means it's robust to later redefinitions in the same scope it
   # captured from.
   esl '''
-    (macro say (function () (return '(yes))))    ; define macro "say"
-    (capmacro m   (function () (return '(say)))) ; use "say" in "m"
-    (macro say (function () (return '(no))))     ; redefine macro "say"
+    (macro say (lambda () (return '(yes))))    ; define macro "say"
+    (capmacro m   (lambda () (return '(say)))) ; use "say" in "m"
+    (macro say (lambda () (return '(no))))     ; redefine macro "say"
     (m)                                          ; call macro "m"
     '''
     ..`@equals` "yes();"
@@ -1014,7 +1014,7 @@ test "invalid AST returned by macro throws error" ->
       # one, without checking if the AST makes sense, this will compile to
       # valid JavaScript code of `console.log('hi');`!
       esl '''
-        (macro hack (function () (return '(console.log "hi"))))
+        (macro hack (lambda () (return '(console.log "hi"))))
         (hack)
         '''
     Error
@@ -1025,7 +1025,7 @@ test "macro multi-returning array with bad values throws descriptive error" ->
     # one, without checking if the AST makes sense, this will compile to
     # valid JavaScript code of `console.log('hi');`!
     esl '''
-      (macro breaking (function () (return ((. this multi) "hi" null))))
+      (macro breaking (lambda () (return ((. this multi) "hi" null))))
       (breaking)
       '''
   catch e
@@ -1038,14 +1038,14 @@ test "macro return intermediates may be invalid if fixed by later macro" ->
   # `...` is an invalid variable name, but since it's corrected by a later
   # macro before evaluation, that's fine.
   esl '''
-    (macro callDots (function () (return '(...))))
-    (macro replaceDots (function () (return 'x)))
+    (macro callDots (lambda () (return '(...))))
+    (macro replaceDots (lambda () (return 'x)))
     (replaceDots (callDots))
     '''
       ..`@equals` "x;"
 
 test "multiple invocations of the compiler are separate" ->
-  esl "(macro what (function () (return 'hi)))"
+  esl "(macro what (lambda () (return 'hi)))"
   esl "(what)"
     .. `@equals` "what();" # instead of "hi;"
 
