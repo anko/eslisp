@@ -52,7 +52,8 @@ to-compiler-form = (ast) ->
     # Objects are expected to represent atoms
     | \Object =>
       if ast.atom then atom ("" + ast.atom), macro-location-string
-      else throw Error "Macro returned object without `atom` property, or atom property set to empty string (got #{JSON.stringify ast})"
+      else
+        ast # assume the returned object is in estree form
 
     # Strings become strings as you'd expect
     | \String => string ast, macro-location-string
@@ -82,6 +83,7 @@ macro-env = (env) ->
   # Create the functions to be exposed for use in a macro's body based on the
   # given compilation environment
 
+  compile : -> it |> to-compiler-form |> env.compile
   evaluate : ->
     it |> to-compiler-form |> env.compile |> env.compile-to-js |> eval
   multi : (...args) -> multiple-statements args

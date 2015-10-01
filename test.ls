@@ -1075,6 +1075,48 @@ test "macro return intermediates may be invalid if fixed by later macro" ->
     '''
       ..`@equals` "x;"
 
+test "macro can return estree object" ->
+  esl '''
+    (macro identifier (lambda ()
+      (return (object "type" "Identifier"
+                      "name" "x"))))
+    (identifier)
+    '''
+      ..`@equals` "x;"
+
+test "macro can multi-return estree objects" ->
+  esl '''
+    (macro identifiers (lambda ()
+      (return ((. this multi)
+               (object "type" "Identifier"
+                       "name" "x")
+               (object "type" "Identifier"
+                       "name" "y")))))
+    (identifiers)
+    '''
+      ..`@equals` "x;\ny;"
+
+test "macro can multi-return estree objects as well as arrays" ->
+  esl '''
+    (macro identifiers (lambda ()
+      (return ((. this multi)
+               (object "type" "Identifier"
+                       "name" "x")
+               'x))))
+    (identifiers)
+    '''
+      ..`@equals` "x;\nx;"
+
+test "macro can compile and return parameter as estree" ->
+  esl '''
+    (macro that (lambda (x)
+      (return ((. this compile) x))))
+    (that 3)
+    (that "hi")
+    (that (c))
+    '''
+      ..`@equals` "3;\n'hi';\nc();"
+
 test "multiple invocations of the compiler are separate" ->
   esl "(macro what (lambda () (return 'hi)))"
   esl "(what)"
