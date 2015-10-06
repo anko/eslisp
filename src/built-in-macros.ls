@@ -398,9 +398,25 @@ contents =
   \macro : (env, ...args) ->
 
     compile-as-macro = (es-ast) ->
-      # This is deliberately defined in the closure here, so it's in scope
-      # during the `eval` and available to the code being compiled.
-      root-require = require.main.require.bind require.main
+
+      # This hack around require makes loading macros from relative paths work.
+      #
+      # It was guided by LiveScript's implementation
+      # https://github.com/gkz/LiveScript/blob/a7525ce6fe7d4906f5d401edf94f15fe5a6b471e/src/node.ls#L10-L18
+      # which originally derives from the Coco language.
+      #
+      # The gist of it is to use the main module's `require` method, such that
+      # the current working directory is the root relative to which packages
+      # are searched.
+
+      {main} = require
+      dirname = "."
+      main
+        ..paths = main.constructor._node-module-paths process.cwd!
+        ..filename = dirname
+
+      root-require = main.require.bind main
+
       let require = root-require
         eval "(#{env.compile-to-js es-ast})"
 

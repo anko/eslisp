@@ -14,7 +14,7 @@ lib/%.js: src/%.ls
 clean:
 	@rm -rf lib/
 
-test:
+test: all
 	@lsc test.ls
 
 test-readme: all readme.markdown

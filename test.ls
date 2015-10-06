@@ -837,18 +837,32 @@ test "compiler types are converted to JS ones when passed to macros" ->
 
 test "macros can be required relative to root directory" ->
 
-  # Create dummy temporary file
-  file-name = "./#{uuid.v4!}.js"
-  fd = fs.open-sync file-name, \a+
-  fs.write-sync fd, "module.exports = function() { }"
+  { exec-sync } = require \child_process
 
-  esl """
-    (macro (object x (require "#file-name")))
+  { name : dir-name, fd } = tmp.dir-sync!
+
+  # Create dummy temporary file
+  module-basename = "#{uuid.v4!}.js"
+  module-path = path.join dir-name, module-basename
+  module-fd = fs.open-sync module-path, \a+
+  fs.write-sync module-fd, "module.exports = function() { }"
+
+
+  main-basename = "#{uuid.v4!}.js"
+  main-path = path.join dir-name, main-basename
+  main-fd = fs.open-sync main-path, \a+
+  fs.write-sync main-fd, """
+    (macro (object x (require "./#module-basename")))
     (x)
     """
-    ..`@equals` ""
 
-  fs.unlink-sync file-name
+  eslc-path = path.join process.cwd!, "bin/eslc"
+  try
+    exec-sync "#eslc-path #main-basename", cwd : dir-name
+      ..to-string! `@equals` "\n"
+  finally
+    e <~ rimraf dir-name
+    @equals e, null
 
 test "macros can be required from node_modules relative to root directory" ->
 
