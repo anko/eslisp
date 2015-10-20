@@ -167,7 +167,6 @@ generate arbitrary JavaScript are built in to eslisp.
 | `break`    | break statement              |
 | `continue` | continue statement           |
 | `label`    | labeled statement            |
-| `label`    | labeled statement            |
 | `lambda`   | function expression          |
 | `function` | function declaration         |
 | `return`   | return statement             |
