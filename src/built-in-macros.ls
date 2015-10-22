@@ -361,6 +361,7 @@ contents =
   \try : ({compile, compile-many}:env, ...args) ->
 
     is-part = (thing, clause-name) ->
+      if not (thing instanceof list) then return false
       first = thing.content.0
       (first instanceof atom) && (first.text! is clause-name)
 

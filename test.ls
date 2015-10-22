@@ -406,6 +406,23 @@ test "try-catch (with `catch` and `finally`)" ->
       }
       """
 
+test "try-catch (with plain atom in body)" ->
+  esl '''
+      (try foo
+           (catch e
+                  bar)
+           (finally baz))
+      '''
+    ..`@equals` """
+      try {
+          foo;
+      } catch (e) {
+          bar;
+      } finally {
+          baz;
+      }
+      """
+
 test "try-catch (with empty body, `catch` and `finally`)" ->
   esl '''
       (try (catch err)
