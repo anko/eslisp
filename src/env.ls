@@ -5,6 +5,9 @@
 
 { keys, concat-map, unfoldr, map, reverse, fold } = require \prelude-ls
 es-generate = require \escodegen .generate _
+compile = require \./compile
+
+{ multiple-statements } = require \./import-macro
 
 # Recursively search a macro table and its parents for a macro with a given
 # name.  Returns `null` if unsuccessful; a macro representing the function if
@@ -52,14 +55,20 @@ class env
     # to the blissful land of Lisp, where everything is recursive somehow.
     @import-target-macro-tables = import-target-macro-tables
 
-  compile : ~> # compile to SpiderMonkey AST
-    if it.compile?
-      it.compile @
-    else it
+  compile : ~> # compile to estree
+    compile this, it
+
+  compile-to-quote : ~> # compile to estree that produces this AST node
+    compile.to-self-producer this, it
 
   compile-many : ~> it |> concat-map @compile |> (.filter (isnt null))
 
   compile-to-js : -> es-generate it
+
+  evaluate : ~>
+    it |> @compile |> @compile-to-js |> eval
+
+  multi : multiple-statements
 
   derive : ~>
     # Create a derived environment with this one as its parent.  This

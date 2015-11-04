@@ -1,10 +1,7 @@
 { map, zip, concat-map } = require \prelude-ls
-{ atom, list, string } = require \./ast
 { is-expression } = require \esutils .ast
 statementify = require \./es-statementify
 {
-  import-macro
-  import-capmacro
   import-compilerspace-macro
   multiple-statements
 } = require \./import-macro
@@ -64,12 +61,18 @@ update-expression = (operator, {type}) ->
     prefix : is-prefix
     argument : compile arg.0
 
-quote = ->
-  if arguments.length > 1
+quote = (env, ...args) ->
+  if args.length > 1
     throw Error "Too many arguments to quote; \
-                 expected 1 but got #{arguments.length}"
-  if it then it.as-sm!
-  else (list [], "returned from macro") .as-sm! # empty list
+                 expected 1 but got #{args.length}"
+
+  it = args.0
+
+  if it then env.compile-to-quote it
+  else
+    # Compile as if empty list
+    env.compile-to-quote do
+      { type : \list values : [] location : "returned from macro" }
 
 optionally-implicit-block-statement = ({compile, compile-many}, body) ->
   switch body.length
@@ -93,13 +96,13 @@ function-type = (type) ->
 
     arg1 = args.shift!
 
-    if arg1 instanceof atom
-      id := type : \Identifier name : arg1.text!
-      params := args.shift! .contents!map compile
+    if arg1.type is \atom
+      id := type : \Identifier name : arg1.value
+      params := args.shift! .values .map compile
     else
       # Let's assume it's a list then
       id := null
-      params := arg1.contents!map compile
+      params := arg1.values .map compile
 
     type : type
     id : id
@@ -209,7 +212,7 @@ contents =
   \switch : ({compile, compile-many}, discriminant, ...cases) ->
     type : \SwitchStatement
     discriminant : compile discriminant
-    cases : cases .map (.contents!)
+    cases : cases .map (.values)
       .map ([t, ...c]) ->
         type       : \SwitchCase
         test       : do
@@ -356,14 +359,14 @@ contents =
       throw Error "Expected 1 or 2 arguments to `regex`; got #{args.length}"
 
     type : \Literal
-    value : new RegExp args.0.text!, args.1?text!
+    value : new RegExp args.0.value, args.1?value
 
   \try : ({compile, compile-many}:env, ...args) ->
 
     is-part = (thing, clause-name) ->
-      if not (thing instanceof list) then return false
-      first = thing.content.0
-      (first instanceof atom) && (first.text! is clause-name)
+      if not (thing.type is \list) then return false
+      first = thing.values.0
+      (first.type is \atom) && (first.value is clause-name)
 
     catch-part = null
     finally-part = null
@@ -372,10 +375,10 @@ contents =
     args.for-each ->
       if it `is-part` \catch
         if catch-part then throw Error "Duplicate `catch` clause"
-        catch-part := it.content.slice 1
+        catch-part := it.values.slice 1
       else if it `is-part` \finally
         if finally-part then throw Error "Duplicate `finally` clause"
-        finally-part := it.content.slice 1
+        finally-part := it.values.slice 1
       else
         others.push it
 
@@ -425,11 +428,11 @@ contents =
     | 1 =>
       form = args.0
       switch
-      | form instanceof atom
+      | form.type is \atom
 
         # Mask any macro of that name in the current scope
 
-        import-compilerspace-macro env, form.text!, null
+        import-compilerspace-macro env, form.value, null
 
       | otherwise
 
@@ -443,7 +446,7 @@ contents =
         switch typeof! result
         | \Object =>
           for k, v of result
-            import-macro env, k, v
+            import-compilerspace-macro env, k, v
         | \Null => fallthrough
         | \Undefined => # do nothing
         | otherwise =>
@@ -453,10 +456,10 @@ contents =
       [ name, form ] = args
 
       switch
-      | form instanceof atom
+      | form.type is \atom
 
-        name = name.text!
-        target-name = form.text!
+        name = name.value
+        target-name = form.value
 
         alias-target-macro = env.find-macro target-name
 
@@ -465,12 +468,12 @@ contents =
 
         import-compilerspace-macro env, name, alias-target-macro
 
-      | form instanceof list
+      | form.type is \list
 
         userspace-macro = form |> env.compile |> compile-as-macro
 
-        name .= text!
-        import-macro env, name, userspace-macro
+        name .= value
+        import-compilerspace-macro env, name, userspace-macro
 
     | otherwise =>
       throw Error "Bad number of arguments to macro constructor \
@@ -513,7 +516,7 @@ contents =
                    (expected 1 or 2; got #that)"
     return null
 
-  \quote : (_, ...args) -> quote.apply null, args
+  \quote : quote.bind!
 
   \quasiquote : do
 
@@ -521,11 +524,11 @@ contents =
     # means we have to resolve lists which first atom is `unquote` or
     # `unquote-splicing` into either an array of values or an identifier to
     # an array of values.
-    qq-body = (compile, ast) ->
+    qq-body = (env, ast) ->
 
       recurse-on = (ast-list) ->
-        ast-list.contents!
-        |> map qq-body compile, _
+        ast-list.values
+        |> map qq-body env, _
         |> generate-concat
 
       unquote = ->
@@ -534,7 +537,7 @@ contents =
 
         # Unquoting should compile to just the thing separated with an array
         # wrapper.
-        [ compile it ]
+        [ env.compile it ]
 
       unquote-splicing = ->
         if arguments.length isnt 1
@@ -543,21 +546,34 @@ contents =
 
         # Splicing should leave it without the array wrapper so concat
         # splices it into the array it's contained in.
-        compile it
+
+        type : \MemberExpression
+        computed : false
+        object :
+          env.compile it
+        property :
+          type : \Identifier
+          name : \values
 
       switch
-      | ast instanceof list
-        [head, ...rest] = ast.contents!
+      | ast.type is \list
+        [head, ...rest] = ast.values
         switch
-        | not head? => [ quote (list [], "returned from macro") ] # empty list
-        | head instanceof atom =>
-          switch head.text!
+        | not head?
+          # quote an empty list
+          [ quote env, {
+            type : \list
+            values : []
+            location :"returned from macro"
+          } ]
+        | head.type is \atom =>
+          switch head.value
           | \unquote          => unquote         .apply null rest
           | \unquote-splicing => unquote-splicing.apply null rest
           | _ => [ recurse-on ast ]
         | _   => [ recurse-on ast ]
 
-      | _ => [ quote ast ]
+      | _ => [ quote env, ast ]
 
     generate-concat = (concattable-things) ->
 
@@ -581,37 +597,54 @@ contents =
       # this macro produce a concatenation of the quasiquote-resolved
       # arguments.
       |> ->
-        type : \CallExpression
-        callee :
-          type : \MemberExpression
-          object :
-            type : \MemberExpression
-            object   : type : \Identifier name : \Array
-            property : type : \Identifier name : \prototype
-          property   : type : \Identifier name : \concat
-        arguments : it
-
-    qq = ({compile}, ...args) ->
+        type : \ObjectExpression
+        properties : [
+          * type : \Property
+            kind : \init
+            key :
+              type : \Identifier
+              name : \type
+            value :
+              type : \Literal
+              value : \list
+              raw : "\"list\""
+          * type : \Property
+            kind : \init
+            key :
+              type : \Identifier
+              name : \values
+            value :
+              type : \CallExpression
+              callee :
+                type : \MemberExpression
+                object :
+                  type : \MemberExpression
+                  object   : type : \Identifier name : \Array
+                  property : type : \Identifier name : \prototype
+                property   : type : \Identifier name : \concat
+              arguments : it
+        ]
+    qq = (env, ...args) ->
 
       if args.length > 1
         throw Error "Too many arguments to quasiquote (`); \
                      expected 1, got #{args.length}"
       arg = args.0
 
-      if arg instanceof list and arg.contents!length
+      if arg.type is \list and arg.values.length
 
-        first-arg = arg.contents!0
+        first-arg = arg.values.0
 
-        if first-arg instanceof atom and first-arg.text! is \unquote
-          rest = arg.contents!slice 1 .0
-          compile rest
+        if first-arg.type is \atom and first-arg.value is \unquote
+          rest = arg.values.slice 1 .0
+          env.compile rest
 
         else
-          arg.contents!
-          |> map qq-body compile, _
+          arg.values
+          |> map qq-body env, _
           |> generate-concat
 
-      else quote arg # act like regular quote
+      else quote env, arg # act like regular quote
 
 module.exports =
   parent : null

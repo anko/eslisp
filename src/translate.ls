@@ -5,6 +5,7 @@
 root-macro-table = require \./built-in-macros
 statementify     = require \./es-statementify
 environment      = require \./env
+compile          = require \./compile
 
 { create-transform-macro } = require \./import-macro
 
@@ -16,7 +17,7 @@ module.exports = (root-env, ast, options={}) ->
     isolated-env = environment root-macro-table
     create-transform-macro isolated-env, func
 
-  statements = ast.content
+  statements = ast.values
 
   transform-macros .for-each (macro) ->
     statements := (macro.apply null, statements)
@@ -25,7 +26,7 @@ module.exports = (root-env, ast, options={}) ->
   program-ast =
     type : \Program
     body : statements
-           |> concat-map (.compile root-env)
+           |> concat-map -> compile root-env, it
            |> (.filter (isnt null)) # because macro definitions emit null
            |> (.map statementify)
 

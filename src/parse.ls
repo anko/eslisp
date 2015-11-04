@@ -2,7 +2,10 @@
 # AST objects.
 
 parse-sexpr = require \sexpr-plus .parse
-{ list, atom, string } = require \./ast
+
+list = (values, location)  -> { type : \list values, location }
+atom = (value, location)   -> { type : \atom value, location }
+string = (value, location) -> { type : \string value, location }
 
 convert = (tree) ->
   switch tree.type
