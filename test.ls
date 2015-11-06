@@ -620,13 +620,31 @@ test "macros can quasiquote to unquote arguments into output" ->
        (rand 5)"
     ..`@equals` "5 * Math.random();"
 
+test "macro env can create atoms out of strings or numbers" ->
+  esl """
+      (macro m (lambda () (return ((. this atom) 42))))
+      (m)"""
+    ..`@equals` "42;"
+
+test "macro env can create sexpr AST nodes equivalently to quoting" ->
+  with-quote =
+    esl """
+        (macro m (lambda () (return '(a \"b\"))))
+        (m)"""
+  with-construct =
+    esl """
+        (macro m (lambda ()
+                  (return ((. this list)
+                           ((. this atom) "a")
+                           ((. this string) "b")))))
+        (m)"""
+  with-quote `@equals` with-construct
+
 test "macros can evaluate arguments to JS and convert them back again" ->
   esl """
        (macro incrementedTimesTwo (lambda (x)
                     (var y (+ 1 ((. this evaluate) x)))
-                    (var xAsSexpr (object
-                                   type "atom"
-                                   value ((. y toString))))
+                    (var xAsSexpr ((. this atom) ((. y toString))))
                     (return `(* ,xAsSexpr 2))))
        (incrementedTimesTwo 5)
        """
@@ -654,9 +672,8 @@ test "quasiquote can contain nested lists" ->
        (lambda ()
         ; Convert arguments into array
         (var args
-             (object type "list"
-                     values ((. Array prototype slice call) arguments 0)))
-        (var total (object type "atom" value ((. (. args values length) toString))))
+             ((. this list apply) null ((. Array prototype slice call) arguments 0)))
+        (var total ((. this atom) ((. (. args values length) toString))))
         (return `(/ (+ ,@args) ,total))))
        (mean 1 2 3)
       '''
@@ -757,10 +774,10 @@ test "when returned from an IIFE, macros can share state" ->
         (return (object
                  plusPrev  (lambda (n)
                                    (+= x ((. this evaluate) n))
-                                   (return (object type "atom" value ((. x toString)))))
+                                   (return ((. this atom) ((. x toString)))))
                  timesPrev (lambda (n)
                                    (*= x ((. this evaluate) n))
-                                   (return (object type "atom" value ((. x toString))))))))))
+                                   (return ((. this atom) ((. x toString))))))))))
       (plusPrev 2) (timesPrev 2)
        """
    ..`@equals` "2;\n4;"
@@ -784,7 +801,7 @@ test "macro can check argument type and get its value" ->
   esl '''
       (macro stringy (lambda (x)
        (if (== (. x type) "atom")
-        (return (object type "string" value (+ "atom:" (. x value))))
+        (return ((. this string) (+ "atom:" (. x value))))
         (block
          (if (== (. x type) "string")
           (return x)
@@ -799,7 +816,7 @@ test "macro returning atom with empty or null name fails" ->
   <[ "" null undefined ]>.for-each ->
     self.throws do
       -> esl """
-          (macro mac (lambda () (return (object type "atom" value #it))))
+          (macro mac (lambda () (return ((. this atom) #it))))
           (mac)
           """
       Error
@@ -873,8 +890,8 @@ test "macros required from separate modules can access complation env" ->
     module.exports = function() {
       // Return two statements: a string and a generated symbol
       return this.multi(
-        { type : "atom", value : "ok" },
-        { type : "atom", value : "ok2" }
+        this.atom("ok"),
+        this.atom("ok2")
       );
     };
     """
@@ -1034,14 +1051,10 @@ test "multiple invocations of the compiler are separate" ->
 
 test "transform-macro can replace contents" ->
   wrapper = ->
-    {
-      type : \list
-      values : [
-        { type : \atom value : \* },
-        { type : \atom value : \3 },
-        { type : \atom value : \4 }
-      ]
-    }
+    @list do
+      @atom \*
+      @atom \3
+      @atom \4
   esl "(+ 1 2)" transform-macros : [ wrapper ]
     .. `@equals` "3 * 4;"
 
@@ -1057,16 +1070,13 @@ test "transform-macro can return empty array" ->
 
 test "transform-macro can receive arguments" ->
   wrapper = (...args) ->
-    {
-      type : \list
-      values : [ { type : \atom value : "hi" } ].concat args
-    }
+    @list.apply null [ @atom "hi" ].concat args
   esl "(+ 1 2) (+ 3 4)" transform-macros : [ wrapper ]
     .. `@equals` "hi(1 + 2, 3 + 4);"
 
 test "transform-macro can multi-return" ->
   wrapper = (...args) ->
-    this.multi { type : \atom value : "hi" }, { type : \atom value : "yo" }
+    this.multi (@atom \hi), (@atom "yo")
   esl "" transform-macros : [ wrapper ]
     .. `@equals` "hi;\nyo;"
 
@@ -1077,8 +1087,8 @@ test "multiple transform-macros can be used" ->
     .. `@equals` "1 + 2;"
 
 test "multiple transform-macros are applied in order" ->
-  wrap1 = (...args) -> { type : \list values : [ { type : \atom value : \one } ].concat args }
-  wrap2 = (...args) -> { type : \list values : [ { type : \atom value : \two } ].concat args }
-  wrap3 = (...args) -> { type : \list values : [ { type : \atom value : \three } ].concat args }
+  wrap1 = (...args) -> @list.apply null [ @atom \one ].concat args
+  wrap2 = (...args) -> @list.apply null [ @atom \two ].concat args
+  wrap3 = (...args) -> @list.apply null [ @atom \three ].concat args
   esl "zero" transform-macros : [ wrap1, wrap2, wrap3 ]
     .. `@equals` "three(two(one(zero)));"

@@ -55,6 +55,10 @@ class env
     # to the blissful land of Lisp, where everything is recursive somehow.
     @import-target-macro-tables = import-target-macro-tables
 
+  atom   : (value) ->  { type : \atom, value : value.to-string! }
+  string : (value) ->  { type : \string, value }
+  list   : (...values) -> { type : \list, values }
+
   compile : ~> # compile to estree
     compile this, it
 
