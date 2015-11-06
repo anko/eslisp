@@ -146,7 +146,7 @@ list-to-estree = (env, { values }) ->
     # Invoke the found macro
 
     #console.log "invoking macro `#{head.value}`"
-    macro-return = that.apply null, ([ local-env ] ++ rest)
+    macro-return = that.apply local-env, rest
     #console.log "output from `#{head.value}`"
     #console.log macro-return
 

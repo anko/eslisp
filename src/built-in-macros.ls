@@ -7,7 +7,9 @@ statementify = require \./es-statementify
 } = require \./import-macro
 
 chained-binary-expr = (type, operator) ->
-  macro = (env, ...args) ->
+  macro = (...args) ->
+    env = this
+    switch
     | args.length is 1 => env.compile args.0
     | args.length is 2
       type : type
@@ -16,24 +18,27 @@ chained-binary-expr = (type, operator) ->
       right : env.compile args.1
     | arguments.length > 2
       [ head, ...rest ] = args
-      macro do
+      macro.call do
         env
-        macro env, env.compile head
-        macro.apply null ([ env ] ++ rest)
+        macro.call env, env.compile head
+        macro.apply env, rest
     | otherwise =>
       throw Error "binary expression macro `#operator` unexpectedly called \
                    with no arguments"
 
-  (env, ...args) ->
+  (...args) ->
+    env = this
     if args.length is 1
-      console.log "ERR"
       throw Error "Chained binary expression `#operator` unexpectedly called \
                    with 1 argument"
     else
-      macro .apply null arguments
+      macro.apply env, arguments
 
 unary-expr = (operator) ->
-  ({ compile }, arg) ->
+
+  (arg) ->
+    { compile } = env = this
+
     type : \UnaryExpression
     operator : operator
     prefix : true
@@ -42,17 +47,19 @@ unary-expr = (operator) ->
 n-ary-expr = (operator) ->
   n-ary = chained-binary-expr \BinaryExpression operator
   unary = unary-expr operator
-  ({compile}, ...args) ->
+  (...args) ->
+    env = this
     ( switch args.length | 0 => null
                          | 1 => unary
                          | _ => n-ary
-    ).apply null arguments
+    ).apply env, arguments
 
 update-expression = (operator, {type}) ->
   unless operator in <[ ++ -- ]>
     throw Error "Illegal update expression operator #operator"
   is-prefix = ( type is \prefix )
-  ({ compile }, ...arg) ->
+  (...arg) ->
+    { compile } = env = this
     if arg.length isnt 1
       throw Error "Expected `++` expression to get exactly 1 argument but \
                    got #{arguments.length}"
@@ -61,7 +68,8 @@ update-expression = (operator, {type}) ->
     prefix : is-prefix
     argument : compile arg.0
 
-quote = (env, ...args) ->
+quote = (...args) ->
+  env = this
   if args.length > 1
     throw Error "Too many arguments to quote; \
                  expected 1 but got #{args.length}"
@@ -87,7 +95,8 @@ optionally-implicit-block-statement = ({compile, compile-many}, body) ->
 # Here's a helper that extracts the common parts to macros for
 # FunctionExpressions and FunctionDeclarations since they're so similar.
 function-type = (type) ->
-  ({compile, compile-many}:env, ...args) ->
+  (...args) ->
+    { compile, compile-many } = env = this
     # The first optional atom argument gives the id that should be attached to
     # the function expression.  The next argument is the function's argument
     # list.  All further arguments are statements for the body.
@@ -164,16 +173,19 @@ contents =
   \|=   : chained-binary-expr \AssignmentExpression \|=
   \^=   : chained-binary-expr \AssignmentExpression \^=
 
-  \seq : ({ compile }, ...expressions) ->
+  \seq : (...expressions) ->
+    { compile } = env = this
     type : \SequenceExpression
     expressions : expressions .map compile
 
-  \array : ({ compile }, ...elements) ->
+  \array : (...elements) ->
+    { compile } = env = this
     type : \ArrayExpression
     elements : elements.map compile
 
-  \object : ({ compile }, ...args) ->
+  \object : (...args) ->
 
+    { compile } = env = this
     if args.length % 2 isnt 0
       throw Error "Expected even number of arguments to object macro, but \
                    got #{args.length}"
@@ -191,7 +203,8 @@ contents =
         key : compile k
 
   \var : do
-    declaration = ({compile}, ...args) ->
+    declaration = (...args) ->
+      { compile } = env = this
       if args.length > 2
         throw Error "Expected variable declaration to get 1 or 2 arguments, \
                      but got #{arguments.length}."
@@ -205,11 +218,13 @@ contents =
 
     declaration
 
-  \block : ({compile, compile-many}, ...statements) ->
+  \block : (...statements) ->
+    { compile-many } = env = this
     type : \BlockStatement
     body : compile-many statements .map statementify
 
-  \switch : ({compile, compile-many}, discriminant, ...cases) ->
+  \switch : (discriminant, ...cases) ->
+    { compile, compile-many } = env = this
     type : \SwitchStatement
     discriminant : compile discriminant
     cases : cases .map (.values)
@@ -222,7 +237,8 @@ contents =
           else t
         consequent : compile-many c .map statementify
 
-  \if : ({compile, compile-many}, test, consequent, alternate) ->
+  \if : (test, consequent, alternate) ->
+    { compile } = env = this
     type : \IfStatement
     test       : compile test
     consequent : statementify compile consequent
@@ -230,43 +246,51 @@ contents =
       if alternate then statementify compile that
       else null
 
-  \?: : ({compile}, test, consequent, alternate) ->
+  \?: : (test, consequent, alternate) ->
+    { compile } = env = this
     type : \ConditionalExpression
     test       : compile test
     consequent : compile consequent
     alternate  : compile alternate
 
-  \while : ({compile, compile-many}:env, test, ...body) ->
+  \while : (test, ...body) ->
+    { compile } = env = this
     type : \WhileStatement
     test : compile test
     body : optionally-implicit-block-statement env, body
 
-  \dowhile : ({compile, compile-many}:env, test, ...body) ->
+  \dowhile : (test, ...body) ->
+    { compile } = env = this
     type : \DoWhileStatement
     test : compile test
     body : optionally-implicit-block-statement env, body
 
-  \for : ({compile, compile-many}:env, init, test, update, ...body) ->
+  \for : (init, test, update, ...body) ->
+    { compile } = env = this
     type : \ForStatement
     init : compile init
     test : compile test
     update : compile update
     body : optionally-implicit-block-statement env, body
 
-  \forin : ({compile, compile-many}:env, left, right, ...body) ->
+  \forin : (left, right, ...body) ->
+    { compile } = env = this
     type : \ForInStatement
     left : compile left
     right : compile right
     body : optionally-implicit-block-statement env, body
 
-  \break : ({compile}, arg) ->
+  \break : (arg) ->
+    { compile } = env = this
     type : \BreakStatement
     label : if arg then compile arg else null
-  \continue : ({compile}, arg) ->
+  \continue : (arg) ->
+    {compile} = env = this
     type : \ContinueStatement
     label : if arg then compile arg else null
 
-  \label : ({compile}, ...args) ->
+  \label : (...args) ->
+    { compile } = env = this
     if args.length not in [ 1 2 ]
       throw Error "Expected `label` macro to get 1 or 2 arguments, but got \
                    #{args.length}"
@@ -279,7 +303,8 @@ contents =
     label : compile label
     body  : body
 
-  \return : ({compile}, arg) ->
+  \return : (arg) ->
+    { compile } = env = this
     type : \ReturnStatement
     argument : compile arg
 
@@ -290,7 +315,11 @@ contents =
       | \Identifier => false
       | otherwise => true
 
-    dot = ({compile}:env, ...args) ->
+    dot = (...args) ->
+
+      { compile } = env = this
+
+      switch
       | args.length is 1 => compile args.0
       | args.length is 2
         property-compiled = compile args.1
@@ -300,15 +329,19 @@ contents =
         property : property-compiled
       | arguments.length > 2
         [ ...initial, last ] = args
-        dot do
+        dot.call do
           env
-          dot.apply null ([ env ] ++ initial)
-          dot env, compile last
+          dot.apply env, initial
+          dot.call env, compile last
       | otherwise =>
         throw Error "dot called with no arguments"
 
   \get : do
-    get = ({compile}:env, ...args) ->
+    get = (...args) ->
+
+      { compile } = env = this
+
+      switch
       | args.length is 1 => compile args.0
       | args.length is 2
         property-compiled = compile args.1
@@ -318,10 +351,10 @@ contents =
         property : property-compiled
       | arguments.length > 2
         [ ...initial, last ] = args
-        get do
+        get.call do
           env
-          get.apply null ([ env ] ++ initial)
-          get env, compile last
+          get.apply env, initial
+          get.call env, compile last
       | otherwise =>
         throw Error "dot called with no arguments"
 
@@ -330,7 +363,10 @@ contents =
 
   \function : function-type \FunctionDeclaration
 
-  \new : ({compile}, ...args) ->
+  \new : (...args) ->
+
+    { compile } = env = this
+
     [ newTarget, ...newArgs ] = args
 
     if not newTarget? then throw Error "No target for `new`"
@@ -340,12 +376,14 @@ contents =
     callee : compile newTarget
     arguments : newArgs .map compile
 
-  \debugger : (_, ...args) ->
+  \debugger : (...args) ->
     if args.length
       throw Error "Expected no arguments to `debugger` statement"
     type : \DebuggerStatement
 
-  \throw : ({compile}, ...args) ->
+  \throw : (...args) ->
+
+    { compile } = env = this
 
     if args.length isnt 1
       throw Error "Expected 1 argument to `throws`; got #{args.length}"
@@ -353,7 +391,9 @@ contents =
     type : \ThrowStatement
     argument : compile args.0
 
-  \regex : ({compile}, ...args) ->
+  \regex : (...args) ->
+
+    { compile } = env = this
 
     if args.length not in [ 1 2 ]
       throw Error "Expected 1 or 2 arguments to `regex`; got #{args.length}"
@@ -361,7 +401,9 @@ contents =
     type : \Literal
     value : new RegExp args.0.value, args.1?value
 
-  \try : ({compile, compile-many}:env, ...args) ->
+  \try : (...args) ->
+
+    { compile, compile-many } = env = this
 
     is-part = (thing, clause-name) ->
       if not (thing.type is \list) then return false
@@ -399,7 +441,9 @@ contents =
     handler : catch-clause
     finalizer : finally-clause
 
-  \macro : (env, ...args) ->
+  \macro : (...args) ->
+
+    env = this
 
     compile-as-macro = (es-ast) ->
 
@@ -480,43 +524,7 @@ contents =
                    (expected 1 or 2; got #that)"
     return null
 
-  \capmacro : (env, ...args) ->
-
-    compile-as-macro = (es-ast) ->
-      # This is deliberately defined in the closure here, so it's in scope
-      # during the `eval` and available to the code being compiled.
-      let { require } = require.main
-        eval "(#{env.compile-to-js es-ast})"
-
-    switch args.length
-    | 1 =>
-      es-ast = env.compile args.0
-
-      result = compile-as-macro es-ast
-
-      switch typeof! result
-      | \Object =>
-        for k, v of result
-          import-capmacro env, k, v
-      | \Null => fallthrough
-      | \Undefined => # do nothing
-      | otherwise =>
-        throw Error "Invalid macro source #that (expected to get an Object, \
-                     or a name argument and a Function)"
-    | 2 =>
-      [ name, form ] = args
-
-      userspace-macro = form |> env.compile |> compile-as-macro
-
-      name .= text!
-      import-capmacro env, name, userspace-macro
-
-    | otherwise =>
-      throw Error "Bad number of arguments to macro constructor \
-                   (expected 1 or 2; got #that)"
-    return null
-
-  \quote : quote.bind!
+  \quote : -> quote.apply this, arguments
 
   \quasiquote : do
 
@@ -561,7 +569,7 @@ contents =
         switch
         | not head?
           # quote an empty list
-          [ quote env, {
+          [ quote.call env, {
             type : \list
             values : []
             location :"returned from macro"
@@ -573,7 +581,7 @@ contents =
           | _ => [ recurse-on ast ]
         | _   => [ recurse-on ast ]
 
-      | _ => [ quote env, ast ]
+      | _ => [ quote.call env, ast ]
 
     generate-concat = (concattable-things) ->
 
@@ -624,7 +632,9 @@ contents =
                 property   : type : \Identifier name : \concat
               arguments : it
         ]
-    qq = (env, ...args) ->
+    qq = (...args) ->
+
+      env = this
 
       if args.length > 1
         throw Error "Too many arguments to quasiquote (`); \
@@ -644,7 +654,7 @@ contents =
           |> map qq-body env, _
           |> generate-concat
 
-      else quote env, arg # act like regular quote
+      else quote.call env, arg # act like regular quote
 
 module.exports =
   parent : null

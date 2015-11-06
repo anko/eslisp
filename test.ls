@@ -549,7 +549,7 @@ test "macro constructor given object imports properties as macros" ->
    ..`@equals` "'hi a';\n'hi b';"
 
 test "simple unquoting macro" ->
-  esl "(macro call (lambda (env x) (return `(,x))))
+  esl "(macro call (lambda (x) (return `(,x))))
        (call three)"
     ..`@equals` "three();"
 
@@ -610,7 +610,7 @@ test "quasiquote is like quote if no unquotes contained" ->
     ..`@equals` "5 * Math.random();"
 
 test "macros can quasiquote to unquote arguments into output" ->
-  esl "(macro rand (lambda (env upper)
+  esl "(macro rand (lambda (upper)
                   (return `(* ,upper
                       ((. Math random))))))
        (rand 5)"
@@ -618,8 +618,8 @@ test "macros can quasiquote to unquote arguments into output" ->
 
 test "macros can evaluate arguments to JS and convert them back again" ->
   esl """
-       (macro incrementedTimesTwo (lambda (env x)
-                    (var y (+ 1 ((. env evaluate) x)))
+       (macro incrementedTimesTwo (lambda (x)
+                    (var y (+ 1 ((. this evaluate) x)))
                     (var xAsSexpr (object
                                    type "atom"
                                    value ((. y toString))))
@@ -629,18 +629,18 @@ test "macros can evaluate arguments to JS and convert them back again" ->
     ..`@equals` "6 * 2;"
 
 test "macros can unquote arrays into quasiquoted lists (non-splicing)" ->
-  esl "(macro what (lambda (env x)
+  esl "(macro what (lambda (x)
                   (return `(,x))))
        (what (+ 2 3))"
     ..`@equals` "(2 + 3)();"
 
 test "macros can splice arrays into quasiquoted lists" ->
-  esl "(macro sumOf (lambda (env xs) (return `(+ ,@xs))))
+  esl "(macro sumOf (lambda (xs) (return `(+ ,@xs))))
        (sumOf (1 2 3))"
     ..`@equals` "1 + (2 + 3);"
 
 test "macros can splice in empty arrays" ->
-  esl "(macro sumOf (lambda (env xs) (return `(+ 1 2 ,@xs))))
+  esl "(macro sumOf (lambda (xs) (return `(+ 1 2 ,@xs))))
        (sumOf ())"
     ..`@equals` "1 + 2;"
 
@@ -651,7 +651,7 @@ test "quasiquote can contain nested lists" ->
         ; Convert arguments into array
         (var args
              (object type "list"
-                     values ((. Array prototype slice call) arguments 1)))
+                     values ((. Array prototype slice call) arguments 0)))
         (var total (object type "atom" value ((. (. args values length) toString))))
         (return `(/ (+ ,@args) ,total))))
        (mean 1 2 3)
@@ -685,7 +685,7 @@ test "macro producing an object literal" ->
     ..`@equals` "({ a: 1 });"
 
 test "macro producing a function" ->
-  esl "(macro increase (lambda (env n)
+  esl "(macro increase (lambda (n)
                       (return `(lambda (x) (return (+ x ,n))))))
        (increase 3)"
     ..`@equals` "(function (x) {\n    return x + 3;\n});"
@@ -735,7 +735,7 @@ test "regex can be given atoms with escaped spaces and slashes" ->
     ..`@equals` "/abc *\\//g;"
 
 test "macro deliberately breaking hygiene for function argument anaphora" ->
-  esl "(macro : (lambda (env body)
+  esl "(macro : (lambda (body)
        (return `(lambda (it) ,body))))
         (: (return (. it x)))"
     ..`@equals` "(function (it) {\n    return it.x;\n});"
@@ -751,11 +751,11 @@ test "when returned from an IIFE, macros can share state" ->
       (macro
        ((lambda () (var x 0)
         (return (object
-                 plusPrev  (lambda (env n)
-                                   (+= x ((. env evaluate) n))
+                 plusPrev  (lambda (n)
+                                   (+= x ((. this evaluate) n))
                                    (return (object type "atom" value ((. x toString)))))
-                 timesPrev (lambda (env n)
-                                   (*= x ((. env evaluate) n))
+                 timesPrev (lambda (n)
+                                   (*= x ((. this evaluate) n))
                                    (return (object type "atom" value ((. x toString))))))))))
       (plusPrev 2) (timesPrev 2)
        """
@@ -772,13 +772,13 @@ test "macro constructor loading from IIFE can load nothing" ->
    ..`@equals` ""
 
 test "macro can return multiple statements with `multi`" ->
-  esl "(macro declareTwo (lambda () (return ((. env multi) '(var x 0) '(var y 1)))))
+  esl "(macro declareTwo (lambda () (return ((. this multi) '(var x 0) '(var y 1)))))
        (declareTwo)"
    ..`@equals` "var x = 0;\nvar y = 1;"
 
 test "macro can check argument type and get its value" ->
   esl '''
-      (macro stringy (lambda (env x)
+      (macro stringy (lambda (x)
        (if (== (. x type) "atom")
         (return (object type "string" value (+ "atom:" (. x value))))
         (block
@@ -866,9 +866,9 @@ test "macros required from separate modules can access complation env" ->
   # To set up, create a temporary file with the appropriate macro contents
   { name, fd } = tmp.file-sync!
   fs.write-sync fd, """
-    module.exports = function(env) {
+    module.exports = function() {
       // Return two statements: a string and a generated symbol
-      return env.multi(
+      return this.multi(
         { type : "atom", value : "ok" },
         { type : "atom", value : "ok2" }
       );
@@ -911,7 +911,7 @@ test "IIFE given to macro can itself contain other macros" ->
 
 test "macro-generating macro" -> # yes srsly
   esl '''
-    (macro define-with-name (lambda (env x)
+    (macro define-with-name (lambda (x)
       (return `(macro ,x (lambda () (return `(var hello 5)))))))
     (define-with-name what)
     (what)
@@ -920,8 +920,8 @@ test "macro-generating macro" -> # yes srsly
 
 test "macro generating macro and macro call" -> # yes srsly squared
   esl '''
-    (macro define-and-call (lambda (env x)
-      (return ((. env multi) `(macro what (lambda () (return `(hello))))
+    (macro define-and-call (lambda (x)
+      (return ((. this multi) `(macro what (lambda () (return `(hello))))
                               `(what)))))
     (define-and-call)
     '''
@@ -962,7 +962,7 @@ test "invalid AST returned by macro throws error" ->
 test "macro multi-returning with bad values throws descriptive error" ->
   try
     esl '''
-      (macro breaking (lambda (env) (return ((. env multi) null))))
+      (macro breaking (lambda () (return ((. this multi) null))))
       (breaking)
       '''
   catch e
@@ -992,8 +992,8 @@ test "macro can return estree object" ->
 
 test "macro can multi-return estree objects" ->
   esl '''
-    (macro identifiers (lambda (env)
-      (return ((. env multi)
+    (macro identifiers (lambda ()
+      (return ((. this multi)
                (object "type" "Identifier"
                        "name" "x")
                (object "type" "Identifier"
@@ -1004,8 +1004,8 @@ test "macro can multi-return estree objects" ->
 
 test "macro can multi-return a combination of estree and sexprs" ->
   esl '''
-    (macro identifiers (lambda (env)
-      (return ((. env multi)
+    (macro identifiers (lambda ()
+      (return ((. this multi)
                (object "type" "Identifier"
                        "name" "x")
                'x))))
@@ -1015,8 +1015,8 @@ test "macro can multi-return a combination of estree and sexprs" ->
 
 test "macro can compile and return parameter as estree" ->
   esl '''
-    (macro that (lambda (env x)
-      (return ((. env compile) x))))
+    (macro that (lambda (x)
+      (return ((. this compile) x))))
     (that 3)
     (that "hi")
     (that (c))
@@ -1052,7 +1052,7 @@ test "transform-macro can return empty array" ->
     .. `@equals` ""
 
 test "transform-macro can receive arguments" ->
-  wrapper = (env, ...args) ->
+  wrapper = (...args) ->
     {
       type : \list
       values : [ { type : \atom value : "hi" } ].concat args
@@ -1061,20 +1061,20 @@ test "transform-macro can receive arguments" ->
     .. `@equals` "hi(1 + 2, 3 + 4);"
 
 test "transform-macro can multi-return" ->
-  wrapper = (env, ...args) ->
-    env.multi { type : \atom value : "hi" }, { type : \atom value : "yo" }
+  wrapper = (...args) ->
+    this.multi { type : \atom value : "hi" }, { type : \atom value : "yo" }
   esl "" transform-macros : [ wrapper ]
     .. `@equals` "hi;\nyo;"
 
 test "multiple transform-macros can be used" ->
-  wrapper-passthrough = (env, ...args) ->
-    env.multi.apply null args
+  wrapper-passthrough = (...args) ->
+    this.multi.apply null args
   esl "(+ 1 2)" transform-macros : [ wrapper-passthrough, wrapper-passthrough ]
     .. `@equals` "1 + 2;"
 
 test "multiple transform-macros are applied in order" ->
-  wrap1 = (env, ...args) -> { type : \list values : [ { type : \atom value : \one } ].concat args }
-  wrap2 = (env, ...args) -> { type : \list values : [ { type : \atom value : \two } ].concat args }
-  wrap3 = (env, ...args) -> { type : \list values : [ { type : \atom value : \three } ].concat args }
+  wrap1 = (...args) -> { type : \list values : [ { type : \atom value : \one } ].concat args }
+  wrap2 = (...args) -> { type : \list values : [ { type : \atom value : \two } ].concat args }
+  wrap3 = (...args) -> { type : \list values : [ { type : \atom value : \three } ].concat args }
   esl "zero" transform-macros : [ wrap1, wrap2, wrap3 ]
     .. `@equals` "three(two(one(zero)));"

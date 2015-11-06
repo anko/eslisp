@@ -23,7 +23,7 @@ import-compilerspace-macro = (env, name, func) ->
 create-transform-macro = (env, func) ->
   (...args) ->
 
-    result = func.apply null, ([ env ] ++ args)
+    result = func.apply env, args
 
     if result instanceof multiple-statements
       return result.statements
