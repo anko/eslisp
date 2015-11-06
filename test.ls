@@ -200,9 +200,13 @@ test "empty statement" ->
   esl "()"
     ..`@equals` ""
 
-test "break and continue statements" ->
-  esl "(while true (break) (continue))"
-    ..`@equals` "while (true) {\n    break;\n    continue;\n}"
+test "break statement" ->
+  esl "(while true (break))"
+    ..`@equals` "while (true) {\n    break;\n}"
+
+test "continue statement" ->
+  esl "(while true (continue))"
+    ..`@equals` "while (true) {\n    continue;\n}"
 
 test "break to label" ->
   esl "(label x (while true (break x)))"
