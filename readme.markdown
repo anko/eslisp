@@ -4,9 +4,9 @@ An [S-expression][4] syntax for [ECMAScript][5]/JavaScript, with [Lisp-like
 hygienic macros][6].  Minimal core, maximally customisable.
 
 This is not magic:  It's just an S-expression encoding of the [estree][7] AST
-format.  The macros are ordinary JS functions that return arrays but just exist
-at compile-time.  Macros can be put on [npm][8] to distribute your own language
-features, [like this][9].
+format.  The macros are ordinary JS functions that return objects, which just
+exist at compile-time.  This means macros can be put on [npm][8] to distribute
+your own language features, [like this][9].
 
 > :warning: **Note the 0.x.x [semver][10].**  The API may shift under your
 > feet.
@@ -286,8 +286,7 @@ to use.
     array(1);
 
 Macros can use [`quasiquote`][34] (`` ` ``), `unquote` (`,`) and
-`unquote-splicing` (`,@`) to construct their outputs and to perform arbitrary
-computations.
+`unquote-splicing` (`,@`) to construct their outputs neatly.
 
 <!-- !test in macro and call -->
 
@@ -300,11 +299,14 @@ computations.
 
 The macro function is called with a `this` context containing methods handy for
 working with macro arguments, such as `this.evaluate`, which compiles and runs
-the argument and returns the result.
+the argument and returns the result, and `this.atom` which creates a new
+S-expression atom.
 
 <!-- !test in evaluate in macro -->
 
-    (macro add2 (lambda (x) (return `,(+ ((. this evaluate) x) 2))))
+    (macro add2 (lambda (x)
+                 (var xPlusTwo (+ ((. this evaluate) x) 2))
+                 (return ((. this atom) xPlusTwo))))
     ((. console log) (add2 40))
 
 <!-- !test out evaluate in macro -->
@@ -328,7 +330,7 @@ You can return multiple statements from a macro with `this.multi`.
     delete someVariable;
 
 Returning `null` from a macro just means nothing.  This is handy for
-compilation side-effects or conditional compilation.
+compilation side-effects and conditional compilation.
 
 <!-- !test in nothing-returning macro -->
 
@@ -343,18 +345,20 @@ compilation side-effects or conditional compilation.
 
     yep();
 
-You can even make macros that share state: just pass an [immediately-invoked
-function expression (IIFE)][35] to `macro` and return an object.  Each property
-of the object will become a macro.  The variables in the IIFE closure are
-shared between them.
+Because macros are JS functions and JS functions can be closures, you can even
+make macros that share state.  One way is to put them in an
+[immediately-invoked function expression (IIFE)][35], return them in an object,
+and pass that to `macro`.  Each property of the object is imported as a macro,
+and the variables in the IIFE are shared between them.
 
 <!-- !test in macros block -->
 
     (macro ((lambda ()
             (var x 0) ; visible to all of the macro functions
-            (return (object increment (lambda () (return (++ x)))
-                            decrement (lambda () (return (-- x)))
-                            get       (lambda () (return x)))))))
+            (return
+             (object increment (lambda () (return ((. this atom) (++ x))))
+                     decrement (lambda () (return ((. this atom) (-- x))))
+                     get       (lambda () (return ((. this atom) x))))))))
 
     (increment)
     (increment)
@@ -375,20 +379,21 @@ shared between them.
 ### Macros as modules
 
 The second argument to `macro` needs to evaluate to a function, but it can be
-whatever. so you can put the macro function in a separate file and do—
+whatever, so you can put the macro function in a separate file and do—
 
     (macro someName (require "./file.js"))
 
 —to use it.
 
 This means you can publish eslisp macros on [npm][36].  The name prefix
-`eslisp-` is recommended.  [Some exist already.][37]
+`eslisp-` and keyword `eslisp-macro` are recommended.  [Some exist
+already.][37]
 
 ### Transformation macros
 
 When running `eslc` from the command line, to apply a transformation macro to
 an eslisp file during compilation, supply the `--transform <macro-name>`
-argument. For example,
+argument (`-t` for short). For example,
 
     eslc --transform eslisp-propertify myprogram.esl
 
@@ -429,7 +434,7 @@ In brief:  A table of predefined macros is used to turn S-expressions into
 Some of those macros allow defining further macros, which get added to the
 table and work from then on like the predefined ones.
 
-For more, read [the source][43] and ask questions.
+For more, read [the source][43]. Ask questions!
 
 ## Bugs, discussion & contributing
 

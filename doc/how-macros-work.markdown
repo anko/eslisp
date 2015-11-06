@@ -13,13 +13,11 @@ Here's a macro in JavaScript which returns code for declaring a variable of a
 given `name` with the value `"hello"`:
 
     module.exports = function (name) {
-        return [{ atom : '=' }, name, 'hello'];
+        return this.list(this.atom('var'), name, this.string('hello'));
     };
 
-What it does is probably becoming clear to you without explanation, but let's
-say it just in case.  The returned array becomes a list, the returned object
-becomes an atom, the string becomes (surprise) still a string, and whatever is
-in the `name` argument is plugged in between.
+That returns a list which first element is an atom, the second is the first
+argument passed to the macro, and the third is a string.
 
 It's basically a template for code of the form `(var <something-goes-here>
 "hello")`.
@@ -42,16 +40,14 @@ somewhere in the same directory, so we can talk through what's happening:
 
 The compiler evaluates the `(require "declareAsHello.js")`, checks it got a
 function and saves it as a macro under the given name.  When that macro is
-called with the `yo` atom, the compiler converts it the JS object `{ atom :
-"yo" }` and calls the stored function with it.
+called with the `yo` atom, the compiler calls the stored function with it.
 
-The function then runs, returning this array:
+The function then runs, returning S-expression nodes equivalent to
 
-    [{ atom : '=' }, { atom : "yo" }, 'hello']
+    (var yo "hello")
 
-The compiler reads the objects as atoms and the array as a list, and adds
-the result into the code at that point.  So it's as if you'd written `(var
-yo "hello)`.  That compiles to JavaScript to become
+The compiler then sees that a `var` macro is defined, so it calls that, which
+emits the code
 
     var yo = 'hello';
 
@@ -60,26 +56,31 @@ Yey!
 We could of course have written the macro function in eslisp instead:
 
     (= (. module exports)
-       (lambda (name) (return (array (object atom "=") name "hello"))))
+       (lambda (name)
+        (return ((. this list)
+                 ((. this atom) "=")
+                 name
+                 ((. this string) "hello")))))
 
-That compiles to the same JS before.  You can write macros in any language you
-want, as long as you can compile it to JS before `require`-ing it from eslisp.
+That compiles to the same JS before.  In fact, you can write macros in any
+language you want, as long as you can compile it to JS before `require`-ing it
+from eslisp.
 
-Eslisp has special syntax for making macros super pretty though, so let's talk
-about that next:
+If the above syntax looks clumsy, that's because it is.  Eslisp has special
+syntax for *quoting*, which makes macro return values much easier to read:
 
 ## Prettier macros with quasiquote
 
 To make macros clearer to read, eslisp has special syntax for returning stuff
 that represents code.  Let's rewrite the previous hello-assigning macro:
 
-    (= (. module exports) (lambda (name) (return `(= ,name "hello"))))
+    (= (. module exports) (lambda (name) (return `(var ,name "hello"))))
 
 That does exactly the same thing, but it contains less of the
-`array`/`object` fluff, so it's clearer to read.  The `array` constructor
-is replaced with a `` ` `` (backtick).  The `=` atom no longer needs to be
-written explicitly as `(object atom =)` and there's now a `,` (comma)
-before `name`.
+`atom`/`list`/`string` constructor fluff, so it's clearer to read.  The `(.
+this list)` constructor is replaced with a `` ` `` (backtick).  The `var` atom
+no longer needs to be written explicitly as `((. this atom) var)` and there's
+now a `,` (comma) before `name`.
 
 In various other Lisp family languages that eslisp is inspired by, the backtick
 is called a *quasiquote* and the comma is called *unquote*.  There's a lot of
@@ -90,10 +91,18 @@ Quasiquote (`` ` ``) means "I want the following thing to represent code".
 Inside it, everything is treated as if it were code.  Unquote inside a
 quasiquote means "…except this", so unquoted things get inserted as-is.
 
-In fact, the above thing using quasiquote and unquote compiles to
+In fact, the above thing using quasiquote and unquote compiles to something
+like
 
     module.exports = function (name) {
-        return Array.prototype.concat([{ atom: '=' }], [name], ['hello']);
+      return {
+        type : "list",
+        values : Array.prototype.concat(
+          [ { type : "atom", value : "var" } ],
+          [ name ],
+          [ { type : "string" value : "hello" ]
+        )
+      };
     };
 
 Unquote (`,`) also has a cousin called unquote-splicing `,@` which can insert
@@ -106,7 +115,7 @@ of some numbers, you could do
      (lambda ()
       ; convert arguments to Array
       (var args ((. Array prototype slice call) arguments 0))
-      (var total (. args length))
+      (var total ((. this atom) (. args length)))
       (return `(/ (+ ,@args) ,total))))
 
     (mean 1 2 3) ; call it
@@ -115,11 +124,11 @@ which effectively creates the eslisp code `(/ (+ 1 2 3) 3)` that compiles to JS
 as `(1 + (2 + 3)) / 3;`
 
 If we had used the plain unquote (`,`) instead of unquote-splicing (`,@`), we'd
-have gotten `(/ (+ (1 2 3)) 3)` which would compile to nonsense JS, as `1`
-isn't a function.
+have gotten `(/ (+ (1 2 3)) 3)` which would compile to nonsense JS, as eslisp
+would think `(1 2 3)` was a function call when `1` isn't a function.
 
 If you don't want to use `quasiquote`/`` ` `` & co., and think it's clearer for
-your use-case to just return arrays and objects, you can always do that.
+your use-case to just work with objects, you can still always do that.
 
 ## Scope
 
@@ -188,51 +197,32 @@ nesting level.
 
 ### Using macros inside macros
 
-Macros defined with `macro` do not capture user-defined macros—they effectively
-exist in a new, independent scope.
+The return values of macros can call other macros too.
 
-<!-- !test in non-capturing macro -->
+Redefinition of a macro in the outer environment is reflected in how
+earlier-defined macros are processed.
 
-    ; Define a macro "ok".
-    (macro ok (lambda () (return 'null)))
+<!-- !test in used macro redefinition -->
 
-    ; Define a non-capturing macro that expects "ok" not to be defined.
-    (macro callOk (lambda (x)
-      (return `(ok)))) ; expects this to compile to calling a function "ok"
+    (macro best (lambda () (return 'pirates)))
 
-    ; Which it does, despite a macro "ok" being defined!
-    (callOk)
+    (macro callBest (lambda (x)
+      (return `(best))))
 
-<!-- !test out non-capturing macro -->
+    (callBest)
 
-    ok();
+    (macro best (lambda () (return 'ninjas))) ; redefinition
 
-This is to prevent unexpected results when definitions of macros affect the
-return valus of later defined ones (which were perhaps defined in another
-module by another person).
+    (callBest)
 
-If you deliberately *do* want the environment to be captured, just use
-`capmacro` instead.  This works exactly the same way as `macro` but *doesn't*
-reset the macro environment.
+<!-- !test out used macro redefinition -->
 
-<!-- !test in capturing macro -->
+    pirates;
+    ninjas;
 
-    ; Define a macro "ok".C
-    (macro ok (lambda () (return 'null)))
-
-    ; Define a capturing macro.
-    (capmacro callOk (lambda (x)
-      (return `(ok)))) ; expects this to compile to calling the macro "ok"
-                       ; (NOT the function "ok"!)
-
-    ; Which it does, because the macro "ok" was captured.
-    (callOk)
-
-<!-- !test out capturing macro -->
-
-    null;
-
-In summary: Use `macro`, except when you know you need `capmacro`.
+If you're absolutely sure you really do want to return a call expression
+`best()` without expanding the macro, you should return an estree object,
+because those aren't macro-expanded.
 
 ## Transform macros
 
@@ -273,16 +263,20 @@ compiles to
     ++hello;
     ++hello;
 
+If your macro internally calls other macro functions, and want to know if those
+returned multiple statements, just check if it's an instance of `this.multi`.
+
 ### `this.evaluate`
 
 Lets you compile and run eslisp code at compile-time.
 
-For example, you might want to pre-compute some expression.
+For example, here's how you might pre-compute a numeric expression at
+compile-time:
 
 <!-- !test in precompute -->
 
     (macro precompute
-     (lambda (list) (return `,((. this evaluate) list))))
+     (lambda (list) (return ((. this atom) ((. this evaluate) list)))))
 
     (precompute (+ 1 2 (* 5 (. Math PI))))
 
@@ -292,83 +286,5 @@ compiles to
 
     18.707963267948966;
 
-There are much subtler uses for it than that though…
-
-### `this.gensym`
-
-Generates a new atom with a unique name (a [UUID][3], actually).  Every call to
-`this.gensym` produces a unique name.
-
-Good for when you just need a unique name for some "scratch" variable that
-shouldn't conflict with anything else.
-
-<!-- !test program ./bin/eslc | head -c -1 \
-| sed 's:\\$\\w\\+:$779e98ee_d2cf_413c_b608_c0aa93722ef4:g' -->
-
-<!-- !test in gensym swap -->
-
-    ; Generate the assignments needed to swap the values of two variables
-    (macro swap
-     (lambda (varA varB)
-      (var swapVar ((. this gensym))) ; Generate a new symbol we can use
-      (return ((. this multi)
-
-               ; Save a's value in the swap variable
-               `(var ,swapVar a)
-
-               ; Assign b's value to a
-               `(= a b)
-
-               ; Assign the swap variable's value to b
-               `(= b ,swapVar)))))
-    (swap x y)
-
-<!-- !test out gensym swap -->
-
-    var $779e98ee_d2cf_413c_b608_c0aa93722ef4 = a;
-    a = b;
-    b = $779e98ee_d2cf_413c_b608_c0aa93722ef4;
-
-A lot like [Common Lisp's `gensym`][4].
-
-### `this.isExpr`
-
-<!-- !test program ./bin/eslc | head -c -1 -->
-
-Answers the question of "*Would this compile to an expression?*".  As opposed
-to a statement, that is.
-
-Handy for things like writing a macro that lets you define functions that
-implicitly return the last thing in their bodies if it's an expression.
-
-<!-- !test in implicit-return function -->
-
-    (macro fn (lambda ()
-      (var args ((. Array prototype slice call) arguments))
-      (var fnArgs (. args 0))
-      (var fnBody ((. args slice) 1))
-
-      (var lastInBody ((. fnBody pop))) ; pop off last thing in body
-
-      (var lastConverted
-       (?: ((. this isExpr) lastInBody) ; if it's an expression
-           `(return ,lastInBody)        ; convert it to a return statement
-           lastInBody))                 ; otherwise just return it as-is
-
-      ((. fnBody push) lastConverted) ; push the maybe-converted thing back on
-
-      ; return the function definition
-      (return `(lambda ,fnArgs ,@fnBody))))
-
-    (fn (a b) (+ a b))
-
-<!-- !test out implicit-return function -->
-
-    (function (a, b) {
-        return a + b;
-    });
-
 [1]: https://github.com/anko/eslisp-camelify
 [2]: https://github.com/anko/eslisp-propertify
-[3]: http://en.wikipedia.org/wiki/Universally_unique_identifier
-[4]: https://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node110.html
