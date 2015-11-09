@@ -5,10 +5,11 @@ looks-like-positive-number = (atom-text) ->
 looks-like-negative-number = (atom-text) ->
   atom-text.match /^-\d+(\.\d+)?$/
 
-string-to-estree = (env, { value }) ->
+string-to-estree = (env, { value }:ast) ->
   type  : \Literal
   value : value
   raw   : "\"#{value}\""
+  loc   : ast.location
 
 string-to-self-producer = ->
   type : \ObjectExpression

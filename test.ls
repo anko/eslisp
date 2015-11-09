@@ -1109,6 +1109,10 @@ test "boolean literal source map" ->
   esl.source-map "42" filename : "test.esl"
     ..`@equals` '{"version":3,"sources":["test.esl"],"names":[],"mappings":"AAAA,E","sourcesContent":["42"]}'
 
+test "string literal source map" ->
+  esl.source-map '"hello"' filename : "test.esl"
+    ..`@equals` '{"version":3,"sources":["test.esl"],"names":[],"mappings":"AAAA,O","sourcesContent":["\\"hello\\""]}'
+
 test "call expression source map" ->
   esl.source-map "(f a b)\n" filename : "test.esl"
     ..`@equals` '{"version":3,"sources":["test.esl"],"names":["f","a","b"],"mappings":"AAACA,CAAD,CAAGC,CAAH,EAAKC,CAAL,C","sourcesContent":["(f a b)\\n"]}'
