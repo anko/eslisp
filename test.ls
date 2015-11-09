@@ -1097,6 +1097,18 @@ test "multiple transform-macros are applied in order" ->
   esl "zero" transform-macros : [ wrap1, wrap2, wrap3 ]
     .. `@equals` "three(two(one(zero)));"
 
+test "identifier source map" ->
+  esl.source-map "x" filename : "test.esl"
+    ..`@equals` '{"version":3,"sources":["test.esl"],"names":["x"],"mappings":"AAAAA,C","sourcesContent":["x"]}'
+
+test "number literal source map" ->
+  esl.source-map "true" filename : "test.esl"
+    ..`@equals` '{"version":3,"sources":["test.esl"],"names":[],"mappings":"AAAA,I","sourcesContent":["true"]}'
+
+test "boolean literal source map" ->
+  esl.source-map "42" filename : "test.esl"
+    ..`@equals` '{"version":3,"sources":["test.esl"],"names":[],"mappings":"AAAA,E","sourcesContent":["42"]}'
+
 test "call expression source map" ->
   esl.source-map "(f a b)\n" filename : "test.esl"
-    ..`@equals` '{"version":3,"sources":["test.esl"],"names":[],"mappings":"CAAA,C,CAAA,E,CAAA,C","sourcesContent":["(f a b)\\n"]}'
+    ..`@equals` '{"version":3,"sources":["test.esl"],"names":["f","a","b"],"mappings":"AAACA,CAAD,CAAGC,CAAH,EAAKC,CAAL,C","sourcesContent":["(f a b)\\n"]}'

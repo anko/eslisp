@@ -33,9 +33,11 @@ string-to-self-producer = ->
         raw : "\"#{it}\""
   ]
 
-atom-to-estree = (env, { value : name }) ->
+atom-to-estree = (env, { value : name }:ast) ->
 
-  lit = ~> type : \Literal, value : it, raw : name
+  lit = ~>
+    type : \Literal value : it, raw : name
+    loc : ast.location
 
   switch name
   | \this  => type : \ThisExpression
@@ -47,6 +49,7 @@ atom-to-estree = (env, { value : name }) ->
       type  : \Literal
       value : Number name
       raw   : name
+      loc   : ast.location
     | looks-like-negative-number name
       type     : \UnaryExpression
       operator : \-
@@ -55,6 +58,7 @@ atom-to-estree = (env, { value : name }) ->
     | otherwise
       type : \Identifier
       name : name
+      loc  : ast.location
 
 atom-to-self-producer = ->
   type : \ObjectExpression
