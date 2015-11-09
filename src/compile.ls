@@ -5,10 +5,10 @@ looks-like-positive-number = (atom-text) ->
 looks-like-negative-number = (atom-text) ->
   atom-text.match /^-\d+(\.\d+)?$/
 
-string-to-estree = ->
+string-to-estree = (env, { value }) ->
   type  : \Literal
-  value : it
-  raw   : "\"#{it}\""
+  value : value
+  raw   : "\"#{value}\""
 
 string-to-self-producer = ->
   type : \ObjectExpression
@@ -42,7 +42,7 @@ string-to-self-producer = ->
         raw : "\"returned from macro\""
   ]
 
-atom-to-estree = (name) ->
+atom-to-estree = (env, { value : name }) ->
 
   lit = ~> type : \Literal, value : it, raw : name
 
@@ -128,7 +128,7 @@ list-to-self-producer = (env, { values }) ->
         raw : "\"returned from macro\""
   ]
 
-list-to-estree = (env, { values }) ->
+list-to-estree = (env, { values }:ast, options={}) ->
 
   return null if values.length is 0
 
@@ -181,11 +181,11 @@ list-to-estree = (env, { values }) ->
 
   return r
 
-ast-to-estree = (env, ast) ->
+ast-to-estree = (env, ast, options) ->
   switch ast.type
-  | \atom   => atom-to-estree ast.value
-  | \string => string-to-estree ast.value
-  | \list   => list-to-estree env, ast
+  | \atom   => atom-to-estree  .apply null arguments
+  | \string => string-to-estree.apply null arguments
+  | \list   => list-to-estree  .apply null arguments
   | otherwise => ast
 
 ast-to-self-producer = (env, ast) ->
