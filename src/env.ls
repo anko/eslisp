@@ -44,6 +44,7 @@ class env
 
     @macro-table = contents : {} parent : root-table
     @root-table = root-table
+    @filename = options.filename || null
 
     # The import-target-macro-tables argument is for the situation when a macro
     # returns another macro.  In such a case, the returned macro should be

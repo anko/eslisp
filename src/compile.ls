@@ -31,15 +31,6 @@ string-to-self-producer = ->
         type : \Literal
         value : it
         raw : "\"#{it}\""
-    * type : \Property
-      kind : \init
-      key :
-        type : \Identifier
-        name : \location
-      value :
-        type : \Literal
-        value : "returned from macro"
-        raw : "\"returned from macro\""
   ]
 
 atom-to-estree = (env, { value : name }) ->
@@ -86,15 +77,6 @@ atom-to-self-producer = ->
         type : \Literal
         value : it
         raw : "\"#{it}\""
-    * type : \Property
-      kind : \init
-      key :
-        type : \Identifier
-        name : \location
-      value :
-        type : \Literal
-        value : "returned from macro"
-        raw : "\"returned from macro\""
   ]
 
 list-to-self-producer = (env, { values }) ->
@@ -117,15 +99,6 @@ list-to-self-producer = (env, { values }) ->
       value :
         type : \ArrayExpression
         elements : values.map (ast-to-self-producer env, _)
-    * type : \Property
-      kind : \init
-      key :
-        type : \Identifier
-        name : \location
-      value :
-        type : \Literal
-        value : "returned from macro"
-        raw : "\"returned from macro\""
   ]
 
 list-to-estree = (env, { values }:ast, options={}) ->
@@ -174,10 +147,14 @@ list-to-estree = (env, { values }:ast, options={}) ->
 
     # Compile to a function call
 
+    # If location known, save the filename in it too
+    ast.location?source = env.filename
+
     # TODO compile-time check if callee has sensible type
     type : \CallExpression
     callee : ast-to-estree env, head
     arguments : rest.map (ast-to-estree env, _)
+    loc : ast.location
 
   return r
 
