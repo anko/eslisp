@@ -40,7 +40,7 @@ find-root = ({parent}:macro-table) -> | parent => find-root that
 
 class env
 
-  (root-table, import-target-macro-tables) ~>
+  (root-table=null, options={}) ~>
 
     @macro-table = contents : {} parent : root-table
     @root-table = root-table
@@ -53,7 +53,7 @@ class env
     #
     # If that's confusing, take a few deep breaths and read it again.  Welcome
     # to the blissful land of Lisp, where everything is recursive somehow.
-    @import-target-macro-tables = import-target-macro-tables
+    @import-target-macro-tables = options.import-target-macro-tables
 
   atom   : (value) ->  { type : \atom, value : value.to-string! }
   string : (value) ->  { type : \string, value }
@@ -79,7 +79,7 @@ class env
     # implements macro scope; macros defined in the new environment aren't
     # visible in the outer one.
 
-    env @macro-table, @import-target-macro-tables
+    env @macro-table, { @import-target-macro-tables }
 
   derive-flattened : ~>
 
@@ -106,12 +106,16 @@ class env
     tables-to-import-into
       ..push flattened-macro-table
 
-    env table-to-read-from, tables-to-import-into
+    env do
+      table-to-read-from
+      { import-target-macro-tables : tables-to-import-into }
 
   derive-root : ~>
     root-table = find-root @macro-table
     import-targets = (@import-target-macro-tables || [ @macro-table ])
-    env root-table, import-targets
+    env do
+      root-table
+      { import-target-macro-tables : import-targets }
 
   find-macro : (name) ~> find-macro @macro-table, name
 
