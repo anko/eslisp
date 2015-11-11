@@ -4,8 +4,6 @@ looks-like-positive-number = (atom-text) ->
   atom-text.match /^\d+(\.\d+)?$/
 looks-like-negative-number = (atom-text) ->
   atom-text.match /^-\d+(\.\d+)?$/
-looks-like-number = ->
-  (looks-like-positive-number it) || (looks-like-negative-number it)
 
 string-to-estree = ->
   type  : \Literal
@@ -54,7 +52,7 @@ atom-to-estree = (name) ->
   | \true  => lit true
   | \false => lit false
   | otherwise switch
-    | looks-like-number name
+    | looks-like-positive-number name
       type  : \Literal
       value : Number name
       raw   : name

@@ -21,9 +21,13 @@ test "first-line shebang" ->
   esl "#!something goes here\n(hello)\n"
     ..`@equals` "hello();"
 
-test "plain literal" ->
+test "plain numeric literal" ->
   esl "3"
     ..`@equals` "3;"
+
+test "plain negative numeric literal" ->
+  esl "-3"
+    ..`@equals` "-3;"
 
 test "plain literal with trailing digits" ->
   esl "asd39"
