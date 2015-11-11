@@ -137,13 +137,17 @@ list-to-estree = (env, { values }:ast, options={}) ->
           | \Object => # that's OK
           | otherwise =>
             throw Error "Unexpected `#that` value received in multi-return"
-        macro-return.statements.map (ast-to-estree env, _)
+        macro-return.statements.map ->
+          ast-to-estree env, it
+            ..?loc ||= head.location
 
       else if macro-return.type in <[ atom list string ]>
         ast-to-estree env, macro-return
+          ..?loc ||= head.location
 
       else
         macro-return
+          ..?loc ||= head.location
 
     | otherwise =>
       throw Error "Unexpected macro return type #that"

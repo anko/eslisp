@@ -1116,3 +1116,7 @@ test "string literal source map" ->
 test "call expression source map" ->
   esl.source-map "(f a b)\n" filename : "test.esl"
     ..`@equals` '{"version":3,"sources":["test.esl"],"names":["f","a","b"],"mappings":"AAACA,CAAD,CAAGC,CAAH,EAAKC,CAAL,C","sourcesContent":["(f a b)\\n"]}'
+
+test "macro return source map" ->
+  esl.source-map "(+ a b)\n" filename : "test.esl"
+    ..`@equals` '{"version":3,"sources":["test.esl"],"names":["a","b"],"mappings":"AAAGA,CAAF,GAAIC,C","sourcesContent":["(+ a b)\\n"]}'
