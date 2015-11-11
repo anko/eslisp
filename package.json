@@ -49,7 +49,7 @@
     "esvalid": "1.1.0",
     "nopt": "^3.0.3",
     "prelude-ls": "^1.1.1",
-    "sexpr-plus": "^6.0.0",
+    "sexpr-plus": "^7.0.0",
     "uuid": "^2.0.1"
   }
 }

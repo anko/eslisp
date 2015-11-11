@@ -14,4 +14,4 @@ convert = (tree) ->
   | \string => string tree.content, tree.location
   | null    => throw Error "Unexpected type `#that` (of `#tree`)"
 
-module.exports = parse-sexpr >> convert
+module.exports = parse-sexpr >> (.map convert)

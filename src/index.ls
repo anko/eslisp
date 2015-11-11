@@ -7,12 +7,7 @@ environment = require \./env
 
 compile = (root-env, input, options={}) ->
 
-  input .= to-string!
-
-  # Ignore first line if it starts with a shebang
-  if input.match /^(#!.*\n)/ then input .= slice that.1.length
-
-  "(#input\n)" # Implicit list of everything (trailing \n terminates comments)
+  input.to-string!
   |> string-to-ast
   |> ast-to-estree root-env, _, transform-macros : options.transform-macros
   |> estree-to-js

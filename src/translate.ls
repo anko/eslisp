@@ -17,7 +17,7 @@ module.exports = (root-env, ast, options={}) ->
     isolated-env = environment root-macro-table
     create-transform-macro isolated-env, func
 
-  statements = ast.values
+  statements = ast
 
   transform-macros .for-each (macro) ->
     statements := (macro.apply null, statements)
