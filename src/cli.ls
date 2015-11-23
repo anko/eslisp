@@ -29,6 +29,7 @@ options =
   version   : Boolean
   help      : Boolean
   transform : Array
+  \source-map-outfile : String
 
 option-shorthands =
   v : \--version
@@ -66,10 +67,35 @@ compiler-opts = {}
 if parsed-options.transform
   compiler-opts.transform-macros = that .map require
 
-compile-and-show = (code) ->
+compile-and-show = (code, filename) ->
   code .= to-string!
   try
-    console.log esl code, compiler-opts
+    var js-code
+
+    # Operate specially if making a source map
+    if parsed-options[\source-map-outfile]
+      compiler-opts.filename = filename
+      source-map-path = that
+
+      # Receive both code and source map from the compiler.
+      { code, map } = esl.with-source-map code, compiler-opts
+
+      # Save the JS for later.
+      js-code := code
+
+      # Write out the source map to the specified file.
+      fs.write-file source-map-path, map, (e) ->
+        if e
+          console.error "Error writing to source map output file " +
+                        "#source-map-path"
+          process.exit 5
+    else
+      # The normal mode of operation is to just run the standard compiler.
+      js-code := esl code, compiler-opts
+
+    # Regardless, the finished JS is printed to stdout.
+    console.log js-code
+
   catch err
     if err instanceof InvalidAstError
       console.error (chalk.red "[Error]") + " " + err.message
@@ -122,10 +148,17 @@ point-at-problem = (input, problematic-node) ->
 if target-path
   e, esl-code <- fs.read-file target-path, encoding : \utf8
   if e then throw e
-  compile-and-show esl-code
+  compile-and-show esl-code, target-path
 else
   # Non-interactive stdin: pipe and compile
   if not process.stdin.isTTY
+    if parsed-options[\source-map-outfile]
+      console.error """
+      Given --source-map-outfile flag, but code was input on stdin
+      instead of by file path.  Source maps require a file name:
+      please specify the input file by a filename.
+      """
+      process.exit 3
     process.stdin .pipe concat compile-and-show
 
   # Interactive stdin: start repl
