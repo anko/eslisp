@@ -1098,25 +1098,37 @@ test "multiple transform-macros are applied in order" ->
     .. `@equals` "three(two(one(zero)));"
 
 test "identifier source map" ->
-  esl.source-map "x" filename : "test.esl"
-    ..`@equals` '{"version":3,"sources":["test.esl"],"names":["x"],"mappings":"AAAAA,C","sourcesContent":["x"]}'
+  esl.with-source-map "x" filename : "test.esl"
+    ..`@deep-equals` do
+      code : "x;"
+      map : '{"version":3,"sources":["test.esl"],"names":["x"],"mappings":"AAAAA,C","sourcesContent":["x"]}'
 
 test "number literal source map" ->
-  esl.source-map "true" filename : "test.esl"
-    ..`@equals` '{"version":3,"sources":["test.esl"],"names":[],"mappings":"AAAA,I","sourcesContent":["true"]}'
+  esl.with-source-map "true" filename : "test.esl"
+    ..`@deep-equals` do
+      code : "true;"
+      map : '{"version":3,"sources":["test.esl"],"names":[],"mappings":"AAAA,I","sourcesContent":["true"]}'
 
 test "boolean literal source map" ->
-  esl.source-map "42" filename : "test.esl"
-    ..`@equals` '{"version":3,"sources":["test.esl"],"names":[],"mappings":"AAAA,E","sourcesContent":["42"]}'
+  esl.with-source-map "42" filename : "test.esl"
+    ..`@deep-equals` do
+      code : "42;"
+      map : '{"version":3,"sources":["test.esl"],"names":[],"mappings":"AAAA,E","sourcesContent":["42"]}'
 
 test "string literal source map" ->
-  esl.source-map '"hello"' filename : "test.esl"
-    ..`@equals` '{"version":3,"sources":["test.esl"],"names":[],"mappings":"AAAA,O","sourcesContent":["\\"hello\\""]}'
+  esl.with-source-map '"hello"' filename : "test.esl"
+    ..`@deep-equals` do
+      code : "'hello';"
+      map : '{"version":3,"sources":["test.esl"],"names":[],"mappings":"AAAA,O","sourcesContent":["\\"hello\\""]}'
 
 test "call expression source map" ->
-  esl.source-map "(f a b)\n" filename : "test.esl"
-    ..`@equals` '{"version":3,"sources":["test.esl"],"names":["f","a","b"],"mappings":"AAACA,CAAD,CAAGC,CAAH,EAAKC,CAAL,C","sourcesContent":["(f a b)\\n"]}'
+  esl.with-source-map "(f a b)\n" filename : "test.esl"
+    ..`@deep-equals` do
+      code : "f(a, b);"
+      map :'{"version":3,"sources":["test.esl"],"names":["f","a","b"],"mappings":"AAACA,CAAD,CAAGC,CAAH,EAAKC,CAAL,C","sourcesContent":["(f a b)\\n"]}'
 
 test "macro return source map" ->
-  esl.source-map "(+ a b)\n" filename : "test.esl"
-    ..`@equals` '{"version":3,"sources":["test.esl"],"names":["a","b"],"mappings":"AAAGA,CAAF,GAAIC,C","sourcesContent":["(+ a b)\\n"]}'
+  esl.with-source-map "(+ a b)\n" filename : "test.esl"
+    ..`@deep-equals` do
+      code : "a + b;"
+      map : '{"version":3,"sources":["test.esl"],"names":["a","b"],"mappings":"AAAGA,CAAF,GAAIC,C","sourcesContent":["(+ a b)\\n"]}'
