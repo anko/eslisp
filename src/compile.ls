@@ -153,11 +153,7 @@ list-to-estree = (env, { values }:ast, options={}) ->
       throw Error "Unexpected macro return type #that"
 
   else
-
     # Compile to a function call
-
-    # If location known, save the filename in it too
-    ast.location?source = env.filename
 
     # TODO compile-time check if callee has sensible type
     type : \CallExpression
