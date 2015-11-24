@@ -1234,3 +1234,29 @@ test "macro return source map" ->
       ..line `@equals` 1
       ..column `@equals` 5
       ..name `@equals` \b
+
+test "macro return source map (across multiple lines)" ->
+
+  { code, map } = esl.with-source-map '(+\na\nb)' filename : "test.esl"
+
+  code `@equals` "a + b;"
+
+  map := JSON.parse map
+    ..version `@equals` 3
+    ..sources.length `@equals` 1
+    ..sources-content.length `@equals` 1
+    ..names `@deep-equals` <[ a b ]>
+
+  consume-map map
+    ..original-position-for line : 1 column : 0
+      ..line `@equals` 2
+      ..column `@equals` 0
+      ..name `@equals` \a
+    ..original-position-for line : 1 column : 2
+      ..line `@equals` 1
+      ..column `@equals` 1
+      @not-ok ..name
+    ..original-position-for line : 1 column : 4
+      ..line `@equals` 3
+      ..column `@equals` 0
+      ..name `@equals` \b
