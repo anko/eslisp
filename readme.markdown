@@ -90,11 +90,12 @@ Further documentation in [`doc/`][25]:
 -   [Macro-writing tutorial][27]
 -   [Module packaging and distribution tutorial][28]
 -   [Comparison against other JS-lisps][29]
+-   [Using source maps][30]
 
 ## Brief tutorial
 
-This is a quick overview of the core language.  See [the basics reference][30]
-or the [test suite][31] for a more complete document.
+This is a quick overview of the core language.  See [the basics reference][31]
+or the [test suite][32] for a more complete document.
 
 ### Building blocks
 
@@ -144,7 +145,7 @@ arguments as the rest:
     a.b[5].c['yo'];
     1 + 2;
 
-If the `(. a b)` syntax feels tedious, you might like the [eslisp-propertify][32] transform macro, which lets you write `a.b` instead.
+If the `(. a b)` syntax feels tedious, you might like the [eslisp-propertify][33] transform macro, which lets you write `a.b` instead.
 
 If the first element of a list isn't the name of a macro which is in scope, it
 compiles to a function call:
@@ -264,7 +265,7 @@ Macros are functions that run at compile-time.  Whatever they return becomes
 part of the compiled code.  User-defined macros and pre-defined compiler ones
 are treated equivalently.
 
-**There's a [fuller tutorial to eslisp macros in the `doc/` directory][33].**
+**There's a [fuller tutorial to eslisp macros in the `doc/` directory][34].**
 These are just some highlights.
 
 You can alias macros to names you find convenient, or mask any you don't want
@@ -285,7 +286,7 @@ to use.
     [1];
     array(1);
 
-Macros can use [`quasiquote`][34] (`` ` ``), `unquote` (`,`) and
+Macros can use [`quasiquote`][35] (`` ` ``), `unquote` (`,`) and
 `unquote-splicing` (`,@`) to construct their outputs neatly.
 
 <!-- !test in macro and call -->
@@ -347,7 +348,7 @@ compilation side-effects and conditional compilation.
 
 Because macros are JS functions and JS functions can be closures, you can even
 make macros that share state.  One way is to put them in an
-[immediately-invoked function expression (IIFE)][35], return them in an object,
+[immediately-invoked function expression (IIFE)][36], return them in an object,
 and pass that to `macro`.  Each property of the object is imported as a macro,
 and the variables in the IIFE are shared between them.
 
@@ -385,9 +386,9 @@ whatever, so you can put the macro function in a separate file and do—
 
 —to use it.
 
-This means you can publish eslisp macros on [npm][36].  The name prefix
+This means you can publish eslisp macros on [npm][37].  The name prefix
 `eslisp-` and keyword `eslisp-macro` are recommended.  [Some exist
-already.][37]
+already.][38]
 
 ### Transformation macros
 
@@ -397,18 +398,18 @@ argument (`-t` for short). For example,
 
     eslc --transform eslisp-propertify myprogram.esl
 
-uses [eslisp-propertify][38] to convert all atoms containg dots into member
+uses [eslisp-propertify][39] to convert all atoms containg dots into member
 expressions.  The flag can be specified multiple times.
 
 ## Try it
 
 ### Global install
 
-If you want `eslc` in your [`$PATH`][39], `npm install --global eslisp`.  (You
+If you want `eslc` in your [`$PATH`][40], `npm install --global eslisp`.  (You
 might need `sudo`.)  Then `eslc` program takes eslisp code as input and outputs
 JavaScript.
 
-The compiler runs as a [REPL][40] if given no arguments, though it doesn't
+The compiler runs as a [REPL][41] if given no arguments, though it doesn't
 (yet) support macros in that mode.
 
 You can also just pipe data to it to compile it if you want.
@@ -430,21 +431,21 @@ it sees them.
 ## How does it work
 
 In brief:  A table of predefined macros is used to turn S-expressions into
-[SpiderMonkey AST][41], which is fed to [escodegen][42], which outputs JS.
+[SpiderMonkey AST][42], which is fed to [escodegen][43], which outputs JS.
 Some of those macros allow defining further macros, which get added to the
 table and work from then on like the predefined ones.
 
-For more, read [the source][43]. Ask questions!
+For more, read [the source][44]. Ask questions!
 
 ## Bugs, discussion & contributing
 
-Create a [github issue][44], or say hi [in gitter chat][45].
+Create a [github issue][45], or say hi [in gitter chat][46].
 
-I'll assume your contributions to also be under the [ISC license][46].
+I'll assume your contributions to also be under the [ISC license][47].
 
 ## License
 
-[ISC][47].
+[ISC][48].
 
 [1]: https://www.npmjs.com/package/eslisp
 [2]: https://travis-ci.org/anko/eslisp
@@ -475,21 +476,22 @@ I'll assume your contributions to also be under the [ISC license][46].
 [27]: doc/how-macros-work.markdown
 [28]: doc/ditributing-modules.markdown
 [29]: doc/comparison-to-other-js-lisps.markdown
-[30]: doc/basics-reference.markdown
-[31]: test.ls
-[32]: https://www.npmjs.com/package/eslisp-propertify
-[33]: doc/how-macros-work.markdown
-[34]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
-[35]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
-[36]: https://www.npmjs.com/
-[37]: https://www.npmjs.com/search?q=eslisp-
-[38]: https://www.npmjs.com/package/eslisp-propertify
-[39]: http://en.wikipedia.org/wiki/PATH_(variable)
-[40]: https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop
-[41]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-[42]: https://github.com/estools/escodegen
-[43]: src/
-[44]: https://github.com/anko/eslisp/issues/new
-[45]: https://gitter.im/anko/eslisp
-[46]: http://opensource.org/licenses/ISC
+[30]: doc/source-maps.markdown
+[31]: doc/basics-reference.markdown
+[32]: test.ls
+[33]: https://www.npmjs.com/package/eslisp-propertify
+[34]: doc/how-macros-work.markdown
+[35]: http://axisofeval.blogspot.co.uk/2013/04/a-quasiquote-i-can-understand.html
+[36]: https://en.wikipedia.org/wiki/Immediately-invoked_function_expression
+[37]: https://www.npmjs.com/
+[38]: https://www.npmjs.com/search?q=eslisp-
+[39]: https://www.npmjs.com/package/eslisp-propertify
+[40]: http://en.wikipedia.org/wiki/PATH_(variable)
+[41]: https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop
+[42]: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+[43]: https://github.com/estools/escodegen
+[44]: src/
+[45]: https://github.com/anko/eslisp/issues/new
+[46]: https://gitter.im/anko/eslisp
 [47]: http://opensource.org/licenses/ISC
+[48]: http://opensource.org/licenses/ISC
