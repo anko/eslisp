@@ -3,6 +3,7 @@ concat  = require \concat-stream
 spawn   = (require \child_process).spawn
 esl     = require \./index
 require! <[ fs path nopt chalk ]>
+require! \convert-source-map
 
 { InvalidAstError } = require \esvalid
 
@@ -30,11 +31,14 @@ options =
   help      : Boolean
   transform : Array
   \source-map-outfile : String
+  \embed-source-map : Boolean
 
 option-shorthands =
   v : \--version
   h : \--help
   t : \--transform
+  s : \--source-map-outfile
+  S : \--embed-source-map
 
 parsed-options = nopt do
   options
@@ -70,30 +74,42 @@ if parsed-options.transform
 compile-and-show = (code, filename) ->
   code .= to-string!
   try
-    var js-code
 
-    # Operate specially if making a source map
-    if parsed-options[\source-map-outfile]
+    opt-map-out = parsed-options[\source-map-outfile]
+    opt-map-embed = parsed-options[\embed-source-map]
+
+    var js-code, js-map
+
+    if opt-map-out or opt-map-embed
+
       compiler-opts.filename = filename
-      source-map-path = that
 
       # Receive both code and source map from the compiler.
       { code, map } = esl.with-source-map code, compiler-opts
-
-      # Save the JS for later.
       js-code := code
+      js-map  := map
 
-      # Write out the source map to the specified file.
-      fs.write-file source-map-path, map, (e) ->
-        if e
-          console.error "Error writing to source map output file " +
-                        "#source-map-path"
-          process.exit 5
     else
-      # The normal mode of operation is to just run the standard compiler.
-      js-code := esl code, compiler-opts
 
-    # Regardless, the finished JS is printed to stdout.
+      # Run the standard compiler, without generating a source map.
+      js-code := esl code, compiler-opts
+      js-map  := null
+
+    if opt-map-out
+      # Write out the source map to the specified file.
+      fs.write-file that, map, (e) ->
+        if e
+          console.error "Error writing to source map output file #that"
+          process.exit 5
+    if opt-map-embed
+
+      source-map-data-uri-comment = convert-source-map
+        .from-JSON js-map
+        .to-comment!
+
+      js-code += "\n#source-map-data-uri-comment"
+
+    # Print finished JavaScript to stdout.
     console.log js-code
 
   catch err

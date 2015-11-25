@@ -44,6 +44,7 @@
   "dependencies": {
     "chalk": "^1.1.1",
     "concat-stream": "^1.4.7",
+    "convert-source-map": "^1.1.2",
     "escodegen": "^1.4.1",
     "estraverse": "^4.1.0",
     "esutils": "^2.0.2",
