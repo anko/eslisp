@@ -955,8 +955,6 @@ test "macro generating macro and macro call" -> # yes srsly squared
     ..`@equals` "hello();"
 
 test "macros capture from outer env" ->
-  # To create a macro that *does* capture the current macro environment, use
-  # `capmacro`.
   esl '''
     (macro f (lambda () (return '"hello")))
     (macro g (lambda () (return '(f))))
