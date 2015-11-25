@@ -2,7 +2,6 @@
 # user macros and returned from them, and the internal compiler AST form used
 # otherwise.  Also, deals with inserting macros into compilation environments.
 
-uuid = require \uuid .v4
 ast-errors = require \./esvalid-partial
 { is-expression } = require \esutils .ast
 

@@ -39,19 +39,17 @@
     "source-map": "^0.5.3",
     "tape": "^4.0.0",
     "tests-ex-markdown": "^2.0.0",
-    "tmp": "0.0.27"
+    "tmp": "0.0.28"
   },
   "dependencies": {
     "chalk": "^1.1.1",
     "concat-stream": "^1.4.7",
     "convert-source-map": "^1.1.2",
     "escodegen": "^1.4.1",
-    "estraverse": "^4.1.0",
     "esutils": "^2.0.2",
     "esvalid": "1.1.0",
     "nopt": "^3.0.3",
     "prelude-ls": "^1.1.1",
-    "sexpr-plus": "^7.0.0",
-    "uuid": "^2.0.1"
+    "sexpr-plus": "^7.0.0"
   }
 }
