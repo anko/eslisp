@@ -130,7 +130,7 @@ string-splice = (string, start, end, inserted-text="") ->
 # Use the node's location data (if present) to show the lines on which the
 # problem occurred.
 point-at-problem = (input, problematic-node) ->
-  { location } = problematic-node
+  { loc : location } = problematic-node
   switch typeof! location
   | \String =>
     stringified-node = JSON.stringify do
@@ -148,8 +148,8 @@ point-at-problem = (input, problematic-node) ->
     # Subtract 1 from both offsets because of open-paren that's implicitly
     # added to the input
     # inputs.
-    start-offset = start.offset - 1
-    end-offset   = end.offset   - 1
+    start-offset = start.offset
+    end-offset   = end.offset
 
     highlighted-part = chalk.black.bg-yellow (lines.slice start-offset, end-offset)
 
