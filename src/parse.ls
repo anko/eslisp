@@ -8,6 +8,13 @@ atom = (value, location)   -> { type : \atom value, location }
 string = (value, location) -> { type : \string value, location }
 
 convert = (tree) ->
+
+  # Parser returns locations with 1-based columns, but source map
+  # expects 0-based, so let's fix that.
+  tree.location
+    ..start.column -= 1
+    ..end  .column -= 1
+
   switch tree.type
   | \list   => list   (tree.content.map convert), tree.location
   | \atom   => atom   tree.content, tree.location

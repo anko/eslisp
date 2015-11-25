@@ -3,6 +3,7 @@ concat  = require \concat-stream
 spawn   = (require \child_process).spawn
 esl     = require \./index
 require! <[ fs path nopt chalk ]>
+require! \convert-source-map
 
 { InvalidAstError } = require \esvalid
 
@@ -16,24 +17,32 @@ print-version = ->
     process.exit 1
 
 print-usage = ->
-  console.log do
-    "Usage: eslc [-h] [-v] [-t require-path] [FILE]\n" +
-    "  FILE           file to read (if omitted, stdin is assumed)\n" +
-    "  -v, --version    print version, exit\n" +
-    "  -h, --help       print usage, exit\n" +
-    "  -t, --transform  macro to wrap whole input in\n" +
-    "                     given path is passed to `require`\n" +
-    "                     can be specified multiple times"
+  console.log """
+  Usage: eslc [-h] [-v] [-t require-path] [-s MAP-FILE] [-S] [FILE]
+    FILE                      eslisp file (if omitted, stdin is read)
+    -v, --version             print version, exit
+    -h, --help                print usage, exit
+    -t, --transform           macro to `require` and wrap whole input in; can
+                                be specified multiple times
+    -s, --source-map-outfile  file to save source map in; remember to add the
+                                appropriate `//\# sourceMappingURL=...` comment
+                                to the end of your output JS file
+    -S, --embed-source-map    store source map in the generated output JS
+    """
 
 options =
   version   : Boolean
   help      : Boolean
   transform : Array
+  \source-map-outfile : String
+  \embed-source-map : Boolean
 
 option-shorthands =
   v : \--version
   h : \--help
   t : \--transform
+  s : \--source-map-outfile
+  S : \--embed-source-map
 
 parsed-options = nopt do
   options
@@ -66,10 +75,47 @@ compiler-opts = {}
 if parsed-options.transform
   compiler-opts.transform-macros = that .map require
 
-compile-and-show = (code) ->
+compile-and-show = (code, filename) ->
   code .= to-string!
   try
-    console.log esl code, compiler-opts
+
+    opt-map-out = parsed-options[\source-map-outfile]
+    opt-map-embed = parsed-options[\embed-source-map]
+
+    var js-code, js-map
+
+    if opt-map-out or opt-map-embed
+
+      compiler-opts.filename = filename
+
+      # Receive both code and source map from the compiler.
+      { code, map } = esl.with-source-map code, compiler-opts
+      js-code := code
+      js-map  := map
+
+    else
+
+      # Run the standard compiler, without generating a source map.
+      js-code := esl code, compiler-opts
+      js-map  := null
+
+    if opt-map-out
+      # Write out the source map to the specified file.
+      fs.write-file that, map, (e) ->
+        if e
+          console.error "Error writing to source map output file #that"
+          process.exit 5
+    if opt-map-embed
+
+      source-map-data-uri-comment = convert-source-map
+        .from-JSON js-map
+        .to-comment!
+
+      js-code += "\n#source-map-data-uri-comment"
+
+    # Print finished JavaScript to stdout.
+    console.log js-code
+
   catch err
     if err instanceof InvalidAstError
       console.error (chalk.red "[Error]") + " " + err.message
@@ -122,10 +168,17 @@ point-at-problem = (input, problematic-node) ->
 if target-path
   e, esl-code <- fs.read-file target-path, encoding : \utf8
   if e then throw e
-  compile-and-show esl-code
+  compile-and-show esl-code, target-path
 else
   # Non-interactive stdin: pipe and compile
   if not process.stdin.isTTY
+    if parsed-options[\source-map-outfile]
+      console.error """
+      Given --source-map-outfile flag, but code was input on stdin
+      instead of by file path.  Source maps require a file name:
+      please specify the input file by a filename.
+      """
+      process.exit 3
     process.stdin .pipe concat compile-and-show
 
   # Interactive stdin: start repl

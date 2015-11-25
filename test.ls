@@ -6,6 +6,8 @@ test = (name, test-func) ->
 
 esl = require \./src/index.ls
 
+consume-map = require \source-map .SourceMapConsumer .bind!
+
 { unique } = require \prelude-ls
 require! <[ tmp fs uuid rimraf path ]>
 
@@ -1096,3 +1098,165 @@ test "multiple transform-macros are applied in order" ->
   wrap3 = (...args) -> @list.apply null [ @atom \three ].concat args
   esl "zero" transform-macros : [ wrap1, wrap2, wrap3 ]
     .. `@equals` "three(two(one(zero)));"
+
+test "identifier source map" ->
+  { code, map } = esl.with-source-map "x" filename : "test.esl"
+
+  code `@equals` "x;"
+
+  map := JSON.parse map
+    ..version `@equals` 3
+    ..sources.length `@equals` 1
+    ..sources-content.length `@equals` 1
+
+  consume-map map
+    ..original-position-for line : 1 column : 0
+      ..line `@equals` 1
+      ..column `@equals` 0
+      ..name `@equals` \x
+
+test "identifier source map (with leading spaces)" ->
+  { code, map } = esl.with-source-map "   x" filename : "test.esl"
+
+  code `@equals` "x;"
+
+  map := JSON.parse map
+    ..version `@equals` 3
+    ..sources.length `@equals` 1
+    ..sources-content.length `@equals` 1
+
+  consume-map map
+    ..original-position-for line : 1 column : 0
+      ..line `@equals` 1
+      ..column `@equals` 3
+      ..name `@equals` \x
+
+
+test "boolean literal source map" ->
+
+  { code, map } = esl.with-source-map "true" filename : "test.esl"
+
+  code `@equals` "true;"
+
+  map := JSON.parse map
+    ..version `@equals` 3
+    ..sources.length `@equals` 1
+    ..sources-content.length `@equals` 1
+
+  consume-map map
+    ..original-position-for line : 1 column : 0
+      ..line `@equals` 1
+      ..column `@equals` 0
+      @not-ok ..name
+
+test "number literal source map" ->
+
+  { code, map } = esl.with-source-map "42" filename : "test.esl"
+
+  code `@equals` "42;"
+
+  map := JSON.parse map
+    ..version `@equals` 3
+    ..sources.length `@equals` 1
+    ..sources-content.length `@equals` 1
+
+  consume-map map
+    ..original-position-for line : 1 column : 0
+      ..line `@equals` 1
+      ..column `@equals` 0
+      @not-ok ..name
+
+test "string literal source map" ->
+
+  { code, map } = esl.with-source-map '"hello"' filename : "test.esl"
+
+  code `@equals` "'hello';"
+
+  map := JSON.parse map
+    ..version `@equals` 3
+    ..sources.length `@equals` 1
+    ..sources-content.length `@equals` 1
+
+  consume-map map
+    ..original-position-for line : 1 column : 0
+      ..line `@equals` 1
+      ..column `@equals` 0
+      @not-ok ..name
+
+test "call expression source map" ->
+
+  { code, map } = esl.with-source-map '(f a b)' filename : "test.esl"
+
+  code `@equals` "f(a, b);"
+
+  map := JSON.parse map
+    ..version `@equals` 3
+    ..sources.length `@equals` 1
+    ..sources-content.length `@equals` 1
+    ..names `@deep-equals` <[ f a b ]>
+
+  consume-map map
+    ..original-position-for line : 1 column : 0
+      ..line `@equals` 1
+      ..column `@equals` 1
+      ..name `@equals` \f
+    ..original-position-for line : 1 column : 2
+      ..line `@equals` 1
+      ..column `@equals` 3
+      ..name `@equals` \a
+    ..original-position-for line : 1 column : 5
+      ..line `@equals` 1
+      ..column `@equals` 5
+      ..name `@equals` \b
+
+test "macro return source map" ->
+
+  { code, map } = esl.with-source-map '(+ a b)' filename : "test.esl"
+
+  code `@equals` "a + b;"
+
+  map := JSON.parse map
+    ..version `@equals` 3
+    ..sources.length `@equals` 1
+    ..sources-content.length `@equals` 1
+    ..names `@deep-equals` <[ a b ]>
+
+  consume-map map
+    ..original-position-for line : 1 column : 0
+      ..line `@equals` 1
+      ..column `@equals` 3
+      ..name `@equals` \a
+    ..original-position-for line : 1 column : 2
+      ..line `@equals` 1
+      ..column `@equals` 1
+      @not-ok ..name
+    ..original-position-for line : 1 column : 4
+      ..line `@equals` 1
+      ..column `@equals` 5
+      ..name `@equals` \b
+
+test "macro return source map (across multiple lines)" ->
+
+  { code, map } = esl.with-source-map '(+\na\nb)' filename : "test.esl"
+
+  code `@equals` "a + b;"
+
+  map := JSON.parse map
+    ..version `@equals` 3
+    ..sources.length `@equals` 1
+    ..sources-content.length `@equals` 1
+    ..names `@deep-equals` <[ a b ]>
+
+  consume-map map
+    ..original-position-for line : 1 column : 0
+      ..line `@equals` 2
+      ..column `@equals` 0
+      ..name `@equals` \a
+    ..original-position-for line : 1 column : 2
+      ..line `@equals` 1
+      ..column `@equals` 1
+      @not-ok ..name
+    ..original-position-for line : 1 column : 4
+      ..line `@equals` 3
+      ..column `@equals` 0
+      ..name `@equals` \b
