@@ -17,14 +17,18 @@ print-version = ->
     process.exit 1
 
 print-usage = ->
-  console.log do
-    "Usage: eslc [-h] [-v] [-t require-path] [FILE]\n" +
-    "  FILE           file to read (if omitted, stdin is assumed)\n" +
-    "  -v, --version    print version, exit\n" +
-    "  -h, --help       print usage, exit\n" +
-    "  -t, --transform  macro to wrap whole input in\n" +
-    "                     given path is passed to `require`\n" +
-    "                     can be specified multiple times"
+  console.log """
+  Usage: eslc [-h] [-v] [-t require-path] [-s MAP-FILE] [-S] [FILE]
+    FILE                      eslisp file (if omitted, stdin is read)
+    -v, --version             print version, exit
+    -h, --help                print usage, exit
+    -t, --transform           macro to `require` and wrap whole input in; can
+                                be specified multiple times
+    -s, --source-map-outfile  file to save source map in; remember to add the
+                                appropriate `//\# sourceMappingURL=...` comment
+                                to the end of your output JS file
+    -S, --embed-source-map    store source map in the generated output JS
+    """
 
 options =
   version   : Boolean
