@@ -1,6 +1,6 @@
 # This lets us use the dependency node modules with executable parts to them as
 # if they were in $PATH like usual system programs.
-export PATH := node_modules/.bin:$(PATH)
+export PATH := $(shell npm bin):$(PATH)
 
 SRC = $(shell find src -name "*.ls" -type f | sort)
 LIB = $(SRC:src/%.ls=lib/%.js)
