@@ -46,6 +46,10 @@ server, you might want to have a build step that adds the line—
 If you're using the eslisp compiler as a module, you can also use it to compile
 simultaneously to a source map and a JavaScript program:
 `require("eslisp").withSourceMap` takes the same arguments as the basic
-compiler, but returns a `{ code, map }` object.
+compiler, the differences are that it
+
+-   returns a `{ code, map }` object instead of just code, and
+-   requires its second argument to be an object containing a `filename`
+    property (which the source maps spec requires).
 
 [1]: http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/
