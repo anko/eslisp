@@ -646,7 +646,7 @@ test "macro env can create sexpr AST nodes equivalently to quoting" ->
         (m)"""
   with-quote `@equals` with-construct
 
-test "macros can evaluate arguments to JS and convert them back again" ->
+test "macros can evaluate number arguments to JS and convert them back again" ->
   esl """
        (macro incrementedTimesTwo (lambda (x)
                     (var y (+ 1 ((. this evaluate) x)))
@@ -655,6 +655,15 @@ test "macros can evaluate arguments to JS and convert them back again" ->
        (incrementedTimesTwo 5)
        """
     ..`@equals` "6 * 2;"
+
+test "macros can evaluate macro-calling arguments to objects" ->
+  esl """
+       (macro printObject (lambda (objDefinition)
+                    (= obj ((. this evaluate) objDefinition))
+                    (return ((. this atom) ((. obj toString))))))
+       (printObject (object a 1))
+       """
+    ..`@equals` "1;"
 
 test "macros can unquote arrays into quasiquoted lists (non-splicing)" ->
   esl "(macro what (lambda (x)
@@ -1045,8 +1054,9 @@ test "macro can compile and return parameter as estree" ->
     (that 3)
     (that "hi")
     (that (c))
+    (that (object a b))
     '''
-      ..`@equals` "3;\n'hi';\nc();"
+      ..`@equals` "3;\n'hi';\nc();\n({ a: b });"
 
 test "multiple invocations of the compiler are separate" ->
   esl "(macro what (lambda () (return 'hi)))"
