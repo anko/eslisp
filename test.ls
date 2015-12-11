@@ -656,14 +656,29 @@ test "macros can evaluate number arguments to JS and convert them back again" ->
        """
     ..`@equals` "6 * 2;"
 
-test "macros can evaluate macro-calling arguments to objects" ->
+test "macros can evaluate object arguments" ->
+  # This macro uses this.evaluate to compile and evaluate a list that expands
+  # to an object, then stringifies it.
   esl """
-       (macro printObject (lambda (objDefinition)
-                    (= obj ((. this evaluate) objDefinition))
-                    (return ((. this atom) ((. obj toString))))))
-       (printObject (object a 1))
+       (macro objectAsString (lambda (input)
+                    (= obj ((. this evaluate) input))
+                    (return ((. this string) ((. JSON stringify) obj)))))
+       (objectAsString (object a 1))
        """
-    ..`@equals` "1;"
+    ..`@equals` "'{\"a\":1}';"
+
+test "macros can evaluate statements" ->
+  # This macro uses this.evaluate to compile and run an if-statement.  A
+  # statement does not evaluate to a value, so we check for undefined.
+  esl """
+       (macro evalThis (lambda (input)
+                    (= obj ((. this evaluate) input))
+                    (if (=== obj undefined)
+                        (return ((. this atom) "yep"))
+                        (return ((. this atom) "nope")))))
+       (evalThis (if 1 (block) (block)))
+       """
+    ..`@equals` "yep;"
 
 test "macros can unquote arrays into quasiquoted lists (non-splicing)" ->
   esl "(macro what (lambda (x)
