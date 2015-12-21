@@ -108,8 +108,8 @@ like
 Unquote (`,`) also has a cousin called unquote-splicing `,@` which can insert
 an array of stuff all at once.
 
-For example, if you want to create a shorthand `mean` for calculating the mean
-of some numbers, you could do
+For example, if you want to create a shorthand `mean` for creating the
+expression necessary to calculate the mean of some variables, you could do
 
 <!-- !test in mean macro -->
 
@@ -128,18 +128,18 @@ of some numbers, you could do
       ; Return a division of the sum of the arguments by the total
       (return `(/ (+ ,@args) ,total))))
 
-    (mean 1 2 3)
+    (mean 1 2 a)
 
-which effectively creates the eslisp code `(/ (+ 1 2 3) 3)` that compiles to JS
+which effectively creates the eslisp code `(/ (+ 1 2 a) 3)` that compiles to JS
 as—
 
 <!-- !test out mean macro -->
 
-    (1 + (2 + 3)) / 3;
+    (1 + (2 + a)) / 3;
 
 If we had used the plain unquote (`,`) instead of unquote-splicing (`,@`), we'd
-have gotten `(/ (+ (1 2 3)) 3)` which would compile to nonsense JS, as eslisp
-would think `(1 2 3)` was a function call when `1` isn't a function.
+have gotten `(/ (+ (1 2 a)) 3)` which would compile to nonsense JS, as eslisp
+would think `(1 2 a)` was a function call when `1` isn't a function.
 
 If you don't want to use `quasiquote`/`` ` `` & co., and think it's clearer for
 your use-case to just work with objects, you can still always do that.
