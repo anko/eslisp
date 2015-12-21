@@ -111,17 +111,31 @@ an array of stuff all at once.
 For example, if you want to create a shorthand `mean` for calculating the mean
 of some numbers, you could do
 
+<!-- !test in mean macro -->
+
     (macro mean
      (lambda ()
-      ; convert arguments to Array
-      (var args ((. Array prototype slice call) arguments 0))
-      (var total ((. this atom) (. args length)))
+
+      ; Convert arguments object to an array
+      (var argumentsAsArray ((. Array prototype slice call) arguments 0))
+
+      ; Make an eslisp list object from the arguments
+      (var args ((. this list apply) null argumentsAsArray))
+
+      ; Make an eslisp atom representing the number of arguments
+      (var total ((. this atom) (. arguments length)))
+
+      ; Return a division of the sum of the arguments by the total
       (return `(/ (+ ,@args) ,total))))
 
-    (mean 1 2 3) ; call it
+    (mean 1 2 3)
 
 which effectively creates the eslisp code `(/ (+ 1 2 3) 3)` that compiles to JS
-as `(1 + (2 + 3)) / 3;`
+as—
+
+<!-- !test out mean macro -->
+
+    (1 + (2 + 3)) / 3;
 
 If we had used the plain unquote (`,`) instead of unquote-splicing (`,@`), we'd
 have gotten `(/ (+ (1 2 3)) 3)` which would compile to nonsense JS, as eslisp
