@@ -39,7 +39,8 @@
     "source-map": "^0.5.3",
     "tape": "^4.0.0",
     "tests-ex-markdown": "^2.0.0",
-    "tmp": "0.0.28"
+    "tmp": "0.0.28",
+    "uuid": "^2.0.1"
   },
   "dependencies": {
     "chalk": "^1.1.1",
