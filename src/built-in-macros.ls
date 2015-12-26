@@ -6,6 +6,21 @@ statementify = require \./es-statementify
   multiple-statements
 } = require \./import-macro
 
+# Any static identifier is prefixed with `:`, like `(. Math :random)`
+is-static-identifier = (node) -> node.type is \Identifier and node.name[0] is \:
+
+# Returns true if this is computed.
+fix-identifier = (node) ->
+  if is-static-identifier node
+    node.name .= slice 1
+    false
+  else
+    true
+
+filter-identifier = (node) ->
+  fix-identifier node
+  node
+
 chained-binary-expr = (type, operator) ->
   macro = (...args) ->
     env = this
@@ -183,24 +198,127 @@ contents =
     type : \ArrayExpression
     elements : elements.map compile
 
-  \object : (...args) ->
+  \object : do
+    check-list = (list, i) ->
+      | list? and list.type is \list => list.values
+      | otherwise => throw Error "Expected property #i to be a list"
 
-    { compile } = env = this
-    if args.length % 2 isnt 0
-      throw Error "Expected even number of arguments to object macro, but \
-                   got #{args.length}"
+    infer-name = (prefix, name, computed) ->
+      if computed
+        prefix
+      else if typeof name.type is \Literal
+        "#prefix #{name.value}"
+      else
+        "#prefix #{name.name}"
 
-    keys-values = do # [ [k1, v1], [k2, v2] , ... ]
-      keys = [] ; values = []
-      args.for-each (a, i) -> (if i % 2 then values else keys).push a
-      zip keys, values
+    compile-get-set = (i, type, [name, params, ...body]) ->
+      if not name?
+        throw Error "Expected #{type}ter in property #i to have a name"
 
-    type : \ObjectExpression
-    properties :
-      keys-values.map ([k, v]) ->
-        type : \Property kind : \init
-        value : compile v
-        key : compile k
+      name = @compile name
+      computed = fix-identifier name and typeof name.type isnt \Literal
+      kind = infer-name "#{type}ter", name, computed
+
+      if not params? or params.type isnt \list
+        throw Error "Expected #{kind} in property #i to have a parameter list"
+
+      params .= values
+
+      # Catch this error here, to return a more sensible, helpful error message
+      # than merely an InvalidAstError referencing property names from the
+      # stringifier itself.
+      if type is \get
+        if params.length isnt 0
+          throw Error "Expected #{kind} in property #i to have no parameters"
+      else # type is \set
+        if params.length isnt 1
+          throw Error "Expected #{kind} in property #i to have exactly one \
+                       parameter"
+        param = params.0
+        if param.type isnt \atom or param.value.0 is \:
+          throw Error "Expected parameter for #{kind} in property #i to be an \
+                       identifier"
+        params = [
+          type : \Identifier
+          name : param.value
+        ]
+
+      type : \Property
+      kind : type
+      key : name
+      computed : computed
+      value :
+        type : \FunctionExpression
+        id : null
+        params : params
+        body : optionally-implicit-block-statement this, body
+        expression : false
+
+    compile-method = (i, [name, params, ...body]) ->
+      if not name?
+        throw Error "Expected method in property #i to have a name"
+
+      name = @compile name
+      computed = fix-identifier name and name.type isnt \Literal
+      method = infer-name 'method', name, computed
+
+      if not params? or params.type isnt \list
+        throw Error "Expected #method in property #i to have a parameter \
+                     list"
+
+      params = for param, j in params.values
+        if param.type isnt \atom or param.value.0 is \:
+          throw Error "Expected parameter #j for #method in property #i to be \
+                       an identifier"
+        type : \Identifier
+        name : param.value
+
+      type : \Property
+      kind : \init
+      method : true
+      computed : computed
+      key : name
+      value :
+        type : \FunctionExpression
+        id : null
+        params : params
+        body : optionally-implicit-block-statement this, body
+        expression : false
+
+    compile-list = (i, args) ->
+      | args.length is 0 =>
+        throw Error "Expected at least two arguments in property #i"
+      | args.length is 1 =>
+        name = @compile args.0
+        if fix-identifier name
+          throw Error "Expected name in property #i to be a symbol identifier"
+        type : \Property
+        kind : \init
+        key : name
+        value : name
+        shorthand : true
+      | args.length is 2 =>
+        key = @compile args.0
+        computed = fix-identifier key and key.type isnt \Literal
+        type : \Property
+        kind : \init
+        computed : computed
+        key : key
+        value : filter-identifier @compile args.1
+      # Check this before compilation and macro resolution to ensure that
+      # neither can affect this, but that it can be avoided in the edge case if
+      # needed with `(id get)` or `(id set)`, where `(macro id (lambda (x) x))`.
+      | args.0.type is \atom and args.0.value in <[get set]> =>
+        compile-get-set.call this, i, args.0.value, args[1 til]
+      # Reserve this for future generator use.
+      | args.0.type is \atom and args.0.value is \* =>
+        throw Error "Unexpected generator method in property #i"
+      | otherwise => compile-method.call this, i, args
+
+    ->
+      type : \ObjectExpression
+      properties : for args, i in arguments
+        compile-list.call this, i, (check-list args, i)
 
   \var : do
     declaration = (...args) ->
@@ -309,55 +427,24 @@ contents =
     argument : compile arg
 
   \. : do
+    join-members = (host, prop) ->
+      property-compiled = @compile prop
+      computed = fix-identifier property-compiled
+      type : \MemberExpression
+      computed : computed
+      object   : host
+      property : property-compiled
 
-    is-computed-property = (ast-node) ->
-      switch ast-node.type
-      | \Identifier => false
-      | otherwise => true
-
-    dot = (...args) ->
-
-      { compile } = env = this
-
+    (host) ->
       switch
-      | args.length is 1 => compile args.0
-      | args.length is 2
-        property-compiled = compile args.1
-        type : \MemberExpression
-        computed : is-computed-property property-compiled
-        object   : compile args.0
-        property : property-compiled
-      | arguments.length > 2
-        [ ...initial, last ] = args
-        dot.call do
-          env
-          dot.apply env, initial
-          dot.call env, compile last
+      | &length is 0 => throw Error "dot called with no arguments"
+      | &length is 1 => @compile host
+      | &length is 2 => join-members.call this, (@compile host), &1
       | otherwise =>
-        throw Error "dot called with no arguments"
-
-  \get : do
-    get = (...args) ->
-
-      { compile } = env = this
-
-      switch
-      | args.length is 1 => compile args.0
-      | args.length is 2
-        property-compiled = compile args.1
-        type : \MemberExpression
-        computed : true # `get` is always computed
-        object   : compile args.0
-        property : property-compiled
-      | arguments.length > 2
-        [ ...initial, last ] = args
-        get.call do
-          env
-          get.apply env, initial
-          get.call env, compile last
-      | otherwise =>
-        throw Error "dot called with no arguments"
-
+        host = @compile host
+        for i from 1 til &length
+          host = join-members.call this, host, &[i]
+        host
 
   \lambda : function-type \FunctionExpression
 

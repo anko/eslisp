@@ -1,7 +1,7 @@
 # Turns an internal AST form into an estree object with reference to the given
 # root environment.  Throws error unless the resulting estree AST is valid.
 
-{ concat-map }   = require \prelude-ls
+{ concat-map, reject }   = require \prelude-ls
 root-macro-table = require \./built-in-macros
 statementify     = require \./es-statementify
 environment      = require \./env
@@ -30,7 +30,13 @@ module.exports = (root-env, ast, options={}) ->
            |> (.filter (isnt null)) # because macro definitions emit null
            |> (.map statementify)
 
-  err = errors program-ast
+  err = errors program-ast |> reject ({node}) ->
+    # These are valid ES6 nodes, and their errors need to be ignored. See
+    # https://github.com/estools/esvalid/issues/7.
+    | node.type is \Property =>
+      node.computed and node.key?.type not in <[Identifier Literal]>
+    | otherwise => false
+
   if err.length
     first-error = err.0
     throw first-error
