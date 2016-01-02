@@ -478,9 +478,7 @@ contents =
       finalizer : finally-clause
 
   \macro : ->
-    env = this
-
-    compile-as-macro = (es-ast) ->
+    compile-as-macro = (es-ast) ~>
 
       # This hack around require makes loading macros from relative paths work.
       #
@@ -501,7 +499,7 @@ contents =
       root-require = main.require.bind main
 
       let require = root-require
-        eval "(#{env.compile-to-js es-ast})"
+        eval "(#{@compile-to-js es-ast})"
 
     switch &length
     | 1 =>
@@ -511,21 +509,21 @@ contents =
 
         # Mask any macro of that name in the current scope
 
-        import-compilerspace-macro env, form.value, null
+        import-compilerspace-macro this, form.value, null
 
       | otherwise
 
         # Attempt to compile the argument, hopefully into an object,
         # define macros from its keys
 
-        es-ast = env.compile form
+        es-ast = @compile form
 
         result = compile-as-macro es-ast
 
         switch typeof! result
         | \Object =>
           for k, v of result
-            import-compilerspace-macro env, k, v
+            import-compilerspace-macro this, k, v
         | \Null => fallthrough
         | \Undefined => # do nothing
         | otherwise =>
@@ -540,19 +538,19 @@ contents =
         name = name.value
         target-name = form.value
 
-        alias-target-macro = env.find-macro target-name
+        alias-target-macro = @find-macro target-name
 
         if not alias-target-macro
           throw Error "Macro alias target `#target-name` is not defined"
 
-        import-compilerspace-macro env, name, alias-target-macro
+        import-compilerspace-macro this, name, alias-target-macro
 
       | form.type is \list
 
-        userspace-macro = form |> env.compile |> compile-as-macro
+        userspace-macro = form |> @compile |> compile-as-macro
 
         name .= value
-        import-compilerspace-macro env, name, userspace-macro
+        import-compilerspace-macro this, name, userspace-macro
 
     | otherwise =>
       throw Error "Bad number of arguments to macro constructor \
@@ -567,23 +565,24 @@ contents =
     # means we have to resolve lists which first atom is `unquote` or
     # `unquote-splicing` into either an array of values or an identifier to
     # an array of values.
-    qq-body = (env, ast) ->
 
-      recurse-on = (ast-list) ->
+    qq-body = (ast) ->
+
+      recurse-on = (ast-list) ~>
         ast-list.values
-        |> map qq-body env, _
+        |> map qq-body.bind this
         |> generate-concat
 
-      unquote = ->
-        if arguments.length isnt 1
+      unquote = ~>
+        if &length isnt 1
           throw Error "Expected 1 argument to unquote but got #{rest.length}"
 
         # Unquoting should compile to just the thing separated with an array
         # wrapper.
-        [ env.compile it ]
+        [ @compile it ]
 
-      unquote-splicing = ->
-        if arguments.length isnt 1
+      unquote-splicing = ~>
+        if &length isnt 1
           throw Error "Expected 1 argument to unquoteSplicing but got
                        #{rest.length}"
 
@@ -592,8 +591,7 @@ contents =
 
         type : \MemberExpression
         computed : false
-        object :
-          env.compile it
+        object : @compile it
         property :
           type : \Identifier
           name : \values
@@ -604,19 +602,19 @@ contents =
         switch
         | not head?
           # quote an empty list
-          [ quote.call env, {
+          [ quote.call this, {
             type : \list
             values : []
-            location :"returned from macro"
+            location : "returned from macro"
           } ]
         | head.type is \atom =>
           switch head.value
-          | \unquote          => unquote         .apply null rest
-          | \unquote-splicing => unquote-splicing.apply null rest
+          | \unquote          => unquote ...rest
+          | \unquote-splicing => unquote-splicing ...rest
           | _ => [ recurse-on ast ]
         | _   => [ recurse-on ast ]
 
-      | _ => [ quote.call env, ast ]
+      | _ => [ quote.call this, ast ]
 
     generate-concat = (concattable-things) ->
 
@@ -668,9 +666,6 @@ contents =
               arguments : it
         ]
     qq = (arg) ->
-
-      env = this
-
       if &length > 1
         throw Error "Too many arguments to quasiquote (`); \
                      expected 1, got #{&length}"
@@ -681,14 +676,14 @@ contents =
 
         if first-arg.type is \atom and first-arg.value is \unquote
           rest = arg.values.slice 1 .0
-          env.compile rest
+          @compile rest
 
         else
           arg.values
-          |> map qq-body env, _
+          |> map qq-body.call this, _
           |> generate-concat
 
-      else quote.call env, arg # act like regular quote
+      else quote.call this, arg # act like regular quote
 
 module.exports =
   parent : null
