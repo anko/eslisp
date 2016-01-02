@@ -22,116 +22,97 @@ filter-identifier = (node) ->
   node
 
 chained-binary-expr = (type, operator) ->
-  macro = (...args) ->
-    env = this
-    switch
-    | args.length is 1 => env.compile args.0
-    | args.length is 2
-      type : type
-      operator : operator
-      left  : env.compile args.0
-      right : env.compile args.1
-    | arguments.length > 2
-      [ head, ...rest ] = args
-      macro.call do
-        env
-        macro.call env, env.compile head
-        macro.apply env, rest
-    | otherwise =>
+  macro = ->
+    | &length is 0 =>
       throw Error "binary expression macro `#operator` unexpectedly called \
                    with no arguments"
+    | &length is 1 => @compile &0
+    | &length is 2 =>
+      type : type
+      operator : operator
+      left  : @compile &0
+      right : @compile &1
+    | otherwise =>
+      [ head, ...rest ] = &
+      macro.call do
+        this
+        macro.call this, @compile head
+        macro.apply this, rest
 
-  (...args) ->
-    env = this
-    if args.length is 1
+  ->
+    if &length is 1
       throw Error "Chained binary expression `#operator` unexpectedly called \
                    with 1 argument"
     else
-      macro.apply env, arguments
+      macro ...
 
-unary-expr = (operator) ->
-
-  (arg) ->
-    { compile } = env = this
-
-    type : \UnaryExpression
-    operator : operator
-    prefix : true
-    argument : compile arg
+unary-expr = (operator) -> (arg) ->
+  type : \UnaryExpression
+  operator : operator
+  prefix : true
+  argument : @compile arg
 
 n-ary-expr = (operator) ->
   n-ary = chained-binary-expr \BinaryExpression operator
   unary = unary-expr operator
-  (...args) ->
-    env = this
-    ( switch args.length | 0 => null
-                         | 1 => unary
-                         | _ => n-ary
-    ).apply env, arguments
+  ->
+    switch &length
+      | 0 => throw Error "#operator requires at least 1 argument"
+      | 1 => unary ...
+      | _ => n-ary ...
 
 update-expression = (operator, {type}) ->
   unless operator in <[ ++ -- ]>
     throw Error "Illegal update expression operator #operator"
-  is-prefix = ( type is \prefix )
-  (...arg) ->
-    { compile } = env = this
-    if arg.length isnt 1
+  is-prefix = type is \prefix
+  (value) ->
+    if &length isnt 1
       throw Error "Expected `++` expression to get exactly 1 argument but \
-                   got #{arguments.length}"
+                   got #{&length}"
     type : \UpdateExpression
     operator : operator
     prefix : is-prefix
-    argument : compile arg.0
+    argument : @compile value
 
-quote = (...args) ->
-  env = this
-  if args.length > 1
+quote = (item) ->
+  | &length > 1 =>
     throw Error "Too many arguments to quote; \
-                 expected 1 but got #{args.length}"
-
-  it = args.0
-
-  if it then env.compile-to-quote it
-  else
+                 expected 1 but got #{&length}"
+  | item => @compile-to-quote item
+  | otherwise =>
     # Compile as if empty list
-    env.compile-to-quote do
+    @compile-to-quote do
       { type : \list values : [] location : "returned from macro" }
 
 optionally-implicit-block-statement = ({compile, compile-many}, body) ->
-  switch body.length
-  | 1 =>
+  if body.length is 1
     body-compiled = compile body.0
     if body-compiled.type is \BlockStatement then return body-compiled
-    fallthrough # "else"
-  | _ =>
-    type : \BlockStatement
-    body : compile-many body .map statementify
+
+  type : \BlockStatement
+  body : compile-many body .map statementify
 
 # Here's a helper that extracts the common parts to macros for
 # FunctionExpressions and FunctionDeclarations since they're so similar.
-function-type = (type) ->
-  (...args) ->
-    { compile, compile-many } = env = this
-    # The first optional atom argument gives the id that should be attached to
-    # the function expression.  The next argument is the function's argument
-    # list.  All further arguments are statements for the body.
+function-type = (type) -> (params, ...rest) ->
+  # The first optional atom argument gives the id that should be attached to
+  # the function expression.  The next argument is the function's argument
+  # list.  All further arguments are statements for the body.
 
-    var id, params
+  var id
 
-    arg1 = args.shift!
+  if params.type is \atom
+    id = type : \Identifier name : params.value
+    params = rest.shift!.values .map @compile
+  else
+    # Let's assume it's a list then
+    id = null
+    params = params.values.map @compile
 
-    if arg1.type is \atom
-      id := type : \Identifier name : arg1.value
-      params := args.shift! .values .map compile
-    else
-      # Let's assume it's a list then
-      id := null
-      params := arg1.values .map compile
-
-    type : type
-    id : id
-    params : params
-    body : optionally-implicit-block-statement env, args
+  type : type
+  id : id
+  params : params
+  body : optionally-implicit-block-statement this, rest
 
 contents =
   \+ : n-ary-expr \+
@@ -189,14 +170,12 @@ contents =
   \^=   : chained-binary-expr \AssignmentExpression \^=
 
   \seq : (...expressions) ->
-    { compile } = env = this
     type : \SequenceExpression
-    expressions : expressions .map compile
+    expressions : expressions .map @compile
 
   \array : (...elements) ->
-    { compile } = env = this
     type : \ArrayExpression
-    elements : elements.map compile
+    elements : elements.map @compile
 
   \object : do
     check-list = (list, i) ->
@@ -320,111 +299,94 @@ contents =
       properties : for args, i in arguments
         compile-list.call this, i, (check-list args, i)
 
-  \var : do
-    declaration = (...args) ->
-      { compile } = env = this
-      if args.length > 2
-        throw Error "Expected variable declaration to get 1 or 2 arguments, \
-                     but got #{arguments.length}."
-      type : \VariableDeclaration
-      kind : "var"
-      declarations : [
-        type : \VariableDeclarator
-        id : compile args.0
-        init : if args.1 then compile args.1 else null
-      ]
-
-    declaration
+  \var : (name, value) ->
+    if &length > 2
+      throw Error "Expected variable declaration to get 1 or 2 arguments, \
+                   but got #{&length}."
+    type : \VariableDeclaration
+    kind : "var"
+    declarations : [
+      type : \VariableDeclarator
+      id : @compile name
+      init : if value then @compile value else null
+    ]
 
   \block : (...statements) ->
-    { compile-many } = env = this
     type : \BlockStatement
-    body : compile-many statements .map statementify
+    body : @compile-many statements .map statementify
 
   \switch : (discriminant, ...cases) ->
-    { compile, compile-many } = env = this
     type : \SwitchStatement
-    discriminant : compile discriminant
-    cases : cases .map (.values)
-      .map ([t, ...c]) ->
+    discriminant : @compile discriminant
+    cases : cases.map (.values)
+      .map ([t, ...c]) ~>
         type       : \SwitchCase
         test       : do
-          t = compile t
+          t = @compile t
           if t.type is \Identifier and t.name is \default
             null # emit "default:" switchcase label
           else t
-        consequent : compile-many c .map statementify
+        consequent : @compile-many c .map statementify
 
   \if : (test, consequent, alternate) ->
-    { compile } = env = this
     type : \IfStatement
-    test       : compile test
-    consequent : statementify compile consequent
+    test       : @compile test
+    consequent : statementify @compile consequent
     alternate :
-      if alternate then statementify compile that
+      if alternate then statementify @compile that
       else null
 
   \?: : (test, consequent, alternate) ->
-    { compile } = env = this
     type : \ConditionalExpression
-    test       : compile test
-    consequent : compile consequent
-    alternate  : compile alternate
+    test       : @compile test
+    consequent : @compile consequent
+    alternate  : @compile alternate
 
   \while : (test, ...body) ->
-    { compile } = env = this
     type : \WhileStatement
-    test : compile test
-    body : optionally-implicit-block-statement env, body
+    test : @compile test
+    body : optionally-implicit-block-statement this, body
 
   \dowhile : (test, ...body) ->
-    { compile } = env = this
     type : \DoWhileStatement
-    test : compile test
-    body : optionally-implicit-block-statement env, body
+    test : @compile test
+    body : optionally-implicit-block-statement this, body
 
   \for : (init, test, update, ...body) ->
-    { compile } = env = this
     type : \ForStatement
-    init : compile init
-    test : compile test
-    update : compile update
-    body : optionally-implicit-block-statement env, body
+    init : @compile init
+    test : @compile test
+    update : @compile update
+    body : optionally-implicit-block-statement this, body
 
   \forin : (left, right, ...body) ->
-    { compile } = env = this
     type : \ForInStatement
-    left : compile left
-    right : compile right
-    body : optionally-implicit-block-statement env, body
+    left : @compile left
+    right : @compile right
+    body : optionally-implicit-block-statement this, body
 
   \break : (arg) ->
-    { compile } = env = this
     type : \BreakStatement
-    label : if arg then compile arg else null
+    label : if arg then @compile arg else null
+
   \continue : (arg) ->
-    {compile} = env = this
     type : \ContinueStatement
-    label : if arg then compile arg else null
+    label : if arg then @compile arg else null
 
-  \label : (...args) ->
-    { compile } = env = this
-    if args.length not in [ 1 2 ]
+  \label : (label, body) ->
+    if &length not in [ 1 2 ]
       throw Error "Expected `label` macro to get 1 or 2 arguments, but got \
-                   #{args.length}"
-    [ label, body ] = args
-
-    body = if body then statementify compile body
+                   #{&length}"
+    body = if body then statementify @compile body
                    else type : \EmptyStatement
 
     type  : \LabeledStatement
-    label : compile label
+    label : @compile label
     body  : body
 
   \return : (arg) ->
-    { compile } = env = this
     type : \ReturnStatement
-    argument : compile arg
+    argument : @compile arg
 
   \. : do
     join-members = (host, prop) ->
@@ -450,86 +412,72 @@ contents =
 
   \function : function-type \FunctionDeclaration
 
-  \new : (...args) ->
-
-    { compile } = env = this
-
-    [ newTarget, ...newArgs ] = args
-
+  \new : (newTarget, ...newArgs) ->
     if not newTarget? then throw Error "No target for `new`"
     # `newArgs` can be empty though
 
     type : \NewExpression
-    callee : compile newTarget
-    arguments : newArgs .map compile
+    callee : @compile newTarget
+    arguments : newArgs .map @compile
 
-  \debugger : (...args) ->
-    if args.length
+  \debugger : ->
+    if &length
       throw Error "Expected no arguments to `debugger` statement"
     type : \DebuggerStatement
 
-  \throw : (...args) ->
-
-    { compile } = env = this
-
-    if args.length isnt 1
-      throw Error "Expected 1 argument to `throws`; got #{args.length}"
+  \throw : (item) ->
+    if &length isnt 1
+      throw Error "Expected 1 argument to `throws`; got #{&length}"
 
     type : \ThrowStatement
-    argument : compile args.0
+    argument : @compile item
 
-  \regex : (...args) ->
-
-    { compile } = env = this
-
-    if args.length not in [ 1 2 ]
-      throw Error "Expected 1 or 2 arguments to `regex`; got #{args.length}"
+  \regex : (expr, flags) ->
+    if &length not in [ 1 2 ]
+      throw Error "Expected 1 or 2 arguments to `regex`; got #{&length}"
 
     type : \Literal
-    value : new RegExp args.0.value, args.1?value
+    value : new RegExp expr.value, flags?value
 
-  \try : (...args) ->
-
-    { compile, compile-many } = env = this
-
+  \try : do
     is-part = (thing, clause-name) ->
       if not (thing.type is \list) then return false
       first = thing.values.0
       (first.type is \atom) && (first.value is clause-name)
 
-    catch-part = null
-    finally-part = null
-    others = []
+    (...args) ->
+      catch-part = null
+      finally-part = null
+      others = []
 
-    args.for-each ->
-      if it `is-part` \catch
-        if catch-part then throw Error "Duplicate `catch` clause"
-        catch-part := it.values.slice 1
-      else if it `is-part` \finally
-        if finally-part then throw Error "Duplicate `finally` clause"
-        finally-part := it.values.slice 1
-      else
-        others.push it
+      args.for-each ->
+        if it `is-part` \catch
+          if catch-part then throw Error "Duplicate `catch` clause"
+          catch-part := it.values.slice 1
+        else if it `is-part` \finally
+          if finally-part then throw Error "Duplicate `finally` clause"
+          finally-part := it.values.slice 1
+        else
+          others.push it
 
-    catch-clause = if catch-part
-      type : \CatchClause
-      param : compile catch-part.shift!
-      body : optionally-implicit-block-statement env, catch-part
-    else null
+      catch-clause = if catch-part
+        type : \CatchClause
+        param : @compile catch-part.shift!
+        body : optionally-implicit-block-statement this, catch-part
+      else null
 
-    finally-clause = if finally-part
-      optionally-implicit-block-statement env, finally-part
-    else null
+      finally-clause = if finally-part
+        optionally-implicit-block-statement this, finally-part
+      else null
 
-    type : \TryStatement
-    block :
-      type : \BlockStatement
-      body : compile-many others .map statementify
-    handler : catch-clause
-    finalizer : finally-clause
+      type : \TryStatement
+      block :
+        type : \BlockStatement
+        body : @compile-many others .map statementify
+      handler : catch-clause
+      finalizer : finally-clause
 
-  \macro : (...args) ->
-
+  \macro : ->
     env = this
 
     compile-as-macro = (es-ast) ->
@@ -555,9 +503,9 @@ contents =
       let require = root-require
         eval "(#{env.compile-to-js es-ast})"
 
-    switch args.length
+    switch &length
     | 1 =>
-      form = args.0
+      form = &0
       switch
       | form.type is \atom
 
@@ -584,7 +532,7 @@ contents =
           throw Error "Invalid macro source #that (expected to get an Object, \
                        or a name argument and a Function)"
     | 2 =>
-      [ name, form ] = args
+      [ name, form ] = &
 
       switch
       | form.type is \atom
@@ -611,7 +559,7 @@ contents =
                    (expected 1 or 2; got #that)"
     return null
 
-  \quote : -> quote.apply this, arguments
+  \quote : quote
 
   \quasiquote : do
 
@@ -719,14 +667,13 @@ contents =
                 property   : type : \Identifier name : \concat
               arguments : it
         ]
-    qq = (...args) ->
+    qq = (arg) ->
 
       env = this
 
-      if args.length > 1
+      if &length > 1
         throw Error "Too many arguments to quasiquote (`); \
-                     expected 1, got #{args.length}"
-      arg = args.0
+                     expected 1, got #{&length}"
 
       if arg.type is \list and arg.values.length
 

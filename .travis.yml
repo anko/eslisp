@@ -5,6 +5,3 @@ node_js:
   - "iojs"
   - "4"
   - "5.1"
-cache:
-  directories:
-    - node_modules
