@@ -872,9 +872,9 @@ test "macros can be required relative to root directory" ->
     (x)
     """
 
-  eslc-path = path.join process.cwd!, "bin/eslc"
+  eslc-path = path.join __dirname, "bin/eslc.js"
   try
-    exec-sync "#eslc-path #main-basename", cwd : dir-name
+    exec-sync "node #eslc-path #main-basename", cwd : dir-name
       ..to-string! `@equals` "\n"
   finally
     e <~ rimraf dir-name

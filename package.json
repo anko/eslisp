@@ -15,7 +15,7 @@
     "doc": "./doc"
   },
   "bin": {
-    "eslc": "./bin/eslc"
+    "eslc": "./bin/eslc.js"
   },
   "files": [
     "lib",

@@ -11,7 +11,7 @@ your own language features, [like this][9].
 > :warning: **Note the 0.x.x [semver][10].**  The API may shift under your
 > feet.
 
-<!-- !test program ./bin/eslc | head -c -1 -->
+<!-- !test program node ./bin/eslc.js | head -c -1 -->
 
 <!-- !test in fib -->
 
