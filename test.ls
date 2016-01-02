@@ -812,6 +812,33 @@ test "when returned from an IIFE, macros can share state" ->
        """
    ..`@equals` "2;\n4;"
 
+test "error thrown by macro is caught with a descriptive message" ->
+
+  tests =
+    * code : """
+             (macro x (lambda () (throw (Error "aaah"))))
+             (x)
+             """
+      desired-error : "Error evaluating macro `x` (called at line 2, column 0): aaah"
+    * code : """
+             (macro x (lambda () (m)))
+             (x)
+             """
+      desired-error : "Error evaluating macro `x` (called at line 2, column 0): m is not defined"
+
+  tests.for-each (it, i) ~>
+    caught = false
+    try
+      esl it.code
+    catch e
+      caught := true
+      if e.message isnt it.desired-error
+        @fail "Code #i produced wrong error message"
+    finally
+      if not caught
+        @fail "Code #i did not throw an error (expected it to)"
+      @pass!
+
 test "macro constructor called with no arguments is an error" ->
   -> esl "(macro)"
    ..`@throws` Error

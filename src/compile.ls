@@ -121,10 +121,17 @@ list-to-estree = (env, { values }:ast, options={}) ->
 
     # Invoke the found macro
 
-    #console.log "invoking macro `#{head.value}`"
-    macro-return = that.apply local-env, rest
-    #console.log "output from `#{head.value}`"
-    #console.log macro-return
+    var macro-return
+    try
+      macro-return := that.apply local-env, rest
+    catch e
+
+      # Prepend data to the error message to help in debugging.
+
+      { line, column } = ast.location.start
+      e.message  = "Error evaluating macro `#{head.value}` \
+                    (called at line #line, column #column): #{e.message}"
+      throw e
 
     switch typeof! macro-return
     | \Null      => fallthrough
