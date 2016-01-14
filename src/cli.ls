@@ -193,6 +193,7 @@ else
     vm = require \vm
     repl.start do
       prompt: "> "
+      use-global : yes
       eval: (cmd, context, filename, callback) ->
         # NOTE: will fail on older nodejs due to paren wrapping logic; see
         # SO http://stackoverflow.com/questions/19182057/node-js-repl-funny-behavior-with-custom-eval-function
