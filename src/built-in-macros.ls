@@ -99,6 +99,12 @@ function-type = (type) -> (params, ...rest) ->
   params : params
   body : optionally-implicit-block-statement this, rest
 
+compile-unless-empty-list = (compile, ast) ->
+  if ast.type isnt \list
+    throw Error "Unexpected argument AST; expected list"
+  if ast.values.length then compile ast
+                       else null
+
 contents =
   \+ : n-ary-expr \+
   \- : n-ary-expr \-
@@ -236,9 +242,9 @@ contents =
 
   \for : (init, test, update, ...body) ->
     type : \ForStatement
-    init : @compile init
-    test : @compile test
-    update : @compile update
+    init : compile-unless-empty-list @compile, init
+    test : compile-unless-empty-list @compile, test
+    update : compile-unless-empty-list @compile, update
     body : optionally-implicit-block-statement this, body
 
   \forin : (left, right, ...body) ->

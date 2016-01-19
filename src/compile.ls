@@ -108,7 +108,12 @@ list-to-self-producer = (env, { values }) ->
 
 list-to-estree = (env, { values }:ast, options={}) ->
 
-  return null if values.length is 0
+  if values.length is 0
+    return do
+      type : \Literal
+      value : null
+      raw : \null
+      loc : ast.location
 
   [ head, ...rest ] = values
 

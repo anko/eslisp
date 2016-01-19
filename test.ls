@@ -204,7 +204,7 @@ test "variable declaration and assignment" ->
 
 test "empty statement" ->
   esl "()"
-    ..`@equals` ""
+    ..`@equals` "null;"
 
 test "break statement" ->
   esl "(while true (break))"
@@ -564,14 +564,14 @@ test "simple unquoting macro" ->
     ..`@equals` "three();"
 
 test "empty-list-returning macro" ->
-  esl "(macro nothing (lambda () (return '())))
-       (nothing)"
-    ..`@equals` ""
+  esl "(macro shouldbenull (lambda () (return '())))
+       (shouldbenull)"
+    ..`@equals` "null;"
 
 test "empty-list-returning macro (using quasiquote)" ->
-  esl "(macro nothing (lambda () (return `())))
-       (nothing)"
-    ..`@equals` ""
+  esl "(macro shouldbenull (lambda () (return `())))
+       (shouldbenull)"
+    ..`@equals` "null;"
 
 test "nothing-returning macro" ->
   esl "(macro nothing (lambda () (return undefined)))
