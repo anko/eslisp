@@ -5,3 +5,4 @@ node_js:
   - "iojs"
   - "4"
   - "5.1"
+script: echo "code tests" ; npm run test; echo "readme tests" ; npm run test-readme ; echo "documentation example tests" ; npm run test-docs
