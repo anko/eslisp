@@ -5,13 +5,6 @@
 ast-errors = require \./esvalid-partial
 { is-expression } = require \esutils .ast
 
-# This is only used to let macros return multiple statements, in a way
-# detectable as different from other return types with an
-# `instanceof`-check.
-class multiple-statements
-  (...args) ~>
-    @statements = args
-
 statementify = require \./es-statementify
 
 # Only used directly by aliases
@@ -24,12 +17,11 @@ create-transform-macro = (env, func) ->
 
     result = func.apply env, args
 
-    if result instanceof multiple-statements
-      return result.statements
+    if typeof! result is \Array
+      return result
     else return [ result ]
 
 module.exports = {
   import-compilerspace-macro,
-  create-transform-macro,
-  multiple-statements
+  create-transform-macro
 }

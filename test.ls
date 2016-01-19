@@ -849,8 +849,8 @@ test "macro constructor loading from IIFE can load nothing" ->
        """
    ..`@equals` ""
 
-test "macro can return multiple statements with `multi`" ->
-  esl "(macro declareTwo (lambda () (return ((. this multi) '(var x 0) '(var y 1)))))
+test "macro can return multiple statements by returning an array" ->
+  esl "(macro declareTwo (lambda () (return (array '(var x 0) '(var y 1)))))
        (declareTwo)"
    ..`@equals` "var x = 0;\nvar y = 1;"
 
@@ -946,10 +946,10 @@ test "macros required from separate modules can access complation env" ->
   fs.write-sync fd, """
     module.exports = function() {
       // Return two statements: a string and a generated symbol
-      return this.multi(
+      return [
         this.atom("ok"),
         this.atom("ok2")
-      );
+      ];
     };
     """
 
@@ -999,8 +999,8 @@ test "macro-generating macro" -> # yes srsly
 test "macro generating macro and macro call" -> # yes srsly squared
   esl '''
     (macro define-and-call (lambda (x)
-      (return ((. this multi) `(macro what (lambda () (return `(hello))))
-                              `(what)))))
+      (return (array `(macro what (lambda () (return `(hello))))
+                     `(what)))))
     (define-and-call)
     '''
     ..`@equals` "hello();"
@@ -1038,7 +1038,7 @@ test "invalid AST returned by macro throws error" ->
 test "macro multi-returning with bad values throws descriptive error" ->
   try
     esl '''
-      (macro breaking (lambda () (return ((. this multi) null))))
+      (macro breaking (lambda () (return (array null))))
       (breaking)
       '''
   catch e
@@ -1069,7 +1069,7 @@ test "macro can return estree object" ->
 test "macro can multi-return estree objects" ->
   esl '''
     (macro identifiers (lambda ()
-      (return ((. this multi)
+      (return (array
                (object "type" "Identifier"
                        "name" "x")
                (object "type" "Identifier"
@@ -1081,7 +1081,7 @@ test "macro can multi-return estree objects" ->
 test "macro can multi-return a combination of estree and sexprs" ->
   esl '''
     (macro identifiers (lambda ()
-      (return ((. this multi)
+      (return (array
                (object "type" "Identifier"
                        "name" "x")
                'x))))
@@ -1132,13 +1132,12 @@ test "transform-macro can receive arguments" ->
 
 test "transform-macro can multi-return" ->
   wrapper = (...args) ->
-    this.multi (@atom \hi), (@atom "yo")
+    [ (@atom \hi), (@atom "yo") ]
   esl "" transform-macros : [ wrapper ]
     .. `@equals` "hi;\nyo;"
 
 test "multiple transform-macros can be used" ->
-  wrapper-passthrough = (...args) ->
-    this.multi.apply null args
+  wrapper-passthrough = (...args) -> args
   esl "(+ 1 2)" transform-macros : [ wrapper-passthrough, wrapper-passthrough ]
     .. `@equals` "1 + 2;"
 

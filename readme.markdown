@@ -315,12 +315,12 @@ S-expression atom.
 
     console.log(42);
 
-You can return multiple statements from a macro with `this.multi`.
+You can return multiple statements from a macro by returning an array.
 
 <!-- !test in multiple-return macro -->
 
     (macro log-and-delete (lambda (varName)
-     (return ((. this multi)
+     (return (array
               `((. console log) ((. JSON stringify) ,varName))
               `(delete ,varName)))))
 

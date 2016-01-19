@@ -258,28 +258,6 @@ When macros are called, the function associated with them is called with a
 particular `this`-context, such that the `this` object contains properties with
 various handy helper functions:
 
-### `this.multi`
-
-Allows you to return multiple expressions or statements from a macro.  Just
-call it with multiple arguments and return that.
-
-<!-- !test in increment twice -->
-
-    (macro incrementTwice
-     (lambda (x) (return ((. this multi) `(++ ,x) `(++ ,x)))))
-
-    (incrementTwice hello)
-
-compiles to
-
-<!-- !test out increment twice -->
-
-    ++hello;
-    ++hello;
-
-If your macro internally calls other macro functions, and want to know if those
-returned multiple statements, just check if it's an instance of `this.multi`.
-
 ### `this.evaluate`
 
 Lets you compile and run eslisp code at compile-time.

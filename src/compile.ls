@@ -1,5 +1,3 @@
-{ multiple-statements } = require \./import-macro
-
 looks-like-positive-number = (atom-text) ->
   atom-text.match /^\d+(\.\d+)?$/
 looks-like-negative-number = (atom-text) ->
@@ -141,19 +139,20 @@ list-to-estree = (env, { values }:ast, options={}) ->
     switch typeof! macro-return
     | \Null      => fallthrough
     | \Undefined => null
+    | \Array =>
+
+      macro-return.for-each ->
+        switch typeof! it
+        | \Object => # that's OK
+        | otherwise =>
+          throw Error "Unexpected `#that` value received in multi-return"
+      macro-return.map ->
+        ast-to-estree env, it
+          ..?loc ||= head.location
+
     | \Object =>
 
-      if macro-return instanceof multiple-statements
-        macro-return.statements.for-each ->
-          switch typeof! it
-          | \Object => # that's OK
-          | otherwise =>
-            throw Error "Unexpected `#that` value received in multi-return"
-        macro-return.statements.map ->
-          ast-to-estree env, it
-            ..?loc ||= head.location
-
-      else if macro-return.type in <[ atom list string ]>
+      if macro-return.type in <[ atom list string ]>
         ast-to-estree env, macro-return
           ..?loc ||= head.location
 

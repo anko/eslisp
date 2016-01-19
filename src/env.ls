@@ -7,8 +7,6 @@
 es-generate = require \escodegen .generate _
 compile = require \./compile
 
-{ multiple-statements } = require \./import-macro
-
 # Recursively search a macro table and its parents for a macro with a given
 # name.  Returns `null` if unsuccessful; a macro representing the function if
 # successful.
@@ -98,8 +96,6 @@ class env
       # gives "SyntaxError: Unexpected token if".
       #
       js |> eval
-
-  multi : multiple-statements
 
   derive : ~>
     # Create a derived environment with this one as its parent.  This
