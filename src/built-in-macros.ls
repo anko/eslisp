@@ -99,13 +99,19 @@ function-type = (type) -> (params, ...rest) ->
   params : params
   body : optionally-implicit-block-statement this, rest
 
-is-atom = (node, name) -> node.type is \atom and node.value is name
+is-atom = (node, name) ->
+  type-ok  = node.type is \atom
+  value-ok = if name then (node.value is name) else true
+
+  type-ok and value-ok
+
+is-list = (node) -> node.type is \list
 
 maybe-unwrap-quote = (node) ->
-  | node.type is \list and node.values.0 `is-atom` \quote =>
+  if (is-list node) and (is-atom node.values.0, \quote)
     computed : false
     node : node.values.1
-  | otherwise =>
+  else
     computed : true
     node : node
 
