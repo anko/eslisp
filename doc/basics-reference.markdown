@@ -374,7 +374,7 @@ Property access uses the `.` macro.
 If you wish you could just write those as `a.b.c` in eslisp code, use the
 [*eslisp-propertify*][10] user-macro.
 
-For *computed* property access, omit the leading colon.
+For *computed* property access, omit the quote.
 
 <!-- !test in computed property access macro -->
 
