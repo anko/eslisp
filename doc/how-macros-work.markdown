@@ -55,12 +55,12 @@ Yey!
 
 We could of course have written the macro function in eslisp instead:
 
-    (= (. module :exports)
+    (= (. module 'exports)
        (lambda (name)
-        (return ((. this :list)
-                 ((. this :atom) "=")
+        (return ((. this 'list)
+                 ((. this 'atom) "=")
                  name
-                 ((. this :string) "hello")))))
+                 ((. this 'string) "hello")))))
 
 That compiles to the same JS before.  In fact, you can write macros in any
 language you want, as long as you can compile it to JS before `require`-ing it
@@ -74,12 +74,12 @@ syntax for *quoting*, which makes macro return values much easier to read:
 To make macros clearer to read, eslisp has special syntax for returning stuff
 that represents code.  Let's rewrite the previous hello-assigning macro:
 
-    (= (. module :exports) (lambda (name) (return `(var ,name "hello"))))
+    (= (. module 'exports) (lambda (name) (return `(var ,name "hello"))))
 
 That does exactly the same thing, but it contains less of the
 `atom`/`list`/`string` constructor fluff, so it's clearer to read.  The `(.
 this list)` constructor is replaced with a `` ` `` (backtick).  The `var` atom
-no longer needs to be written explicitly as `((. this :atom) var)` and there's
+no longer needs to be written explicitly as `((. this 'atom) var)` and there's
 now a `,` (comma) before `name`.
 
 In various other Lisp family languages that eslisp is inspired by, the backtick
@@ -117,13 +117,13 @@ expression necessary to calculate the mean of some variables, you could do
      (lambda ()
 
       ; Convert arguments object to an array
-      (var argumentsAsArray ((. Array :prototype :slice :call) arguments 0))
+      (var argumentsAsArray ((. Array 'prototype 'slice 'call) arguments 0))
 
       ; Make an eslisp list object from the arguments
-      (var args ((. this :list :apply) null argumentsAsArray))
+      (var args ((. this 'list 'apply) null argumentsAsArray))
 
       ; Make an eslisp atom representing the number of arguments
-      (var total ((. this :atom) (. arguments :length)))
+      (var total ((. this 'atom) (. arguments 'length)))
 
       ; Return a division of the sum of the arguments by the total
       (return `(/ (+ ,@args) ,total))))
@@ -179,9 +179,9 @@ list.
       ; Redefine the macro in an inner scope
       (macro one (lambda () (return '1.1))) ; "very large value of 1"
 
-      ((. console :log) (one)))
+      ((. console 'log) (one)))
 
-    ((. console :log) (one))
+    ((. console 'log) (one))
 
 <!-- !test out function-expression scope macro -->
 
@@ -266,7 +266,7 @@ call it with multiple arguments and return that.
 <!-- !test in increment twice -->
 
     (macro incrementTwice
-     (lambda (x) (return ((. this :multi) `(++ ,x) `(++ ,x)))))
+     (lambda (x) (return ((. this 'multi) `(++ ,x) `(++ ,x)))))
 
     (incrementTwice hello)
 
@@ -290,9 +290,9 @@ compile-time:
 <!-- !test in precompute -->
 
     (macro precompute
-     (lambda (list) (return ((. this :atom) ((. this :evaluate) list)))))
+     (lambda (list) (return ((. this 'atom) ((. this 'evaluate) list)))))
 
-    (precompute (+ 1 2 (* 5 (. Math :PI))))
+    (precompute (+ 1 2 (* 5 (. Math 'PI))))
 
 compiles to
 

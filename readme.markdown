@@ -18,13 +18,13 @@ your own language features, [like this][9].
     ; Only include given statement if `$DEBUG` environment variable is set
     (macro debug
      (lambda (statement)
-      (return (?: (. process :env :DEBUG)
+      (return (?: (. process 'env 'DEBUG)
                   statement
                   null))))
 
     (var fib ; Fibonacci number sequence
        (lambda (x)
-        (debug ((. console :log) (+ "resolving number " x)))
+        (debug ((. console 'log) (+ "resolving number " x)))
         (switch x
          (0 (return 0))
          (1 (return 1))
@@ -132,9 +132,9 @@ arguments as the rest:
 <!-- !test in simple macros -->
 
     ; The "." macro compiles to property access.
-    (. a :b)
-    (. a :b c)
-    (. a :b 5 :c "yo")
+    (. a 'b)
+    (. a 'b c)
+    (. a 'b 5 'c "yo")
 
     ; The "+" macro compiles to addition.
     (+ 1 2)
@@ -148,7 +148,7 @@ arguments as the rest:
     a.b[5].c['yo'];
     1 + 2;
 
-If the `(. a :b)` syntax feels tedious, you might like the [eslisp-propertify][34] transform macro, which lets you write `a.b` instead.
+If the `(. a 'b)` syntax feels tedious, you might like the [eslisp-propertify][34] transform macro, which lets you write `a.b` instead.
 
 If the first element of a list isn't the name of a macro which is in scope, it
 compiles to a function call:
@@ -173,7 +173,7 @@ These can of course be nested:
     (var x (+ 1 (* 2 3)))
 
     ; Calling the result of a property access expression
-    ((. console :log) "hi")
+    ((. console 'log) "hi")
 
 <!-- !test out nested macros -->
 
@@ -295,7 +295,7 @@ Macros can use [`quasiquote`][36] (`` ` ``), `unquote` (`,`) and
 <!-- !test in macro and call -->
 
     (macro m (lambda (x) (return `(+ ,x 2))))
-    ((. console :log) (m 40))
+    ((. console 'log) (m 40))
 
 <!-- !test out macro and call -->
 
@@ -309,9 +309,9 @@ S-expression atom.
 <!-- !test in evaluate in macro -->
 
     (macro add2 (lambda (x)
-                 (var xPlusTwo (+ ((. this :evaluate) x) 2))
-                 (return ((. this :atom) xPlusTwo))))
-    ((. console :log) (add2 40))
+                 (var xPlusTwo (+ ((. this 'evaluate) x) 2))
+                 (return ((. this 'atom) xPlusTwo))))
+    ((. console 'log) (add2 40))
 
 <!-- !test out evaluate in macro -->
 
@@ -322,8 +322,8 @@ You can return multiple statements from a macro with `this.multi`.
 <!-- !test in multiple-return macro -->
 
     (macro log-and-delete (lambda (varName)
-     (return ((. this :multi)
-              `((. console :log) ((. JSON :stringify) ,varName))
+     (return ((. this 'multi)
+              `((. console 'log) ((. JSON 'stringify) ,varName))
               `(delete ,varName)))))
 
     (log-and-delete someVariable)
@@ -340,9 +340,9 @@ compilation side-effects and conditional compilation.
 
     ; Only include statement if `$DEBUG` environment variable is set
     (macro debug (lambda (statement)
-     (return (?: (. process :env :DEBUG) statement null))))
+     (return (?: (. process 'env 'DEBUG) statement null))))
 
-    (debug ((. console :log) "debug output"))
+    (debug ((. console 'log) "debug output"))
     (yep)
 
 <!-- !test out nothing-returning macro -->
@@ -360,9 +360,9 @@ and the variables in the IIFE are shared between them.
     (macro ((lambda ()
             (var x 0) ; visible to all of the macro functions
             (return
-             (object (:increment (lambda () (return ((. this :atom) (++ x)))))
-                     (:decrement (lambda () (return ((. this :atom) (-- x)))))
-                     (:get       (lambda () (return ((. this :atom) x)))))))))
+             (object ('increment (lambda () (return ((. this 'atom) (++ x)))))
+                     ('decrement (lambda () (return ((. this 'atom) (-- x)))))
+                     ('get       (lambda () (return ((. this 'atom) x)))))))))
 
     (increment)
     (increment)
@@ -417,7 +417,7 @@ The compiler runs as a [REPL][42] if given no arguments, though it doesn't
 
 You can also just pipe data to it to compile it if you want.
 
-    echo '((. console :log) "Yo!")' | eslc
+    echo '((. console 'log) "Yo!")' | eslc
 
 Or pass a filename, like `eslc myprogram.esl`.
 

@@ -295,7 +295,7 @@ parameters to be simple pairs keys and values.
 <!-- !test in object macro -->
 
     (object)
-    (object (:a 1))
+    (object ('a 1))
     (object ("a" 1) ("b" 2))
 
 <!-- !test out object macro -->
@@ -313,8 +313,8 @@ ES5 getters and setters can be used.
 
     (var data 0)
     (object
-        (get :data () (return data))
-        (set :data (value) (= data value)))
+        (get 'data () (return data))
+        (set 'data (value) (= data value)))
 
 <!-- !test out object getter setter -->
 
@@ -337,9 +337,9 @@ implemented, though, so generator methods are not available.
     (var prop 2)
     (var data (Symbol "data"))
     (object
-        (:prop)
-        ((. Symbol :toStringTag) "foo")
-        (:method (arg) (return (+ arg 1)))
+        ('prop)
+        ((. Symbol 'toStringTag) "foo")
+        ('method (arg) (return (+ arg 1)))
         (get data () (return 1)))
 
 <!-- !test out object es6 -->
@@ -362,8 +362,8 @@ Property access uses the `.` macro.
 <!-- !test in property access macro -->
 
     (. a 1)
-    (. a :b (. c :d))
-    (. a 1 "b" :c)
+    (. a 'b (. c 'd))
+    (. a 1 "b" 'c)
 
 <!-- !test out property access macro -->
 
@@ -447,9 +447,9 @@ the `default`-case clause.
 <!-- !test in switch statement -->
 
     (switch x
-        (1 ((. console :log) "it is 1")
+        (1 ((. console 'log) "it is 1")
            (break))
-        (default ((. console :log) "it is not 1")))
+        (default ((. console 'log) "it is not 1")))
 
 <!-- !test out switch statement -->
 
@@ -548,7 +548,7 @@ header, the second to be the right, and the rest to be body statements.
 <!-- !test in for-in loop -->
 
     (forin (var x) xs
-           ((. console :log) (. xs x)))
+           ((. console 'log) (. xs x)))
 
 <!-- !test out for-in loop -->
 
@@ -615,7 +615,7 @@ or `finally`, in which case they are treated as the catch- or finally-clause.
          (catch err
                 (logError err)
                 (f a b))
-         (finally ((. console :log) "done")))
+         (finally ((. console 'log) "done")))
 
 <!-- !test out try-catch -->
 
