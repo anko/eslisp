@@ -5,3 +5,6 @@ node_js:
   - "iojs"
   - "4"
   - "5.1"
+
+# Test against all the rules, not just the basic tests
+script: make test-all
