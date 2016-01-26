@@ -6,21 +6,6 @@ statementify = require \./es-statementify
   multiple-statements
 } = require \./import-macro
 
-# Any static identifier is prefixed with `:`, like `(. Math :random)`
-is-static-identifier = (node) -> node.type is \Identifier and node.name[0] is \:
-
-# Returns true if this is computed.
-fix-identifier = (node) ->
-  if is-static-identifier node
-    node.name .= slice 1
-    false
-  else
-    true
-
-filter-identifier = (node) ->
-  fix-identifier node
-  node
-
 chained-binary-expr = (type, operator) ->
   macro = ->
     | &length is 0 =>
@@ -114,6 +99,31 @@ function-type = (type) -> (params, ...rest) ->
   params : params
   body : optionally-implicit-block-statement this, rest
 
+is-atom = (node, name) -> node.type is \atom and node.value is name
+
+unwrap-quote = (node, string-is-computed) ->
+  | node.type is \list and node.values.0 `is-atom` \quote =>
+    computed : false
+    node : node.values.1
+  | otherwise =>
+    computed : true
+    node : node
+
+# For some final coercion after compilation, when building the ESTree AST.
+coerce-property = (node, computed, string-is-computed) ->
+  # This should be explicitly overridden and unconditional. Helps with minifiers
+  # and other things.
+  | string-is-computed and
+      node.type is \Literal and
+      typeof node.value isnt \object =>
+    node :
+      type : \Literal
+      value : node.value + ''
+    computed : false
+  | otherwise =>
+    node : node
+    computed : computed
+
 contents =
   \+ : n-ary-expr \+
   \- : n-ary-expr \-
@@ -194,11 +204,16 @@ contents =
       if not name?
         throw Error "Expected #{type}ter in property #i to have a name"
 
-      name = @compile name
-      computed = fix-identifier name and typeof name.type isnt \Literal
+      {node, computed} = unwrap-quote name, true
+
+      unless computed or node.type is \atom
+        throw Error "Expected name of #{type}ter in property #i to be a quoted
+          atom or an expression"
+
+      {node : name, computed} = coerce-property (@compile node), computed, true
       kind = infer-name "#{type}ter", name, computed
 
-      if not params? or params.type isnt \list
+      unless params?.type is \list
         throw Error "Expected #{kind} in property #i to have a parameter list"
 
       params .= values
@@ -214,7 +229,7 @@ contents =
           throw Error "Expected #{kind} in property #i to have exactly one \
                        parameter"
         param = params.0
-        if param.type isnt \atom or param.value.0 is \:
+        if param.type isnt \atom
           throw Error "Expected parameter for #{kind} in property #i to be an \
                        identifier"
         params = [
@@ -225,6 +240,7 @@ contents =
       type : \Property
       kind : type
       key : name
+      # The initial check doesn't cover the compiled case.
       computed : computed
       value :
         type : \FunctionExpression
@@ -237,8 +253,13 @@ contents =
       if not name?
         throw Error "Expected method in property #i to have a name"
 
-      name = @compile name
-      computed = fix-identifier name and name.type isnt \Literal
+      {node, computed} = unwrap-quote name, true
+
+      unless computed or node.type is \atom
+        throw Error "Expected name of method in property #i to be a quoted atom
+          or an expression"
+
+      {node : name, computed} = coerce-property (@compile node), computed, true
       method = infer-name 'method', name, computed
 
       if not params? or params.type isnt \list
@@ -246,7 +267,7 @@ contents =
                      list"
 
       params = for param, j in params.values
-        if param.type isnt \atom or param.value.0 is \:
+        if param.type isnt \atom
           throw Error "Expected parameter #j for #method in property #i to be \
                        an identifier"
         type : \Identifier
@@ -267,31 +288,53 @@ contents =
     compile-list = (i, args) ->
       | args.length is 0 =>
         throw Error "Expected at least two arguments in property #i"
+
       | args.length is 1 =>
-        name = @compile args.0
-        if fix-identifier name
-          throw Error "Expected name in property #i to be a symbol identifier"
+        node = args.0
+
+        if node.type isnt \list
+          throw Error "Expected name in property #i to be a quoted atom"
+
+        [type, node] = node.values
+
+        unless type `is-atom` \quote and node.type is \atom
+          throw Error "Expected name in property #i to be a quoted atom"
+
         type : \Property
         kind : \init
-        key : name
-        value : name
+        key :
+          type : \Identifier
+          name : node.value
+        value :
+          type : \Identifier
+          name : node.value
         shorthand : true
+
       | args.length is 2 =>
-        key = @compile args.0
-        computed = fix-identifier key and key.type isnt \Literal
+        {node, computed} = unwrap-quote args.0, true
+
+        if not computed and node.type isnt \atom
+          throw Error "Expected name of property #i to be an expression or
+            quoted atom"
+
+        {node : key, computed} = coerce-property (@compile node), computed, true
+
         type : \Property
         kind : \init
         computed : computed
         key : key
-        value : filter-identifier @compile args.1
+        value : @compile args.1
+
       # Check this before compilation and macro resolution to ensure that
       # neither can affect this, but that it can be avoided in the edge case if
       # needed with `(id get)` or `(id set)`, where `(macro id (lambda (x) x))`.
-      | args.0.type is \atom and args.0.value in <[get set]> =>
+      | args.0 `is-atom` \get or args.0 `is-atom` \set =>
         compile-get-set.call this, i, args.0.value, args[1 til]
+
       # Reserve this for future generator use.
-      | args.0.type is \atom and args.0.value is \* =>
+      | args.0.type `is-atom` \* =>
         throw Error "Unexpected generator method in property #i"
+
       | otherwise => compile-method.call this, i, args
 
     ->
@@ -390,12 +433,17 @@ contents =
 
   \. : do
     join-members = (host, prop) ->
-      property-compiled = @compile prop
-      computed = fix-identifier property-compiled
+      {node, computed} = unwrap-quote prop, false
+
+      if not computed and node.type isnt \atom
+        throw Error "Expected quoted name of property getter to be an atom"
+
+      {node : prop, computed} = coerce-property (@compile node), computed, false
+
       type : \MemberExpression
       computed : computed
       object   : host
-      property : property-compiled
+      property : prop
 
     (host) ->
       switch
@@ -441,9 +489,7 @@ contents =
 
   \try : do
     is-part = (thing, clause-name) ->
-      if not (thing.type is \list) then return false
-      first = thing.values.0
-      (first.type is \atom) && (first.value is clause-name)
+      thing.type is \list and thing.values.0 `is-atom` clause-name
 
     (...args) ->
       catch-part = null
@@ -524,8 +570,7 @@ contents =
         | \Object =>
           for k, v of result
             import-compilerspace-macro this, k, v
-        | \Null => fallthrough
-        | \Undefined => # do nothing
+        | \Null, \Undefined => # do nothing
         | otherwise =>
           throw Error "Invalid macro source #that (expected to get an Object, \
                        or a name argument and a Function)"
@@ -607,11 +652,8 @@ contents =
             values : []
             location : "returned from macro"
           } ]
-        | head.type is \atom =>
-          switch head.value
-          | \unquote          => unquote ...rest
-          | \unquote-splicing => unquote-splicing ...rest
-          | _ => [ recurse-on ast ]
+        | head `is-atom` \unquote => unquote ...rest
+        | head `is-atom` \unquote-splicing => unquote-splicing ...rest
         | _   => [ recurse-on ast ]
 
       | _ => [ quote.call this, ast ]
@@ -671,10 +713,7 @@ contents =
                      expected 1, got #{&length}"
 
       if arg.type is \list and arg.values.length
-
-        first-arg = arg.values.0
-
-        if first-arg.type is \atom and first-arg.value is \unquote
+        if arg.values.0 `is-atom` \unquote
           rest = arg.values.slice 1 .0
           @compile rest
 
