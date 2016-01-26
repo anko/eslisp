@@ -101,7 +101,7 @@ function-type = (type) -> (params, ...rest) ->
 
 is-atom = (node, name) -> node.type is \atom and node.value is name
 
-unwrap-quote = (node, string-is-computed) ->
+unwrap-quote = (node) ->
   | node.type is \list and node.values.0 `is-atom` \quote =>
     computed : false
     node : node.values.1
@@ -204,7 +204,7 @@ contents =
       if not name?
         throw Error "Expected #{type}ter in property #i to have a name"
 
-      {node, computed} = unwrap-quote name, true
+      {node, computed} = unwrap-quote name
 
       unless computed or node.type is \atom
         throw Error "Expected name of #{type}ter in property #i to be a quoted
@@ -253,7 +253,7 @@ contents =
       if not name?
         throw Error "Expected method in property #i to have a name"
 
-      {node, computed} = unwrap-quote name, true
+      {node, computed} = unwrap-quote name
 
       unless computed or node.type is \atom
         throw Error "Expected name of method in property #i to be a quoted atom
@@ -311,7 +311,7 @@ contents =
         shorthand : true
 
       | args.length is 2 =>
-        {node, computed} = unwrap-quote args.0, true
+        {node, computed} = unwrap-quote args.0
 
         if not computed and node.type isnt \atom
           throw Error "Expected name of property #i to be an expression or
@@ -433,7 +433,7 @@ contents =
 
   \. : do
     join-members = (host, prop) ->
-      {node, computed} = unwrap-quote prop, false
+      {node, computed} = unwrap-quote prop
 
       if not computed and node.type isnt \atom
         throw Error "Expected quoted name of property getter to be an atom"
