@@ -239,7 +239,7 @@ test "return statement" ->
     ..`@equals` "(function () {\n    return 'hello there';\n});"
 
 test "member expression" ->
-  esl "(. console log)"
+  esl "(. console 'log)"
     ..`@equals` "console.log;"
 
 test "explicit block statement" ->
@@ -251,17 +251,17 @@ test "call expression" ->
     ..`@equals` "f();"
 
 test "member, then call with arguments" ->
-  esl '((. console log) "hi")'
+  esl '((. console \'log) "hi")'
     ..`@equals` "console.log('hi');"
 
 test "func with member and call in it" ->
-  esl "(lambda (x) ((. console log) x))"
+  esl "(lambda (x) ((. console 'log) x))"
     ..`@equals` "(function (x) {\n    console.log(x);\n});"
 
 test "switch statement" ->
   esl '''
       (switch (y)
-              ((== x 5) ((. console log) "hi") (break))
+              ((== x 5) ((. console 'log) "hi") (break))
               (default  (yes)))
       '''
     ..`@equals` """
@@ -275,7 +275,7 @@ test "switch statement" ->
                 """
 
 test "if-statement with blocks" ->
-  esl '(if (+ 1 0) (block ((. console log) "yes") (x)) (block 0))'
+  esl '(if (+ 1 0) (block ((. console \'log) "yes") (x)) (block 0))'
     ..`@equals` """
       if (1 + 0) {
           console.log(\'yes\');
@@ -295,7 +295,7 @@ test "if-statement with expressions" ->
       """
 
 test "if-statement without alternate" ->
-  esl '(if (+ 1 0) (block ((. console log) "yes") (x)))'
+  esl '(if (+ 1 0) (block ((. console \'log) "yes") (x)))'
     ..`@equals` """
       if (1 + 0) {
           console.log(\'yes\');
@@ -309,8 +309,8 @@ test "ternary expression" ->
 
 test "while loop with explicit body" ->
   esl '(while (-- n) (block
-                      ((. console log) "ok")
-                      ((. console log) "still ok")))'
+                      ((. console \'log) "ok")
+                      ((. console \'log) "still ok")))'
     ..`@equals` "while (--n) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "while loop with explicit body that contains a block" ->
@@ -319,29 +319,29 @@ test "while loop with explicit body that contains a block" ->
     ..`@equals` "while (--n) {\n    {\n        a;\n    }\n}"
 
 test "while loop with implicit body" ->
-  esl '(while (-- n) ((. console log) "ok")
-                     ((. console log) "still ok"))'
+  esl '(while (-- n) ((. console \'log) "ok")
+                     ((. console \'log) "still ok"))'
     ..`@equals` "while (--n) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "do/while loop with implicit body" ->
-  esl '(dowhile (-- n) ((. console log) "ok")
-                     ((. console log) "still ok"))'
+  esl '(dowhile (-- n) ((. console \'log) "ok")
+                       ((. console \'log) "still ok"))'
     ..`@equals` "do {\n    console.log('ok');\n    console.log('still ok');\n} while (--n);"
 
 test "do/while loop with explicit body" ->
   esl '(dowhile (-- n) (block
-                        ((. console log) "ok")
-                        ((. console log) "still ok")))'
+                        ((. console \'log) "ok")
+                        ((. console \'log) "still ok")))'
     ..`@equals` "do {\n    console.log('ok');\n    console.log('still ok');\n} while (--n);"
 
 test "for loop with implicit body" ->
-  esl '(for (var x 1) (< x 10) (++ x) ((. console log) "ok")
-                                    ((. console log) "still ok"))'
+  esl '(for (var x 1) (< x 10) (++ x) ((. console \'log) "ok")
+                                      ((. console \'log) "still ok"))'
     ..`@equals` "for (var x = 1; x < 10; ++x) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "for loop with explicit body" ->
-  esl '(for (var x 1) (< x 10) (++ x) (block ((. console log) "ok")
-                                           ((. console log) "still ok")))'
+  esl '(for (var x 1) (< x 10) (++ x) (block ((. console \'log) "ok")
+                                             ((. console \'log) "still ok")))'
     ..`@equals` "for (var x = 1; x < 10; ++x) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "for loop with no body" ->
@@ -349,36 +349,36 @@ test "for loop with no body" ->
     ..`@equals` "for (var x = 1; x < 10; ++x) {\n}"
 
 test "for loop with null update" ->
-  esl '(for (var x 1) (< x 10) () ((. console log) "ok")
-                                ((. console log) "still ok"))'
+  esl '(for (var x 1) (< x 10) () ((. console \'log) "ok")
+                                  ((. console \'log) "still ok"))'
     ..`@equals` "for (var x = 1; x < 10;) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "for loop with null init, update and test" ->
-  esl '(for () () () ((. console log) "ok")
-                     ((. console log) "still ok"))'
+  esl '(for () () () ((. console \'log) "ok")
+                     ((. console \'log) "still ok"))'
     ..`@equals` "for (;;) {\n    console.log('ok');\n    console.log('still ok');\n}"
 
 test "for-in loop with implicit body" ->
-  esl '(forin (var x) xs ((. console log) x))'
+  esl '(forin (var x) xs ((. console \'log) x))'
     ..`@equals` "for (var x in xs) {\n    console.log(x);\n}"
 
 test "for-in loop with explicit body" ->
-  esl '(forin (var x) xs (block ((. console log) x)))'
+  esl '(forin (var x) xs (block ((. console \'log) x)))'
     ..`@equals` "for (var x in xs) {\n    console.log(x);\n}"
 
 test "multiple statements in program" ->
-  esl '((. console log) "hello") ((. console log) "world")'
+  esl '((. console \'log) "hello") ((. console \'log) "world")'
     ..`@equals` "console.log('hello');\nconsole.log('world');"
 
 test "function with implicit block body" ->
-  esl '(lambda (x) ((. console log) "hello") \
-                   ((. console log) "world"))'
+  esl '(lambda (x) ((. console \'log) "hello") \
+                   ((. console \'log) "world"))'
     ..`@equals` "(function (x) {\n    console.log(\'hello\');\n    console.log(\'world\');\n});"
 
 test "function with explicit block body" ->
   esl '(lambda (x) (block
-                      ((. console log) "hello") \
-                      ((. console log) "world")))'
+                      ((. console \'log) "hello") \
+                      ((. console \'log) "world")))'
     ..`@equals` "(function (x) {\n    console.log(\'hello\');\n    console.log(\'world\');\n});"
 
 test "new statement" ->
@@ -546,14 +546,14 @@ test "quoting atoms produces an object representing it" ->
       ..value `@equals` "fun"
 
 test "simple quoting macro" ->
-  esl "(macro random (lambda () (return '((. Math random)))))
+  esl "(macro random (lambda () (return '((. Math 'random)))))
        (+ (random) (random))"
     ..`@equals` "Math.random() + Math.random();"
 
 test "macro constructor given object imports properties as macros" ->
   esl '''
-      (macro (object a (lambda () (return '"hi a"))
-                     b (lambda () (return '"hi b"))))
+      (macro (object ('a (lambda () (return '"hi a")))
+                     ('b (lambda () (return '"hi b")))))
       (a) (b)
       '''
    ..`@equals` "'hi a';\n'hi b';"
@@ -580,7 +580,7 @@ test "nothing-returning macro" ->
 
 test "macros mask others defined before with the same name" ->
   esl "(macro m (lambda () (return ())))
-       (macro m (lambda () (return '((. console log) \"hi\"))))
+       (macro m (lambda () (return '((. console 'log) \"hi\"))))
        (m)"
     ..`@equals` "console.log('hi');"
 
@@ -615,20 +615,20 @@ test "dead simple quasiquote" ->
 test "quasiquote is like quote if no unquotes contained" ->
   esl "(macro rand (lambda ()
                   (return `(* 5
-                      ((. Math random))))))
+                      ((. Math 'random))))))
        (rand)"
     ..`@equals` "5 * Math.random();"
 
 test "macros can quasiquote to unquote arguments into output" ->
   esl "(macro rand (lambda (upper)
                   (return `(* ,upper
-                      ((. Math random))))))
+                      ((. Math 'random))))))
        (rand 5)"
     ..`@equals` "5 * Math.random();"
 
 test "macro env can create atoms out of strings or numbers" ->
   esl """
-      (macro m (lambda () (return ((. this atom) 42))))
+      (macro m (lambda () (return ((. this 'atom) 42))))
       (m)"""
     ..`@equals` "42;"
 
@@ -640,17 +640,17 @@ test "macro env can create sexpr AST nodes equivalently to quoting" ->
   with-construct =
     esl """
         (macro m (lambda ()
-                  (return ((. this list)
-                           ((. this atom) "a")
-                           ((. this string) "b")))))
+                  (return ((. this 'list)
+                           ((. this 'atom) "a")
+                           ((. this 'string) "b")))))
         (m)"""
   with-quote `@equals` with-construct
 
 test "macros can evaluate number arguments to JS and convert them back again" ->
   esl """
        (macro incrementedTimesTwo (lambda (x)
-                    (var y (+ 1 ((. this evaluate) x)))
-                    (var xAsSexpr ((. this atom) ((. y toString))))
+                    (var y (+ 1 ((. this 'evaluate) x)))
+                    (var xAsSexpr ((. this 'atom) ((. y 'toString))))
                     (return `(* ,xAsSexpr 2))))
        (incrementedTimesTwo 5)
        """
@@ -661,9 +661,9 @@ test "macros can evaluate object arguments" ->
   # to an object, then stringifies it.
   esl """
        (macro objectAsString (lambda (input)
-                    (= obj ((. this evaluate) input))
-                    (return ((. this string) ((. JSON stringify) obj)))))
-       (objectAsString (object a 1))
+                    (= obj ((. this 'evaluate) input))
+                    (return ((. this 'string) ((. JSON 'stringify) obj)))))
+       (objectAsString (object ('a 1)))
        """
     ..`@equals` "'{\"a\":1}';"
 
@@ -672,10 +672,10 @@ test "macros can evaluate statements" ->
   # statement does not evaluate to a value, so we check for undefined.
   esl """
        (macro evalThis (lambda (input)
-                    (= obj ((. this evaluate) input))
+                    (= obj ((. this 'evaluate) input))
                     (if (=== obj undefined)
-                        (return ((. this atom) "yep"))
-                        (return ((. this atom) "nope")))))
+                        (return ((. this 'atom) "yep"))
+                        (return ((. this 'atom) "nope")))))
        (evalThis (if 1 (block) (block)))
        """
     ..`@equals` "yep;"
@@ -702,8 +702,8 @@ test "quasiquote can contain nested lists" ->
        (lambda ()
         ; Convert arguments into array
         (var args
-             ((. this list apply) null ((. Array prototype slice call) arguments 0)))
-        (var total ((. this atom) ((. (. args values length) toString))))
+             ((. this 'list 'apply) null ((. Array 'prototype 'slice 'call) arguments 0)))
+        (var total ((. this 'atom) ((. (. args 'values 'length) 'toString))))
         (return `(/ (+ ,@args) ,total))))
        (mean 1 2 3)
       '''
@@ -718,20 +718,118 @@ test "array macro can be empty" ->
     ..`@equals` "[];"
 
 test "object macro produces object expression" ->
-  esl "(object a 1 b 2)"
+  esl "(object ('a 1) ('b 2))"
     ..`@equals` "({\n    a: 1,\n    b: 2\n});"
 
 test "object macro can be passed strings as keys too" ->
-  esl '(object "a" 1 "b" 2)'
+  esl '(object ("a" 1) ("b" 2))'
     ..`@equals` "({\n    'a': 1,\n    'b': 2\n});"
 
 test "object macro's value parts can be expressions" ->
-  esl '(object "a" (+ 1 2) "b" (f x))'
+  esl '(object ("a" (+ 1 2)) ("b" (f x)))'
     ..`@equals` "({\n    'a': 1 + 2,\n    'b': f(x)\n});"
-# dynamic *keys* would be ES6
+
+test "object macro's parts can be ES6 shorthands" ->
+  esl '(object (\'a) (\'b))'
+    ..`@equals` "({\n    a,\n    b\n});"
+
+test "object macro's key parts can be computed ES6 values" ->
+  esl '(object (a (+ 1 2)) (b (f x)))'
+    ..`@equals` "({\n    [a]: 1 + 2,\n    [b]: f(x)\n});"
+
+test "object macro can create getters" ->
+  esl '(object (get \'a () (return 1)))'
+    ..`@equals` '({\n    get a() {\n        return 1;\n    }\n});'
+
+test "object macro can create setters" ->
+  esl '(object (set \'a (x) (return 1)))'
+    ..`@equals` '({\n    set a(x) {\n        return 1;\n    }\n});'
+
+test "object macro can create computed getters and setters" ->
+  esl '(object (get a ()) (set a (x)))'
+    ..`@equals` '''
+    ({
+        get [a]() {
+        },
+        set [a](x) {
+        }
+    });
+    '''
+
+test "object macro's parts can be ES6 methods" ->
+  esl '''
+      (object
+        ('a () (return 1))
+        ('b (x) (return (+ x 1)))
+        (c (x y) (return (+ x y 1))))
+      '''
+    ..`@equals` """
+      ({
+          a() {
+              return 1;
+          },
+          b(x) {
+              return x + 1;
+          },
+          [c](x, y) {
+              return x + (y + 1);
+          }
+      });
+      """
+
+test "object macro compiles complex ES6 object" ->
+  esl '''
+      (object
+        ('prop)
+        ('_foo 1)
+        ((. Symbol 'toStringTag) "Foo")
+
+        (get 'foo ()
+          (return (. this '_foo)))
+
+        (set 'foo (value)
+          (= (. this '_foo) value))
+
+        (get (. syms 'Sym) ()
+          (return ((. wm 'get) this)))
+
+        (set (. syms 'Sym) (value)
+          ((. wm 'set) this value))
+
+        ('printFoo ()
+          ((. console 'log) (. this 'foo)))
+
+        ('concatFoo (value)
+          (return (+ (. this 'foo) value))))
+      '''
+    ..`@equals` '''
+    ({
+        prop,
+        _foo: 1,
+        [Symbol.toStringTag]: 'Foo',
+        get foo() {
+            return this._foo;
+        },
+        set foo(value) {
+            this._foo = value;
+        },
+        get [syms.Sym]() {
+            return wm.get(this);
+        },
+        set [syms.Sym](value) {
+            wm.set(this, value);
+        },
+        printFoo() {
+            console.log(this.foo);
+        },
+        concatFoo(value) {
+            return this.foo + value;
+        }
+    });
+    '''
 
 test "macro producing an object literal" ->
-  esl "(macro obj (lambda () (return '(object a 1))))
+  esl "(macro obj (lambda () (return '(object ('a 1)))))
        (obj)"
     ..`@equals` "({ a: 1 });"
 
@@ -742,28 +840,32 @@ test "macro producing a function" ->
     ..`@equals` "(function (x) {\n    return x + 3;\n});"
 
 test "property access (dotting) chains identifiers" ->
-  esl "(. a b c)"
+  esl "(. a 'b 'c)"
     ..`@equals` "a.b.c;"
+
+test "property access (dotting) chains computed identifiers" ->
+  esl "(. a b c)"
+    ..`@equals` "a[b][c];"
 
 test "property access (dotting) chains literals" ->
   esl "(. a 1 2)"
     ..`@equals` "a[1][2];"
 
 test "property access (dotting) can be nested" ->
-  esl "(. a (. a (. b name)))"
+  esl "(. a (. a (. b 'name)))"
     ..`@equals` "a[a[b.name]];"
 
 test "property access (dotting) chains mixed literals and identifiers" ->
-  esl "(. a b 2 a)"
+  esl "(. a 'b 2 'a)"
     ..`@equals` "a.b[2].a;"
+
+test "property access (dotting) chains mixed literals and values" ->
+  esl "(. a b 2 'a)"
+    ..`@equals` "a[b][2].a;"
 
 test "property access (dotting) treats strings as literals, not identifiers" ->
   esl "(. a \"hi\")"
     ..`@equals` "a['hi'];"
-
-test "computed member expression (\"square brackets\")" ->
-  esl "(get a b 5)"
-    ..`@equals` "a[b][5];"
 
 test "regex literal" ->
   esl '(regex ".*")'
@@ -788,7 +890,7 @@ test "regex can be given atoms with escaped spaces and slashes" ->
 test "macro deliberately breaking hygiene for function argument anaphora" ->
   esl "(macro : (lambda (body)
        (return `(lambda (it) ,body))))
-        (: (return (. it x)))"
+        (: (return (. it 'x)))"
     ..`@equals` "(function (it) {\n    return it.x;\n});"
 
 test "macro given nothing produces no output" ->
@@ -802,12 +904,12 @@ test "when returned from an IIFE, macros can share state" ->
       (macro
        ((lambda () (var x 0)
         (return (object
-                 plusPrev  (lambda (n)
-                                   (+= x ((. this evaluate) n))
-                                   (return ((. this atom) ((. x toString)))))
-                 timesPrev (lambda (n)
-                                   (*= x ((. this evaluate) n))
-                                   (return ((. this atom) ((. x toString))))))))))
+                 ('plusPrev  (lambda (n)
+                                   (+= x ((. this 'evaluate) n))
+                                   (return ((. this 'atom) ((. x 'toString))))))
+                 ('timesPrev (lambda (n)
+                                   (*= x ((. this 'evaluate) n))
+                                   (return ((. this 'atom) ((. x 'toString)))))))))))
       (plusPrev 2) (timesPrev 2)
        """
    ..`@equals` "2;\n4;"
@@ -850,17 +952,17 @@ test "macro constructor loading from IIFE can load nothing" ->
    ..`@equals` ""
 
 test "macro can return multiple statements with `multi`" ->
-  esl "(macro declareTwo (lambda () (return ((. this multi) '(var x 0) '(var y 1)))))
+  esl "(macro declareTwo (lambda () (return ((. this 'multi) '(var x 0) '(var y 1)))))
        (declareTwo)"
    ..`@equals` "var x = 0;\nvar y = 1;"
 
 test "macro can check argument type and get its value" ->
   esl '''
       (macro stringy (lambda (x)
-       (if (== (. x type) "atom")
-        (return ((. this string) (+ "atom:" (. x value))))
+       (if (== (. x 'type) "atom")
+        (return ((. this 'string) (+ "atom:" (. x 'value))))
         (block
-         (if (== (. x type) "string")
+         (if (== (. x 'type) "string")
           (return x)
           (return "An unexpected development!"))))))
       (stringy a)
@@ -873,7 +975,7 @@ test "macro returning atom with empty or null name fails" ->
   <[ "" null undefined ]>.for-each ->
     self.throws do
       -> esl """
-          (macro mac (lambda () (return ((. this atom) #it))))
+          (macro mac (lambda () (return ((. this 'atom) #it))))
           (mac)
           """
       Error
@@ -895,7 +997,7 @@ test "macros can be required relative to root directory" ->
   main-path = path.join dir-name, main-basename
   main-fd = fs.open-sync main-path, \a+
   fs.write-sync main-fd, """
-    (macro (object x (require "./#module-basename")))
+    (macro (object ('x (require "./#module-basename"))))
     (x)
     """
 
@@ -932,7 +1034,7 @@ test "macros can be required from node_modules relative to root directory" ->
   # Attempt to require it and use it as a macro
 
   esl """
-    (macro (object x (require "#module-name")))
+    (macro (object ('x (require "#module-name"))))
     (x)
     """
     ..`@equals` ""
@@ -954,7 +1056,7 @@ test "macros required from separate modules can access complation env" ->
     """
 
   code = esl """
-    (macro (object x (require "#name")))
+    (macro (object ('x (require "#name"))))
     (x)
     """
 
@@ -999,7 +1101,7 @@ test "macro-generating macro" -> # yes srsly
 test "macro generating macro and macro call" -> # yes srsly squared
   esl '''
     (macro define-and-call (lambda (x)
-      (return ((. this multi) `(macro what (lambda () (return `(hello))))
+      (return ((. this 'multi) `(macro what (lambda () (return `(hello))))
                               `(what)))))
     (define-and-call)
     '''
@@ -1038,7 +1140,7 @@ test "invalid AST returned by macro throws error" ->
 test "macro multi-returning with bad values throws descriptive error" ->
   try
     esl '''
-      (macro breaking (lambda () (return ((. this multi) null))))
+      (macro breaking (lambda () (return ((. this 'multi) null))))
       (breaking)
       '''
   catch e
@@ -1060,8 +1162,8 @@ test "macro return intermediates may be invalid if fixed by later macro" ->
 test "macro can return estree object" ->
   esl '''
     (macro identifier (lambda ()
-      (return (object "type" "Identifier"
-                      "name" "x"))))
+      (return (object ("type" "Identifier")
+                      ("name" "x")))))
     (identifier)
     '''
       ..`@equals` "x;"
@@ -1069,11 +1171,11 @@ test "macro can return estree object" ->
 test "macro can multi-return estree objects" ->
   esl '''
     (macro identifiers (lambda ()
-      (return ((. this multi)
-               (object "type" "Identifier"
-                       "name" "x")
-               (object "type" "Identifier"
-                       "name" "y")))))
+      (return ((. this 'multi)
+               (object ("type" "Identifier")
+                       ("name" "x"))
+               (object ("type" "Identifier")
+                       ("name" "y"))))))
     (identifiers)
     '''
       ..`@equals` "x;\ny;"
@@ -1081,9 +1183,9 @@ test "macro can multi-return estree objects" ->
 test "macro can multi-return a combination of estree and sexprs" ->
   esl '''
     (macro identifiers (lambda ()
-      (return ((. this multi)
-               (object "type" "Identifier"
-                       "name" "x")
+      (return ((. this 'multi)
+               (object ("type" "Identifier")
+                       ("name" "x"))
                'x))))
     (identifiers)
     '''
@@ -1092,11 +1194,11 @@ test "macro can multi-return a combination of estree and sexprs" ->
 test "macro can compile and return parameter as estree" ->
   esl '''
     (macro that (lambda (x)
-      (return ((. this compile) x))))
+      (return ((. this 'compile) x))))
     (that 3)
     (that "hi")
     (that (c))
-    (that (object a b))
+    (that (object ('a b)))
     '''
       ..`@equals` "3;\n'hi';\nc();\n({ a: b });"
 

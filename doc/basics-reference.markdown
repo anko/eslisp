@@ -156,7 +156,6 @@ generate arbitrary JavaScript are built in to eslisp.
 | `regex`    | regular expression literal   |
 | `var`      | variable declaration         |
 | `.`        | member expression            |
-| `get`      | *computed* member expression |
 | `switch`   | switch statement             |
 | `if`       | conditional statement        |
 | `?:`       | ternary expression           |
@@ -291,13 +290,13 @@ elements.
     ];
 
 Object literals are created with the `object` macro which expects its
-parameters to be alternating keys and values.
+parameters to be simple pairs keys and values.
 
 <!-- !test in object macro -->
 
     (object)
-    (object a 1)
-    (object "a" 1 "b" 2)
+    (object ('a 1))
+    (object ("a" 1) ("b" 2))
 
 <!-- !test out object macro -->
 
@@ -308,13 +307,63 @@ parameters to be alternating keys and values.
         'b': 2
     });
 
+ES5 getters and setters can be used.
+
+<!-- !test in object getter setter -->
+
+    (var data 0)
+    (object
+        (get 'data () (return data))
+        (set 'data (value) (= data value)))
+
+<!-- !test out object getter setter -->
+
+    var data = 0;
+    ({
+        get data() {
+            return data;
+        },
+        set data(value) {
+            data = value;
+        }
+    });
+
+ES6 methods, property shorthand, computed properties, etc. can be used. Computed
+properties can even be used with getters. Generators have not yet been
+implemented, though, so generator methods are not available.
+
+<!-- !test in object es6 -->
+
+    (var prop 2)
+    (var data (Symbol "data"))
+    (object
+        ('prop)
+        ((. Symbol 'toStringTag) "foo")
+        ('method (arg) (return (+ arg 1)))
+        (get data () (return 1)))
+
+<!-- !test out object es6 -->
+
+    var prop = 2;
+    var data = Symbol('data');
+    ({
+        prop,
+        [Symbol.toStringTag]: 'foo',
+        method(arg) {
+            return arg + 1;
+        },
+        get [data]() {
+            return 1;
+        }
+    });
+
 Property access uses the `.` macro.
 
 <!-- !test in property access macro -->
 
     (. a 1)
-    (. a b (. c d))
-    (. a 1 "b" c)
+    (. a 'b (. c 'd))
+    (. a 1 "b" 'c)
 
 <!-- !test out property access macro -->
 
@@ -325,13 +374,13 @@ Property access uses the `.` macro.
 If you wish you could just write those as `a.b.c` in eslisp code, use the
 [*eslisp-propertify*][10] user-macro.
 
-For *computed* property access, use the `get` macro.
+For *computed* property access, omit the leading colon.
 
 <!-- !test in computed property access macro -->
 
-    (get a b)
-    (get a b c 1)
-    (= (get a b) 5)
+    (. a b)
+    (. a b c 1)
+    (= (. a b) 5)
 
 <!-- !test out computed property access macro -->
 
@@ -398,9 +447,9 @@ the `default`-case clause.
 <!-- !test in switch statement -->
 
     (switch x
-        (1 ((. console log) "it is 1")
+        (1 ((. console 'log) "it is 1")
            (break))
-        (default ((. console log) "it is not 1")))
+        (default ((. console 'log) "it is not 1")))
 
 <!-- !test out switch statement -->
 
@@ -499,7 +548,7 @@ header, the second to be the right, and the rest to be body statements.
 <!-- !test in for-in loop -->
 
     (forin (var x) xs
-           ((. console log) (get xs x)))
+           ((. console 'log) (. xs x)))
 
 <!-- !test out for-in loop -->
 
@@ -566,7 +615,7 @@ or `finally`, in which case they are treated as the catch- or finally-clause.
          (catch err
                 (logError err)
                 (f a b))
-         (finally ((. console log) "done")))
+         (finally ((. console 'log) "done")))
 
 <!-- !test out try-catch -->
 

@@ -99,6 +99,31 @@ function-type = (type) -> (params, ...rest) ->
   params : params
   body : optionally-implicit-block-statement this, rest
 
+is-atom = (node, name) -> node.type is \atom and node.value is name
+
+unwrap-quote = (node, string-is-computed) ->
+  | node.type is \list and node.values.0 `is-atom` \quote =>
+    computed : false
+    node : node.values.1
+  | otherwise =>
+    computed : true
+    node : node
+
+# For some final coercion after compilation, when building the ESTree AST.
+coerce-property = (node, computed, string-is-computed) ->
+  # This should be explicitly overridden and unconditional. Helps with minifiers
+  # and other things.
+  | string-is-computed and
+      node.type is \Literal and
+      typeof node.value isnt \object =>
+    node :
+      type : \Literal
+      value : node.value + ''
+    computed : false
+  | otherwise =>
+    node : node
+    computed : computed
+
 contents =
   \+ : n-ary-expr \+
   \- : n-ary-expr \-
@@ -162,24 +187,160 @@ contents =
     type : \ArrayExpression
     elements : elements.map @compile
 
-  \object : (...args) ->
+  \object : do
+    check-list = (list, i) ->
+      | list? and list.type is \list => list.values
+      | otherwise => throw Error "Expected property #i to be a list"
 
-    { compile } = env = this
-    if args.length % 2 isnt 0
-      throw Error "Expected even number of arguments to object macro, but \
-                   got #{args.length}"
+    infer-name = (prefix, name, computed) ->
+      if computed
+        prefix
+      else if typeof name.type is \Literal
+        "#prefix #{name.value}"
+      else
+        "#prefix #{name.name}"
 
-    keys-values = do # [ [k1, v1], [k2, v2] , ... ]
-      keys = [] ; values = []
-      args.for-each (a, i) -> (if i % 2 then values else keys).push a
-      zip keys, values
+    compile-get-set = (i, type, [name, params, ...body]) ->
+      if not name?
+        throw Error "Expected #{type}ter in property #i to have a name"
 
-    type : \ObjectExpression
-    properties :
-      keys-values.map ([k, v]) ->
-        type : \Property kind : \init
-        value : compile v
-        key : compile k
+      {node, computed} = unwrap-quote name, true
+
+      unless computed or node.type is \atom
+        throw Error "Expected name of #{type}ter in property #i to be a quoted
+          atom or an expression"
+
+      {node : name, computed} = coerce-property (@compile node), computed, true
+      kind = infer-name "#{type}ter", name, computed
+
+      unless params?.type is \list
+        throw Error "Expected #{kind} in property #i to have a parameter list"
+
+      params .= values
+
+      # Catch this error here, to return a more sensible, helpful error message
+      # than merely an InvalidAstError referencing property names from the
+      # stringifier itself.
+      if type is \get
+        if params.length isnt 0
+          throw Error "Expected #{kind} in property #i to have no parameters"
+      else # type is \set
+        if params.length isnt 1
+          throw Error "Expected #{kind} in property #i to have exactly one \
+                       parameter"
+        param = params.0
+        if param.type isnt \atom
+          throw Error "Expected parameter for #{kind} in property #i to be an \
+                       identifier"
+        params = [
+          type : \Identifier
+          name : param.value
+        ]
+
+      type : \Property
+      kind : type
+      key : name
+      # The initial check doesn't cover the compiled case.
+      computed : computed
+      value :
+        type : \FunctionExpression
+        id : null
+        params : params
+        body : optionally-implicit-block-statement this, body
+        expression : false
+
+    compile-method = (i, [name, params, ...body]) ->
+      if not name?
+        throw Error "Expected method in property #i to have a name"
+
+      {node, computed} = unwrap-quote name, true
+
+      unless computed or node.type is \atom
+        throw Error "Expected name of method in property #i to be a quoted atom
+          or an expression"
+
+      {node : name, computed} = coerce-property (@compile node), computed, true
+      method = infer-name 'method', name, computed
+
+      if not params? or params.type isnt \list
+        throw Error "Expected #method in property #i to have a parameter \
+                     list"
+
+      params = for param, j in params.values
+        if param.type isnt \atom
+          throw Error "Expected parameter #j for #method in property #i to be \
+                       an identifier"
+        type : \Identifier
+        name : param.value
+
+      type : \Property
+      kind : \init
+      method : true
+      computed : computed
+      key : name
+      value :
+        type : \FunctionExpression
+        id : null
+        params : params
+        body : optionally-implicit-block-statement this, body
+        expression : false
+
+    compile-list = (i, args) ->
+      | args.length is 0 =>
+        throw Error "Expected at least two arguments in property #i"
+
+      | args.length is 1 =>
+        node = args.0
+
+        if node.type isnt \list
+          throw Error "Expected name in property #i to be a quoted atom"
+
+        [type, node] = node.values
+
+        unless type `is-atom` \quote and node.type is \atom
+          throw Error "Expected name in property #i to be a quoted atom"
+
+        type : \Property
+        kind : \init
+        key :
+          type : \Identifier
+          name : node.value
+        value :
+          type : \Identifier
+          name : node.value
+        shorthand : true
+
+      | args.length is 2 =>
+        {node, computed} = unwrap-quote args.0, true
+
+        if not computed and node.type isnt \atom
+          throw Error "Expected name of property #i to be an expression or
+            quoted atom"
+
+        {node : key, computed} = coerce-property (@compile node), computed, true
+
+        type : \Property
+        kind : \init
+        computed : computed
+        key : key
+        value : @compile args.1
+
+      # Check this before compilation and macro resolution to ensure that
+      # neither can affect this, but that it can be avoided in the edge case if
+      # needed with `(id get)` or `(id set)`, where `(macro id (lambda (x) x))`.
+      | args.0 `is-atom` \get or args.0 `is-atom` \set =>
+        compile-get-set.call this, i, args.0.value, args[1 til]
+
+      # Reserve this for future generator use.
+      | args.0.type `is-atom` \* =>
+        throw Error "Unexpected generator method in property #i"
+
+      | otherwise => compile-method.call this, i, args
+
+    ->
+      type : \ObjectExpression
+      properties : for args, i in arguments
+        compile-list.call this, i, (check-list args, i)
 
   \var : (name, value) ->
     if &length > 2
@@ -271,55 +432,29 @@ contents =
     argument : @compile arg
 
   \. : do
+    join-members = (host, prop) ->
+      {node, computed} = unwrap-quote prop, false
 
-    is-computed-property = (ast-node) ->
-      switch ast-node.type
-      | \Identifier => false
-      | otherwise => true
+      if not computed and node.type isnt \atom
+        throw Error "Expected quoted name of property getter to be an atom"
 
-    dot = (...args) ->
+      {node : prop, computed} = coerce-property (@compile node), computed, false
 
-      { compile } = env = this
+      type : \MemberExpression
+      computed : computed
+      object   : host
+      property : prop
 
+    (host) ->
       switch
-      | args.length is 1 => compile args.0
-      | args.length is 2
-        property-compiled = compile args.1
-        type : \MemberExpression
-        computed : is-computed-property property-compiled
-        object   : compile args.0
-        property : property-compiled
-      | arguments.length > 2
-        [ ...initial, last ] = args
-        dot.call do
-          env
-          dot.apply env, initial
-          dot.call env, compile last
+      | &length is 0 => throw Error "dot called with no arguments"
+      | &length is 1 => @compile host
+      | &length is 2 => join-members.call this, (@compile host), &1
       | otherwise =>
-        throw Error "dot called with no arguments"
-
-  \get : do
-    get = (...args) ->
-
-      { compile } = env = this
-
-      switch
-      | args.length is 1 => compile args.0
-      | args.length is 2
-        property-compiled = compile args.1
-        type : \MemberExpression
-        computed : true # `get` is always computed
-        object   : compile args.0
-        property : property-compiled
-      | arguments.length > 2
-        [ ...initial, last ] = args
-        get.call do
-          env
-          get.apply env, initial
-          get.call env, compile last
-      | otherwise =>
-        throw Error "dot called with no arguments"
-
+        host = @compile host
+        for i from 1 til &length
+          host = join-members.call this, host, &[i]
+        host
 
   \lambda : function-type \FunctionExpression
 
@@ -354,9 +489,7 @@ contents =
 
   \try : do
     is-part = (thing, clause-name) ->
-      if not (thing.type is \list) then return false
-      first = thing.values.0
-      (first.type is \atom) && (first.value is clause-name)
+      thing.type is \list and thing.values.0 `is-atom` clause-name
 
     (...args) ->
       catch-part = null
@@ -391,9 +524,7 @@ contents =
       finalizer : finally-clause
 
   \macro : ->
-    env = this
-
-    compile-as-macro = (es-ast) ->
+    compile-as-macro = (es-ast) ~>
 
       # This hack around require makes loading macros from relative paths work.
       #
@@ -414,7 +545,7 @@ contents =
       root-require = main.require.bind main
 
       let require = root-require
-        eval "(#{env.compile-to-js es-ast})"
+        eval "(#{@compile-to-js es-ast})"
 
     switch &length
     | 1 =>
@@ -424,23 +555,22 @@ contents =
 
         # Mask any macro of that name in the current scope
 
-        import-compilerspace-macro env, form.value, null
+        import-compilerspace-macro this, form.value, null
 
       | otherwise
 
         # Attempt to compile the argument, hopefully into an object,
         # define macros from its keys
 
-        es-ast = env.compile form
+        es-ast = @compile form
 
         result = compile-as-macro es-ast
 
         switch typeof! result
         | \Object =>
           for k, v of result
-            import-compilerspace-macro env, k, v
-        | \Null => fallthrough
-        | \Undefined => # do nothing
+            import-compilerspace-macro this, k, v
+        | \Null, \Undefined => # do nothing
         | otherwise =>
           throw Error "Invalid macro source #that (expected to get an Object, \
                        or a name argument and a Function)"
@@ -453,19 +583,19 @@ contents =
         name = name.value
         target-name = form.value
 
-        alias-target-macro = env.find-macro target-name
+        alias-target-macro = @find-macro target-name
 
         if not alias-target-macro
           throw Error "Macro alias target `#target-name` is not defined"
 
-        import-compilerspace-macro env, name, alias-target-macro
+        import-compilerspace-macro this, name, alias-target-macro
 
       | form.type is \list
 
-        userspace-macro = form |> env.compile |> compile-as-macro
+        userspace-macro = form |> @compile |> compile-as-macro
 
         name .= value
-        import-compilerspace-macro env, name, userspace-macro
+        import-compilerspace-macro this, name, userspace-macro
 
     | otherwise =>
       throw Error "Bad number of arguments to macro constructor \
@@ -480,23 +610,24 @@ contents =
     # means we have to resolve lists which first atom is `unquote` or
     # `unquote-splicing` into either an array of values or an identifier to
     # an array of values.
-    qq-body = (env, ast) ->
 
-      recurse-on = (ast-list) ->
+    qq-body = (ast) ->
+
+      recurse-on = (ast-list) ~>
         ast-list.values
-        |> map qq-body env, _
+        |> map qq-body.bind this
         |> generate-concat
 
-      unquote = ->
-        if arguments.length isnt 1
+      unquote = ~>
+        if &length isnt 1
           throw Error "Expected 1 argument to unquote but got #{rest.length}"
 
         # Unquoting should compile to just the thing separated with an array
         # wrapper.
-        [ env.compile it ]
+        [ @compile it ]
 
-      unquote-splicing = ->
-        if arguments.length isnt 1
+      unquote-splicing = ~>
+        if &length isnt 1
           throw Error "Expected 1 argument to unquoteSplicing but got
                        #{rest.length}"
 
@@ -505,8 +636,7 @@ contents =
 
         type : \MemberExpression
         computed : false
-        object :
-          env.compile it
+        object : @compile it
         property :
           type : \Identifier
           name : \values
@@ -517,19 +647,16 @@ contents =
         switch
         | not head?
           # quote an empty list
-          [ quote.call env, {
+          [ quote.call this, {
             type : \list
             values : []
-            location :"returned from macro"
+            location : "returned from macro"
           } ]
-        | head.type is \atom =>
-          switch head.value
-          | \unquote          => unquote         .apply null rest
-          | \unquote-splicing => unquote-splicing.apply null rest
-          | _ => [ recurse-on ast ]
+        | head `is-atom` \unquote => unquote ...rest
+        | head `is-atom` \unquote-splicing => unquote-splicing ...rest
         | _   => [ recurse-on ast ]
 
-      | _ => [ quote.call env, ast ]
+      | _ => [ quote.call this, ast ]
 
     generate-concat = (concattable-things) ->
 
@@ -581,27 +708,21 @@ contents =
               arguments : it
         ]
     qq = (arg) ->
-
-      env = this
-
       if &length > 1
         throw Error "Too many arguments to quasiquote (`); \
                      expected 1, got #{&length}"
 
       if arg.type is \list and arg.values.length
-
-        first-arg = arg.values.0
-
-        if first-arg.type is \atom and first-arg.value is \unquote
+        if arg.values.0 `is-atom` \unquote
           rest = arg.values.slice 1 .0
-          env.compile rest
+          @compile rest
 
         else
           arg.values
-          |> map qq-body env, _
+          |> map qq-body.call this, _
           |> generate-concat
 
-      else quote.call env, arg # act like regular quote
+      else quote.call this, arg # act like regular quote
 
 module.exports =
   parent : null
