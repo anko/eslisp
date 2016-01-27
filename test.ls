@@ -749,6 +749,10 @@ test "object macro can create setters" ->
   esl '(object (set \'a (x) (return 1)))'
     ..`@equals` '({\n    set a(x) {\n        return 1;\n    }\n});'
 
+test "object macro can create setters with no body" ->
+  esl '(object (set y (x)))'
+    ..`@equals` '({\n    set [y](x) {\n    }\n});'
+
 test "object macro can create computed getters and setters" ->
   esl '(object (get a ()) (set a (x)))'
     ..`@equals` '''
