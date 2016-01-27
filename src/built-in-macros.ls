@@ -187,6 +187,21 @@ contents =
     elements : elements.map @compile
 
   \object : do
+    # This macro needs to detect patterns in its arguments, e.g.
+    #
+    #     (object (get 'a () (return 1)))
+    #
+    # where (get <something> <parameters> <body...>) is a pattern.  It is split
+    # into methods that handle different kinds of patterns.
+
+    # Specific Error type, to be thrown just in this macro when the user has
+    # provided an invalid argument pattern.
+    #
+    # This makes error handling neater: the top-level macro function catches
+    # this type of Errors and prepends information about which parameter was
+    # being processed when it occurred.
+    class ObjectParamError extends Error
+      (@message) ~>
 
     infer-name = (prefix, name, computed) ->
       if computed
@@ -205,7 +220,7 @@ contents =
       [name, params, ...body] = args
 
       if not name?
-        throw Error "No #{type}ter name"
+        throw ObjectParamError "No #{type}ter name"
 
       {node, computed} = maybe-unwrap-quote name
 
@@ -215,7 +230,7 @@ contents =
       kind = infer-name "#{type}ter", name, computed
 
       unless params?.type is \list
-        throw Error "Expected #{kind} to have a parameter list"
+        throw ObjectParamError "Expected #{kind} to have a parameter list"
 
       params .= values
 
@@ -224,14 +239,14 @@ contents =
       # stringifier itself.
       if type is \get
         if params.length isnt 0
-          throw Error "Expected #{kind} to have no parameters"
+          throw ObjectParamError "Expected #{kind} to have no parameters"
       else # type is \set
         if params.length isnt 1
-          throw Error "Expected #{kind} to have exactly one \
+          throw ObjectParamError "Expected #{kind} to have exactly one \
                        parameter"
         param = params.0
         if param.type isnt \atom
-          throw Error "Expected parameter for #{kind} to be an \
+          throw ObjectParamError "Expected parameter for #{kind} to be an \
                        identifier"
         params = [
           type : \Identifier
@@ -252,7 +267,7 @@ contents =
 
     compile-method = ([name, params, ...body]) ->
       if not name?
-        throw Error "Expected method to have a name"
+        throw ObjectParamError "Expected method to have a name"
 
       {node, computed} = maybe-unwrap-quote name
 
@@ -262,12 +277,12 @@ contents =
       method = infer-name 'method', name, computed
 
       if not params? or params.type isnt \list
-        throw Error "Expected #method to have a parameter \
+        throw ObjectParamError "Expected #method to have a parameter \
                      list"
 
       params = for param, j in params.values
         if param.type isnt \atom
-          throw Error "Expected parameter #j for #method to be \
+          throw ObjectParamError "Expected parameter #j for #method to be \
                        an identifier"
         type : \Identifier
         name : param.value
@@ -286,7 +301,7 @@ contents =
 
     compile-property-list = (args) ->
       | args.length is 0 =>
-        throw Error "Got empty list (expected list to have contents)"
+        throw ObjectParamError "Got empty list (expected list to have contents)"
 
       | args.length is 1 =>
         node = args.0
@@ -294,7 +309,7 @@ contents =
         [type, node] = node.values
 
         unless (is-atom type, \quote) and is-atom node
-          throw Error "Invalid single-element list (expected a pattern of (quote <atom>))"
+          throw ObjectParamError "Invalid single-element list (expected a pattern of (quote <atom>))"
 
         type : \Property
         kind : \init
@@ -327,7 +342,7 @@ contents =
 
       # Reserve this for future generator use.
       | args.0 `is-atom` \* =>
-        throw Error "Unexpected '*' (generator methods not yet implemented)"
+        throw ObjectParamError "Unexpected '*' (generator methods not yet implemented)"
 
       | otherwise => compile-method.call this, args
 
@@ -339,8 +354,12 @@ contents =
           try
             compile-property-list.call @, arg.values
           catch e
-            e.message = "Unexpected object macro argument #i: " + e.message
+            # To object parameter errors, prepend the argument index.
+            if e instanceof ObjectParamError
+              e.message = "Unexpected object macro argument #i: " + e.message
+
             throw e
+
         else
           throw Error "Unexpected object macro argument #i: \
                        Got #{arg.type} (expected list)"
