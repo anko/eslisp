@@ -119,14 +119,10 @@ maybe-unwrap-quote = (node) ->
 coerce-property = (node, computed) ->
   # This should be explicitly overridden and unconditional. Helps with
   # minifiers and other things.
-  | (node.type is \Literal) and (typeof node.value isnt \object) =>
-    node :
-      type : \Literal
-      value : node.value + ''
-    computed : false
-  | otherwise =>
+  | node.type is \Literal =>
     node : node
-    computed : computed
+    computed : false
+  | otherwise => { node, computed }
 
 contents =
   \+ : n-ary-expr \+
