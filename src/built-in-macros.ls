@@ -1,4 +1,4 @@
-{ map, zip, concat-map } = require \prelude-ls
+{ map, zip, concat-map, fold1 } = require \prelude-ls
 { is-expression } = require \esutils .ast
 statementify = require \./es-statementify
 {
@@ -438,28 +438,29 @@ contents =
     argument : @compile arg
 
   \. : do
-    join-members = (host, prop) ->
-      {node, computed} = maybe-unwrap-quote prop
 
-      if not computed and node.type isnt \atom
+    join-as-member-expression = (host-node, prop-node) ->
+
+      host = @compile host-node
+
+      { node : prop-node, computed } = maybe-unwrap-quote prop-node
+
+      if not computed and prop-node.type isnt \atom
         throw Error "Expected quoted name of property getter to be an atom"
 
-      {node : prop, computed} = coerce-property (@compile node), computed, false
+      prop = @compile prop-node
 
       type : \MemberExpression
       computed : computed
       object   : host
       property : prop
 
-    (host) ->
-      switch
+    ->
       | &length is 0 => throw Error "dot called with no arguments"
-      | &length is 1 => @compile host
+      | &length is 1 => @compile &0
       | otherwise =>
-        host = @compile host
-        for i from 1 til &length
-          host = join-members.call this, host, &[i]
-        host
+        [].slice.call arguments
+        |> fold1 join-as-member-expression.bind @
 
   \lambda : function-type \FunctionExpression
 
