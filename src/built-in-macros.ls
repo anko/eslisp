@@ -240,14 +240,6 @@ contents =
         if params.length isnt 1
           throw ObjectParamError "Expected #readable-kind-name to have \
                                   exactly one parameter (got #{params.length})"
-        param = params.0
-        if not is-atom param
-          throw ObjectParamError "Expected parameter for \
-                                  #readable-kind-name to be an identifier"
-        params = [
-          type : \Identifier
-          name : param.value
-        ]
 
       type : \Property
       kind : kind
