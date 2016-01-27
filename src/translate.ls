@@ -31,8 +31,10 @@ module.exports = (root-env, ast, options={}) ->
            |> (.map statementify)
 
   err = errors program-ast |> reject ({node}) ->
-    # These are valid ES6 nodes, and their errors need to be ignored. See
-    # https://github.com/estools/esvalid/issues/7.
+    # TODO Because esvalid doesn't yet support ES6
+    # https://github.com/estools/esvalid/issues/7 we have to manually ignore
+    # errors to do with properties that have a computed key.  This may miss
+    # some though!
     | node.type is \Property =>
       node.computed and node.key?.type not in <[Identifier Literal]>
     | otherwise => false
