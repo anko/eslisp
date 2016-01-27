@@ -455,7 +455,6 @@ contents =
       switch
       | &length is 0 => throw Error "dot called with no arguments"
       | &length is 1 => @compile host
-      | &length is 2 => join-members.call this, (@compile host), &1
       | otherwise =>
         host = @compile host
         for i from 1 til &length
