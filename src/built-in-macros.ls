@@ -232,12 +232,11 @@ contents =
       # Catch this error here, to return a more sensible, helpful error message
       # than merely an InvalidAstError referencing property names from the
       # stringifier itself.
-      if kind is \get
-        if params.length isnt 0
+      switch
+      | kind is \get and params.length isnt 0
           throw ObjectParamError "Expected #readable-kind-name to have \
                                   no parameters (got #{params.length})"
-      else # kind is \set
-        if params.length isnt 1
+      | kind is \set and params.length isnt 1
           throw ObjectParamError "Expected #readable-kind-name to have \
                                   exactly one parameter (got #{params.length})"
 
