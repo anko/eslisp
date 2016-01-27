@@ -123,15 +123,6 @@ maybe-unwrap-quote = (node) ->
     computed : true
     node     : node
 
-# For some final coercion after compilation, when building the ESTree AST.
-coerce-property = (node, computed) ->
-  # This should be explicitly overridden and unconditional. Helps with
-  # minifiers and other things.
-  | node.type is \Literal =>
-    node : node
-    computed : false
-  | otherwise => { node, computed }
-
 contents =
   \+ : n-ary-expr \+
   \- : n-ary-expr \-
@@ -214,7 +205,9 @@ contents =
 
       {node, computed} = maybe-unwrap-quote name
 
-      {node : name, computed} = coerce-property (@compile node), computed
+      name = @compile node
+      if name.type is \Literal
+        computed := false
       kind = infer-name "#{type}ter", name, computed
 
       unless params?.type is \list
@@ -259,7 +252,9 @@ contents =
 
       {node, computed} = maybe-unwrap-quote name
 
-      {node : name, computed} = coerce-property (@compile node), computed
+      name := @compile node
+      if name.type is \Literal
+        computed := false
       method = infer-name 'method', name, computed
 
       if not params? or params.type isnt \list
@@ -313,7 +308,9 @@ contents =
       | args.length is 2 =>
         {node, computed} = maybe-unwrap-quote args.0
 
-        {node : key, computed} = coerce-property (@compile node), computed
+        key = @compile node
+        if key.type is \Literal
+          computed := false
 
         type : \Property
         kind : \init
