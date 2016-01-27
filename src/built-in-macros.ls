@@ -203,58 +203,49 @@ contents =
     class ObjectParamError extends Error
       (@message) ~>
 
-    infer-name = (prefix, name, computed) ->
-      if computed
-        prefix
-      else if typeof name.type is \Literal
-        "#prefix #{name.value}"
-      else
-        "#prefix #{name.name}"
+    compile-get-set = (kind, [name, params, ...body]) ->
+      # kind is either "get" or "set"
 
-    compile-get-set = (type, args) ->
-      # type is either "get" or "set"
-
-      if not args
-        throw Error "No arguments!"
-
-      [name, params, ...body] = args
+      # What the thing being compiled is called in human-readable errors
+      readable-kind-name = kind + "ter"
 
       if not name?
-        throw ObjectParamError "No #{type}ter name"
+        throw ObjectParamError "No #readable-kind-name name"
 
       {node, computed} = maybe-unwrap-quote name
 
       name = @compile node
-      if name.type is \Literal
+      if name.kind is \Literal
         computed := false
-      kind = infer-name "#{type}ter", name, computed
 
-      unless params?.type is \list
-        throw ObjectParamError "Expected #{kind} to have a parameter list"
+      unless is-list params
+        throw ObjectParamError "Expected #readable-kind-name to have a \
+                                parameter list"
 
       params .= values
 
       # Catch this error here, to return a more sensible, helpful error message
       # than merely an InvalidAstError referencing property names from the
       # stringifier itself.
-      if type is \get
+      if kind is \get
         if params.length isnt 0
-          throw ObjectParamError "Expected #{kind} to have no parameters"
-      else # type is \set
+          throw ObjectParamError "Expected #readable-kind-name to have \
+                                  no parameters"
+      else # kind is \set
         if params.length isnt 1
-          throw ObjectParamError "Expected #{kind} to have exactly one \
-                       parameter"
+          throw ObjectParamError "Expected #readable-kind-name to have \
+                                  exactly one parameter"
         param = params.0
-        if param.type isnt \atom
-          throw ObjectParamError "Expected parameter for #{kind} to be an \
-                       identifier"
+        if not is-atom param
+          throw ObjectParamError "Expected parameter for \
+                                  #readable-kind-name to be an identifier"
         params = [
           type : \Identifier
           name : param.value
         ]
 
       type : \Property
-      kind : type
+      kind : kind
       key : name
       # The initial check doesn't cover the compiled case.
       computed : computed
@@ -274,16 +265,19 @@ contents =
       name := @compile node
       if name.type is \Literal
         computed := false
-      method = infer-name 'method', name, computed
+
+      readable-kind-name = 'method'+ switch name.type is \Identifier
+                                     | true  => " '#{name.name}'"
+                                     | false => ""
 
       if not params? or params.type isnt \list
-        throw ObjectParamError "Expected #method to have a parameter \
+        throw ObjectParamError "Expected #readable-kind-name to have a parameter \
                      list"
 
       params = for param, j in params.values
         if param.type isnt \atom
-          throw ObjectParamError "Expected parameter #j for #method to be \
-                       an identifier"
+          throw ObjectParamError "Expected parameter #j for #readable-kind-name
+                                  to be an identifier"
         type : \Identifier
         name : param.value
 
