@@ -250,9 +250,11 @@ contents =
           .apply this, function-macro-arguments-part
             ..expression = false
 
-    compile-method = ([name, params, ...body]) ->
-      if not name?
-        throw ObjectParamError "Expected method to have a name"
+    compile-method = ([name, ...function-macro-arguments-part]) ->
+
+      if not name? then throw ObjectParamError "Expected method to have a name"
+
+      [ params, _ ] = function-macro-arguments-part
 
       {node, computed} = maybe-unwrap-quote name
 
@@ -264,28 +266,19 @@ contents =
                                      | true  => " '#{name.name}'"
                                      | false => ""
 
-      if not params? or params.type isnt \list
-        throw ObjectParamError "Expected #readable-kind-name to have a parameter \
-                     list"
-
-      params = for param, j in params.values
-        if param.type isnt \atom
-          throw ObjectParamError "Expected parameter #j for #readable-kind-name
-                                  to be an identifier"
-        type : \Identifier
-        name : param.value
+      if not params? or not is-list params
+        throw ObjectParamError "Expected #readable-kind-name to have a \
+                                parameter list"
 
       type : \Property
       kind : \init
       method : true
       computed : computed
       key : name
-      value :
-        type : \FunctionExpression
-        id : null
-        params : params
-        body : optionally-implicit-block-statement this, body
-        expression : false
+      value : do
+        (function-type \FunctionExpression)
+          .apply this, function-macro-arguments-part
+            ..expression = false
 
     compile-property-list = (args) ->
       | args.length is 0 =>
