@@ -116,12 +116,10 @@ maybe-unwrap-quote = (node) ->
     node : node
 
 # For some final coercion after compilation, when building the ESTree AST.
-coerce-property = (node, computed, string-is-computed) ->
-  # This should be explicitly overridden and unconditional. Helps with minifiers
-  # and other things.
-  | string-is-computed and
-      node.type is \Literal and
-      typeof node.value isnt \object =>
+coerce-property = (node, computed) ->
+  # This should be explicitly overridden and unconditional. Helps with
+  # minifiers and other things.
+  | (node.type is \Literal) and (typeof node.value isnt \object) =>
     node :
       type : \Literal
       value : node.value + ''
@@ -216,7 +214,7 @@ contents =
         throw Error "Expected name of #{type}ter in property #i to be a quoted
           atom or an expression"
 
-      {node : name, computed} = coerce-property (@compile node), computed, true
+      {node : name, computed} = coerce-property (@compile node), computed
       kind = infer-name "#{type}ter", name, computed
 
       unless params?.type is \list
@@ -265,7 +263,7 @@ contents =
         throw Error "Expected name of method in property #i to be a quoted atom
           or an expression"
 
-      {node : name, computed} = coerce-property (@compile node), computed, true
+      {node : name, computed} = coerce-property (@compile node), computed
       method = infer-name 'method', name, computed
 
       if not params? or params.type isnt \list
@@ -323,7 +321,7 @@ contents =
           throw Error "Expected name of property #i to be an expression or
             quoted atom"
 
-        {node : key, computed} = coerce-property (@compile node), computed, true
+        {node : key, computed} = coerce-property (@compile node), computed
 
         type : \Property
         kind : \init
