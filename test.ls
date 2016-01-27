@@ -856,6 +856,15 @@ test "object macro not-a-quoted-atom in argument raises error" ->
     return
   @fail "No error thrown"
 
+test "object macro setter with bad argument list raises error" ->
+  try
+    esl '(object (set x x))'
+  catch e
+    e.message `@equals` 'Unexpected object macro argument 0: Unexpected setter part (got atom; expected list of parameters)'
+
+    return
+  @fail "No error thrown"
+
 test "macro producing an object literal" ->
   esl "(macro obj (lambda () (return '(object ('a 1)))))
        (obj)"

@@ -223,8 +223,9 @@ contents =
       [ params, _ ] = function-macro-arguments-part
 
       unless is-list params
-        throw ObjectParamError "Expected #readable-kind-name to have a \
-                                parameter list"
+        throw ObjectParamError "Unexpected #readable-kind-name part \
+                                (got #{params.type}; \
+                                expected list of parameters)"
 
       params .= values
 
