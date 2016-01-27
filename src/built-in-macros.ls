@@ -235,11 +235,11 @@ contents =
       if kind is \get
         if params.length isnt 0
           throw ObjectParamError "Expected #readable-kind-name to have \
-                                  no parameters"
+                                  no parameters (got #{params.length})"
       else # kind is \set
         if params.length isnt 1
           throw ObjectParamError "Expected #readable-kind-name to have \
-                                  exactly one parameter"
+                                  exactly one parameter (got #{params.length})"
         param = params.0
         if not is-atom param
           throw ObjectParamError "Expected parameter for \

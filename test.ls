@@ -869,6 +869,24 @@ test "object macro setter with bad argument list raises error" ->
     return
   @fail "No error thrown"
 
+test "object macro setter with no arguments raises error" ->
+  try
+    esl '(object (set x ()))'
+  catch e
+    e.message `@equals` 'Unexpected object macro argument 0: Expected setter to have exactly one parameter (got 0)'
+
+    return
+  @fail "No error thrown"
+
+test "object macro getter with arguments raises error" ->
+  try
+    esl '(object (get x (y)))'
+  catch e
+    e.message `@equals` 'Unexpected object macro argument 0: Expected getter to have no parameters (got 1)'
+
+    return
+  @fail "No error thrown"
+
 test "macro producing an object literal" ->
   esl "(macro obj (lambda () (return '(object ('a 1)))))
        (obj)"
