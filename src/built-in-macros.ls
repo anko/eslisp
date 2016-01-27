@@ -187,9 +187,6 @@ contents =
     elements : elements.map @compile
 
   \object : do
-    check-list = (list, i) ->
-      | list? and list.type is \list => list.values
-      | otherwise => throw Error "Expected property #i to be a list"
 
     infer-name = (prefix, name, computed) ->
       if computed
@@ -330,10 +327,16 @@ contents =
 
       | otherwise => compile-method.call this, i, args
 
-    ->
+    (...args) ->
       type : \ObjectExpression
-      properties : for args, i in arguments
-        compile-list.call this, i, (check-list args, i)
+      properties : args.map (arg, i) ~>
+
+        if is-list arg
+          compile-list.call @, i, arg.values
+        else
+          throw Error "Unexpected argument to object macro: \
+                       expected properties to be lists, but \
+                       argument #i type was #{arg.type}"
 
   \var : (name, value) ->
     if &length > 2
