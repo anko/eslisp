@@ -196,9 +196,16 @@ contents =
       else
         "#prefix #{name.name}"
 
-    compile-get-set = (i, type, [name, params, ...body]) ->
+    compile-get-set = (type, args) ->
+      # type is either "get" or "set"
+
+      if not args
+        throw Error "No arguments!"
+
+      [name, params, ...body] = args
+
       if not name?
-        throw Error "Expected #{type}ter in property #i to have a name"
+        throw Error "No #{type}ter name"
 
       {node, computed} = maybe-unwrap-quote name
 
@@ -208,7 +215,7 @@ contents =
       kind = infer-name "#{type}ter", name, computed
 
       unless params?.type is \list
-        throw Error "Expected #{kind} in property #i to have a parameter list"
+        throw Error "Expected #{kind} to have a parameter list"
 
       params .= values
 
@@ -217,14 +224,14 @@ contents =
       # stringifier itself.
       if type is \get
         if params.length isnt 0
-          throw Error "Expected #{kind} in property #i to have no parameters"
+          throw Error "Expected #{kind} to have no parameters"
       else # type is \set
         if params.length isnt 1
-          throw Error "Expected #{kind} in property #i to have exactly one \
+          throw Error "Expected #{kind} to have exactly one \
                        parameter"
         param = params.0
         if param.type isnt \atom
-          throw Error "Expected parameter for #{kind} in property #i to be an \
+          throw Error "Expected parameter for #{kind} to be an \
                        identifier"
         params = [
           type : \Identifier
@@ -243,9 +250,9 @@ contents =
         body : optionally-implicit-block-statement this, body
         expression : false
 
-    compile-method = (i, [name, params, ...body]) ->
+    compile-method = ([name, params, ...body]) ->
       if not name?
-        throw Error "Expected method in property #i to have a name"
+        throw Error "Expected method to have a name"
 
       {node, computed} = maybe-unwrap-quote name
 
@@ -255,12 +262,12 @@ contents =
       method = infer-name 'method', name, computed
 
       if not params? or params.type isnt \list
-        throw Error "Expected #method in property #i to have a parameter \
+        throw Error "Expected #method to have a parameter \
                      list"
 
       params = for param, j in params.values
         if param.type isnt \atom
-          throw Error "Expected parameter #j for #method in property #i to be \
+          throw Error "Expected parameter #j for #method to be \
                        an identifier"
         type : \Identifier
         name : param.value
@@ -277,20 +284,17 @@ contents =
         body : optionally-implicit-block-statement this, body
         expression : false
 
-    compile-list = (i, args) ->
+    compile-property-list = (args) ->
       | args.length is 0 =>
-        throw Error "Expected at least two arguments in property #i"
+        throw Error "Got empty list (expected list to have contents)"
 
       | args.length is 1 =>
         node = args.0
 
-        if node.type isnt \list
-          throw Error "Expected name in property #i to be a quoted atom"
-
         [type, node] = node.values
 
-        unless type `is-atom` \quote and node.type is \atom
-          throw Error "Expected name in property #i to be a quoted atom"
+        unless (is-atom type, \quote) and is-atom node
+          throw Error "Invalid single-element list (expected a pattern of (quote <atom>))"
 
         type : \Property
         kind : \init
@@ -318,25 +322,28 @@ contents =
       # Check this before compilation and macro resolution to ensure that
       # neither can affect this, but that it can be avoided in the edge case if
       # needed with `(id get)` or `(id set)`, where `(macro id (lambda (x) x))`.
-      | args.0 `is-atom` \get or args.0 `is-atom` \set =>
-        compile-get-set.call this, i, args.0.value, args[1 til]
+      | is-atom args.0 and (args.0.value in <[ get set ]>) =>
+        compile-get-set.call this, args.0.value, args[1 til]
 
       # Reserve this for future generator use.
-      | args.0.type `is-atom` \* =>
-        throw Error "Unexpected generator method in property #i"
+      | args.0 `is-atom` \* =>
+        throw Error "Unexpected '*' (generator methods not yet implemented)"
 
-      | otherwise => compile-method.call this, i, args
+      | otherwise => compile-method.call this, args
 
     (...args) ->
       type : \ObjectExpression
       properties : args.map (arg, i) ~>
 
         if is-list arg
-          compile-list.call @, i, arg.values
+          try
+            compile-property-list.call @, arg.values
+          catch e
+            e.message = "Unexpected object macro argument #i: " + e.message
+            throw e
         else
-          throw Error "Unexpected argument to object macro: \
-                       expected properties to be lists, but \
-                       argument #i type was #{arg.type}"
+          throw Error "Unexpected object macro argument #i: \
+                       Got #{arg.type} (expected list)"
 
   \var : (name, value) ->
     if &length > 2

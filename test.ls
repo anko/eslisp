@@ -717,6 +717,10 @@ test "array macro can be empty" ->
   esl "(array)"
     ..`@equals` "[];"
 
+test "object macro can be empty" ->
+  esl "(object)"
+    ..`@equals` "({});"
+
 test "object macro produces object expression" ->
   esl "(object ('a 1) ('b 2))"
     ..`@equals` "({\n    a: 1,\n    b: 2\n});"
@@ -827,6 +831,30 @@ test "object macro compiles complex ES6 object" ->
         }
     });
     '''
+
+test "object macro empty list argument raises error" ->
+  try
+    esl '(object ())'
+  catch e
+    e.message `@equals` "Unexpected object macro argument 0: Got empty list (expected list to have contents)"
+    return
+  @fail "No error thrown"
+
+test "object macro non-list argument raises error" ->
+  try
+    esl '(object "hi")'
+  catch e
+    e.message `@equals` "Unexpected object macro argument 0: Got string (expected list)"
+    return
+  @fail "No error thrown"
+
+test "object macro not-a-quoted-atom in argument raises error" ->
+  try
+    esl '(object ((a x)))'
+  catch e
+    e.message `@equals` "Unexpected object macro argument 0: Invalid single-element list (expected a pattern of (quote <atom>))"
+    return
+  @fail "No error thrown"
 
 test "macro producing an object literal" ->
   esl "(macro obj (lambda () (return '(object ('a 1)))))
