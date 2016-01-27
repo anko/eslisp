@@ -109,11 +109,19 @@ is-list = (node) -> node.type is \list
 
 maybe-unwrap-quote = (node) ->
   if (is-list node) and (is-atom node.values.0, \quote)
+
+    quoted-thing = node.values.1
+
+    unless is-atom quoted-thing
+      throw Error "Unexpected quoted property #{quoted-thing.type}: \
+                   expected atom"
+
     computed : false
-    node : node.values.1
+    node     : quoted-thing
+
   else
     computed : true
-    node : node
+    node     : node
 
 # For some final coercion after compilation, when building the ESTree AST.
 coerce-property = (node, computed) ->
@@ -206,10 +214,6 @@ contents =
 
       {node, computed} = maybe-unwrap-quote name
 
-      unless computed or node.type is \atom
-        throw Error "Expected name of #{type}ter in property #i to be a quoted
-          atom or an expression"
-
       {node : name, computed} = coerce-property (@compile node), computed
       kind = infer-name "#{type}ter", name, computed
 
@@ -254,10 +258,6 @@ contents =
         throw Error "Expected method in property #i to have a name"
 
       {node, computed} = maybe-unwrap-quote name
-
-      unless computed or node.type is \atom
-        throw Error "Expected name of method in property #i to be a quoted atom
-          or an expression"
 
       {node : name, computed} = coerce-property (@compile node), computed
       method = infer-name 'method', name, computed
@@ -312,10 +312,6 @@ contents =
 
       | args.length is 2 =>
         {node, computed} = maybe-unwrap-quote args.0
-
-        if not computed and node.type isnt \atom
-          throw Error "Expected name of property #i to be an expression or
-            quoted atom"
 
         {node : key, computed} = coerce-property (@compile node), computed
 
@@ -438,9 +434,6 @@ contents =
       host = @compile host-node
 
       { node : prop-node, computed } = maybe-unwrap-quote prop-node
-
-      if not computed and prop-node.type isnt \atom
-        throw Error "Expected quoted name of property getter to be an atom"
 
       prop = @compile prop-node
 
