@@ -248,7 +248,6 @@ contents =
       value : do
         (function-type \FunctionExpression)
           .apply this, function-macro-arguments-part
-            ..expression = false
 
     compile-method = ([name, ...function-macro-arguments-part]) ->
 
@@ -278,7 +277,6 @@ contents =
       value : do
         (function-type \FunctionExpression)
           .apply this, function-macro-arguments-part
-            ..expression = false
 
     compile-property-list = (args) ->
       | args.length is 0 =>
