@@ -203,7 +203,7 @@ contents =
     class ObjectParamError extends Error
       (@message) ~>
 
-    compile-get-set = (kind, [name, params, ...body]) ->
+    compile-get-set = (kind, [name, ...function-macro-arguments-part]) ->
       # kind is either "get" or "set"
 
       # What the thing being compiled is called in human-readable errors
@@ -217,6 +217,10 @@ contents =
       name = @compile node
       if name.kind is \Literal
         computed := false
+
+      # We'll only check the parameters here; the function expression macro can
+      # check the body.
+      [ params, _ ] = function-macro-arguments-part
 
       unless is-list params
         throw ObjectParamError "Expected #readable-kind-name to have a \
@@ -249,12 +253,10 @@ contents =
       key : name
       # The initial check doesn't cover the compiled case.
       computed : computed
-      value :
-        type : \FunctionExpression
-        id : null
-        params : params
-        body : optionally-implicit-block-statement this, body
-        expression : false
+      value : do
+        (function-type \FunctionExpression)
+          .apply this, function-macro-arguments-part
+            ..expression = false
 
     compile-method = ([name, params, ...body]) ->
       if not name?
