@@ -341,6 +341,7 @@ contents =
         compile-get-set.call this, args.0.value, args[1 til]
 
       # Reserve this for future generator use.
+      # TODO Implement
       | args.0 `is-atom` \* =>
         throw ObjectParamError "Unexpected '*' (generator methods not yet implemented)"
 
