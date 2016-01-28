@@ -300,7 +300,22 @@ contents =
           name : node.value
         shorthand : true
 
-      | args.length is 2 =>
+      | is-atom args.0 and (args.0.value is \method) =>
+        compile-method.call this, args[1 til]
+
+      | is-atom args.0 and (args.0.value in <[ get set ]>) =>
+        compile-get-set.call this, args.0.value, args[1 til]
+
+      | args.0 `is-atom` \* =>
+        # TODO Implement
+        throw ObjectParamError "Unexpected '*' (generator methods not yet implemented)"
+
+      | otherwise # Assume a key-value pair for a normal object Property
+        if args.length isnt 2
+          throw Error "Not getter, setter, method, or shorthand property, \
+                       but length is #{args.length} \
+                       (expected 2: key and value)"
+
         {node, computed} = maybe-unwrap-quote args.0
 
         key = @compile node
@@ -312,19 +327,6 @@ contents =
         computed : computed
         key : key
         value : @compile args.1
-
-      # Check this before compilation and macro resolution to ensure that
-      # neither can affect this, but that it can be avoided in the edge case if
-      # needed with `(id get)` or `(id set)`, where `(macro id (lambda (x) x))`.
-      | is-atom args.0 and (args.0.value in <[ get set ]>) =>
-        compile-get-set.call this, args.0.value, args[1 til]
-
-      # Reserve this for future generator use.
-      # TODO Implement
-      | args.0 `is-atom` \* =>
-        throw ObjectParamError "Unexpected '*' (generator methods not yet implemented)"
-
-      | otherwise => compile-method.call this, args
 
     (...args) ->
       type : \ObjectExpression

@@ -339,7 +339,7 @@ implemented, though, so generator methods are not available.
     (object
         ('prop)
         ((. Symbol 'toStringTag) "foo")
-        ('method (arg) (return (+ arg 1)))
+        (method 'methodName (arg) (return (+ arg 1)))
         (get data () (return 1)))
 
 <!-- !test out object es6 -->
@@ -349,7 +349,7 @@ implemented, though, so generator methods are not available.
     ({
         prop,
         [Symbol.toStringTag]: 'foo',
-        method(arg) {
+        methodName(arg) {
             return arg + 1;
         },
         get [data]() {

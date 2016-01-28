@@ -745,11 +745,15 @@ test "object macro can create getters" ->
   esl '(object (get \'a () (return 1)))'
     ..`@equals` '({\n    get a() {\n        return 1;\n    }\n});'
 
+test "object macro can create getters with empty body" ->
+  esl '(object (get \'a ()))'
+    ..`@equals` '({\n    get a() {\n    }\n});'
+
 test "object macro can create setters" ->
   esl '(object (set \'a (x) (return 1)))'
     ..`@equals` '({\n    set a(x) {\n        return 1;\n    }\n});'
 
-test "object macro can create setters with no body" ->
+test "object macro can create setters with empty body" ->
   esl '(object (set y (x)))'
     ..`@equals` '({\n    set [y](x) {\n    }\n});'
 
@@ -767,9 +771,10 @@ test "object macro can create computed getters and setters" ->
 test "object macro's parts can be ES6 methods" ->
   esl '''
       (object
-        ('a () (return 1))
-        ('b (x) (return (+ x 1)))
-        (c (x y) (return (+ x y 1))))
+        (method 'a () (return 1))
+        (method 'b (x) (return (+ x 1)))
+        (method c (x y) (return (+ x y 1)))
+        (method 'd ())) ; no args, empty method body
       '''
     ..`@equals` """
       ({
@@ -781,6 +786,8 @@ test "object macro's parts can be ES6 methods" ->
           },
           [c](x, y) {
               return x + (y + 1);
+          },
+          d() {
           }
       });
       """
@@ -804,10 +811,10 @@ test "object macro compiles complex ES6 object" ->
         (set (. syms 'Sym) (value)
           ((. wm 'set) this value))
 
-        ('printFoo ()
+        (method 'printFoo ()
           ((. console 'log) (. this 'foo)))
 
-        ('concatFoo (value)
+        (method 'concatFoo (value)
           (return (+ (. this 'foo) value))))
       '''
     ..`@equals` '''
