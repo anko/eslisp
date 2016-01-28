@@ -894,6 +894,24 @@ test "object macro getter with arguments raises error" ->
     return
   @fail "No error thrown"
 
+test "object macro method with no name raises error" ->
+  try
+    esl '(object (method))'
+  catch e
+    e.message `@equals` 'Unexpected object macro argument 0: Method has no name or argument list'
+
+    return
+  @fail "No error thrown"
+
+test "object macro method with no argument list raises error" ->
+  try
+    esl '(object (method \'x))'
+  catch e
+    e.message `@equals` 'Unexpected object macro argument 0: Expected method \'x\' to have an argument list'
+
+    return
+  @fail "No error thrown"
+
 test "macro producing an object literal" ->
   esl "(macro obj (lambda () (return '(object ('a 1)))))
        (obj)"

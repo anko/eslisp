@@ -249,9 +249,14 @@ contents =
         (function-type \FunctionExpression)
           .apply this, function-macro-arguments-part
 
-    compile-method = ([name, ...function-macro-arguments-part]) ->
+    compile-method = (args) ->
 
-      if not name? then throw ObjectParamError "Expected method to have a name"
+      if args.length is 0
+        throw ObjectParamError "Method has no name or argument list"
+
+      [name, ...function-macro-arguments-part] = args
+
+      if not name? then throw ObjectParamError "Method has no name"
 
       [ params, _ ] = function-macro-arguments-part
 
@@ -266,8 +271,8 @@ contents =
                                      | false => ""
 
       if not params? or not is-list params
-        throw ObjectParamError "Expected #readable-kind-name to have a \
-                                parameter list"
+        throw ObjectParamError "Expected #readable-kind-name to have an \
+                                argument list"
 
       type : \Property
       kind : \init
@@ -282,6 +287,15 @@ contents =
       | args.length is 0 =>
         throw ObjectParamError "Got empty list (expected list to have contents)"
 
+      | is-atom args.0 and (args.0.value is \method) =>
+        compile-method.call this, args[1 til]
+
+      | is-atom args.0 and (args.0.value in <[ get set ]>) =>
+        compile-get-set.call this, args.0.value, args[1 til]
+
+      | args.0 `is-atom` \* =>
+        # TODO Implement
+        throw ObjectParamError "Unexpected '*' (generator methods not yet implemented)"
       | args.length is 1 =>
         node = args.0
 
@@ -300,15 +314,6 @@ contents =
           name : node.value
         shorthand : true
 
-      | is-atom args.0 and (args.0.value is \method) =>
-        compile-method.call this, args[1 til]
-
-      | is-atom args.0 and (args.0.value in <[ get set ]>) =>
-        compile-get-set.call this, args.0.value, args[1 til]
-
-      | args.0 `is-atom` \* =>
-        # TODO Implement
-        throw ObjectParamError "Unexpected '*' (generator methods not yet implemented)"
 
       | otherwise # Assume a key-value pair for a normal object Property
         if args.length isnt 2
