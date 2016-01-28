@@ -26,4 +26,4 @@ test-docs: all doc/how-macros-work.markdown doc/basics-reference.markdown
 
 test-all: test test-readme test-docs
 
-.PHONY: all clean test test-readme test-docs
+.PHONY: all clean test test-readme test-docs test-all
