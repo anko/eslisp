@@ -5,7 +5,7 @@ differently, but call them the same way as normal functions.  They can execute
 whatever logic you want, and their return values become program code at the
 point where they're called.
 
-<!-- !test program ./bin/eslc | head -c -1 -->
+<!-- !test program node ./bin/eslc.js | head -c -1 -->
 
 ## The basics
 

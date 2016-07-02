@@ -66,7 +66,7 @@ those later.)
 
 ## Compilation
 
-<!-- !test program ./bin/eslc | head -c -1 -->
+<!-- !test program node ./bin/eslc.js | head -c -1 -->
 
 When you hand your code to the eslisp compiler, it reads the lists and turns
 them into JavaScript code with the following rules:
