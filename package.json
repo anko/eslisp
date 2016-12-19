@@ -11,15 +11,13 @@
   },
   "directories": {
     "lib": "./lib",
-    "bin": "./bin",
     "doc": "./doc"
   },
   "bin": {
-    "eslc": "./bin/eslc"
+    "eslc": "./lib/cli.js"
   },
   "files": [
-    "lib",
-    "bin"
+    "lib"
   ],
   "keywords": [
     "language",
