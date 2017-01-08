@@ -412,12 +412,16 @@ contents =
       # are searched.
 
       {main} = require
-      dirname = "."
-      main
-        ..paths = main.constructor._node-module-paths process.cwd!
-        ..filename = dirname
+      if main
+        dirname = "."
+        main
+          ..paths = main.constructor._node-module-paths process.cwd!
+          ..filename = dirname
 
-      root-require = main.require.bind main
+        root-require = main.require.bind main
+      else
+        # require.main is undefined within Node REPL, so use global require.
+        root-require = require
 
       let require = root-require
         eval "(#{env.compile-to-js es-ast})"
