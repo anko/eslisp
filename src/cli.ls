@@ -75,7 +75,7 @@ compiler-opts = {}
 if parsed-options.transform
   compiler-opts.transform-macros = that .map require
 
-compile-and-show = (code, filename) ->
+compile-and-show = (code, filename=null) ->
   code .= to-string!
   try
 
@@ -84,9 +84,9 @@ compile-and-show = (code, filename) ->
 
     var js-code, js-map
 
-    if opt-map-out or opt-map-embed
+    compiler-opts.filename = filename
 
-      compiler-opts.filename = filename
+    if opt-map-out or opt-map-embed
 
       # Receive both code and source map from the compiler.
       { code, map } = esl.with-source-map code, compiler-opts

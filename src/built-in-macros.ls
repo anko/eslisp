@@ -5,6 +5,8 @@ statementify = require \./es-statementify
   import-compilerspace-macro
   multiple-statements
 } = require \./import-macro
+Module = require \module
+require! \path
 
 chained-binary-expr = (type, operator) ->
   macro = ->
@@ -401,25 +403,39 @@ contents =
 
     compile-as-macro = (es-ast) ->
 
-      # This hack around require makes loading macros from relative paths work.
-      #
-      # It was guided by LiveScript's implementation
-      # https://github.com/gkz/LiveScript/blob/a7525ce6fe7d4906f5d401edf94f15fe5a6b471e/src/node.ls#L10-L18
-      # which originally derives from the Coco language.
-      #
-      # The gist of it is to use the main module's `require` method, such that
-      # the current working directory is the root relative to which packages
-      # are searched.
+      [ lookup-filename, displayed-filename ] = do ->
+        # If we know we are compiling a particular file, have `require` look up
+        # relative paths relative to that file.  This makes macro `require`s
+        # with relative paths work as expected.
+        | env.filename =>
+          p = path.resolve that
+          [ p, p ]
+        # If we are compiling without a filename (that is, code from stdin or
+        # interactively in a REPL), have `require` resolve relative to the
+        # current working directory.
+        | otherwise => [ process.cwd!, null ]
 
-      {main} = require
-      dirname = "."
-      main
-        ..paths = main.constructor._node-module-paths process.cwd!
-        ..filename = dirname
+      new-module = new Module "eslisp-internal:#displayed-filename" null
+        ..paths    = Module._node-module-paths lookup-filename
+        ..filename = displayed-filename
+      require-substitute = new-module.require.bind new-module
 
-      root-require = main.require.bind main
+      /*
+      filename = env.filename
+      if filename
+        fname = path.resolve env.filename
+        new-module = new Module "eslisp-internal:#fname" null
+          ..paths = Module._node-module-paths fname
+          ..filename = path.resolve fname
+        require-substitute = new-module.require.bind new-module
+      else
+        new-module = new Module "eslisp-internal:." null
+          ..paths = Module._node-module-paths process.cwd!
+          ..filename = null
+        require-substitute = new-module.require.bind new-module
+        */
 
-      let require = root-require
+      let require = require-substitute
         eval "(#{env.compile-to-js es-ast})"
 
     switch &length

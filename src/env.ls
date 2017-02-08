@@ -102,7 +102,7 @@ class env
     # implements macro scope; macros defined in the new environment aren't
     # visible in the outer one.
 
-    env @macro-table, { @import-target-macro-tables }
+    env @macro-table, { @import-target-macro-tables, @filename }
 
   derive-flattened : ~>
 
@@ -131,7 +131,10 @@ class env
 
     env do
       table-to-read-from
-      { import-target-macro-tables : tables-to-import-into }
+      {
+        import-target-macro-tables : tables-to-import-into
+        @filename
+      }
 
   derive-root : ~>
     root-table = find-root @macro-table

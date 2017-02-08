@@ -1,15 +1,20 @@
 #!/usr/bin/env lsc
-test = (name, test-func) ->
-  (require \tape) name, (t) ->
-    test-func.call t  # Make `this` refer to tape's asserts
-    t.end!            # Automatically end tests
+consume-map = require \source-map .SourceMapConsumer .bind!
+{ spawn } = require \child_process
+{ unique } = require \prelude-ls
+require! <[ tape tmp fs uuid rimraf path ]>
+concat = require \concat-stream
 
 esl = require \./src/index.ls
 
-consume-map = require \source-map .SourceMapConsumer .bind!
-
-{ unique } = require \prelude-ls
-require! <[ tmp fs uuid rimraf path ]>
+test = (name, test-func) ->
+  tape name, (t) ->
+    test-func.call t  # Make `this` refer to tape's asserts
+    t.end!            # Automatically end tests
+test-async = (name, test-func) ->
+  tape name, (t) ->
+    test-func.call t
+    # Don't end automatically
 
 test "nothing" ->
   esl ""
@@ -878,33 +883,58 @@ test "macro returning atom with empty or null name fails" ->
           """
       Error
 
-test "macros can be required relative to root directory" ->
+test "require in macros is relative to the eslisp file" ->
 
   { exec-sync } = require \child_process
 
-  { name : dir-name, fd } = tmp.dir-sync!
+  { name : root-dir, fd } = tmp.dir-sync!
 
-  # Create dummy temporary file
+  # Create simple module in the root to import as a macro
   module-basename = "#{uuid.v4!}.js"
-  module-path = path.join dir-name, module-basename
+  module-path = path.join root-dir, module-basename
   module-fd = fs.open-sync module-path, \a+
-  fs.write-sync module-fd, "module.exports = function() { }"
+  fs.write-sync module-fd, '''
+    module.exports = function() {
+      return this.string("BOOM SHAKALAKA")
+    }
+    '''
 
-
+  # Create an eslisp file in the root that requires the root directory module
+  # as a macro
   main-basename = "#{uuid.v4!}.js"
-  main-path = path.join dir-name, main-basename
+  main-path = path.join root-dir, main-basename
   main-fd = fs.open-sync main-path, \a+
   fs.write-sync main-fd, """
     (macro (object x (require "./#module-basename")))
     (x)
     """
+  # Create a subdirectory
+  subdir-basename = "subdir"
+  subdir-path = path.join root-dir, subdir-basename
+  fs.mkdir-sync subdir-path
+
+  # Create an eslisp file in the sub-directory that requires the module in the
+  # root directory (its parent directory) as a macro
+  main2-basename = "#{uuid.v4!}.js"
+  main2-path = path.join subdir-path, main2-basename
+  main2-fd = fs.open-sync main2-path, \a+
+  fs.write-sync main2-fd, """
+    (macro (object x (require "../#module-basename")))
+    (x)
+    """
 
   eslc-path = path.join process.cwd!, "bin/eslc"
   try
-    exec-sync "#eslc-path #main-basename", cwd : dir-name
-      ..to-string! `@equals` "\n"
+    # Call the eslisp compiler with current working directory set to the root
+    # directory, with both eslisp files in turn, and expect neither to error.
+    exec-sync "#eslc-path #main-basename", cwd : root-dir
+      ..to-string! `@equals` "'BOOM SHAKALAKA';\n"
+    exec-sync "#eslc-path #main2-path", cwd : root-dir
+      ..to-string! `@equals` "'BOOM SHAKALAKA';\n"
+    # This second one will only succeed if `require` within macros works
+    # relative to the eslisp file being compiled.
   finally
-    e <~ rimraf dir-name
+    e <~ rimraf root-dir
     @equals e, null
 
 test "macros can be required from node_modules relative to root directory" ->
@@ -1309,3 +1339,57 @@ test "macro return source map (across multiple lines)" ->
       ..line `@equals` 3
       ..column `@equals` 0
       ..name `@equals` \b
+
+test-async "macros can be defined when eslisp is used from the Node REPL" ->
+  @plan 2
+  # Spawn a new Node.js REPL process
+  spawn "node"
+    # Feed it some input:
+    ..stdin
+      # Require the eslisp module in it
+      ..write "eslisp = require('.')\n"
+      # Create a stateful eslisp compiler instance
+      ..write "x = eslisp.stateful()\n"
+      # Define a macro in it
+      ..write "x('(macro x (lambda () (return \\'42)))')\n"
+      # Call that macro, and log the resulting JavaScript code
+      ..write "console.log(x('(x)'))\n"
+      ..end!
+    ..stdout.pipe concat (.to-string! `@equals` '42;\n')
+    ..stderr.pipe concat (.to-string! `@equals` '')
+    ..on \close ~> @end!
+
+test-async "macros can be required from eslisp in Node REPL relative to REPL cwd" ->
+
+  { name : dir-name, fd } = tmp.dir-sync!
+
+  # Create dummy temporary file
+  module-basename = "#{uuid.v4!}.js"
+  module-path = path.join dir-name, module-basename
+  module-fd = fs.open-sync module-path, \a+
+  fs.write-sync module-fd, '''
+    module.exports = function() {
+      return this.atom(42)
+    }
+    '''
+
+  @plan 4
+
+  spawn "node" cwd : dir-name
+    # Feed it some input:
+    ..stdin
+      # Require the eslisp module in it
+      ..write "eslisp = require('#{process.cwd!}')\n"
+      # Create a stateful eslisp compiler instance
+      ..write "x = eslisp.stateful()\n"
+      # Define a macro in it
+      ..write "x('(macro x (require \"./#module-basename\"))')\n"
+      # Call that macro, and log the resulting JavaScript code
+      ..write "console.log(x('(x)'))\n"
+      ..end!
+    ..stdout.pipe concat (.to-string! `@equals` '42;\n')
+    ..stderr.pipe concat (.to-string! `@equals` '')
+    ..on \close ~>
+      @pass "Node.js process exited"
+      e <~ rimraf dir-name
+      @equals e, null, "Temporary directory removed"

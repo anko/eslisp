@@ -34,6 +34,7 @@
   "bugs": "https://github.com/anko/eslisp/issues",
   "license": "ISC",
   "devDependencies": {
+    "concat-stream": "^1.6.0",
     "livescript": "^1.4.0",
     "rimraf": "^2.4.1",
     "source-map": "^0.5.3",
