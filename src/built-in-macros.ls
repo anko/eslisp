@@ -420,21 +420,6 @@ contents =
         ..filename = displayed-filename
       require-substitute = new-module.require.bind new-module
 
-      /*
-      filename = env.filename
-      if filename
-        fname = path.resolve env.filename
-        new-module = new Module "eslisp-internal:#fname" null
-          ..paths = Module._node-module-paths fname
-          ..filename = path.resolve fname
-        require-substitute = new-module.require.bind new-module
-      else
-        new-module = new Module "eslisp-internal:." null
-          ..paths = Module._node-module-paths process.cwd!
-          ..filename = null
-        require-substitute = new-module.require.bind new-module
-        */
-
       let require = require-substitute
         eval "(#{env.compile-to-js es-ast})"
 
