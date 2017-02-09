@@ -410,8 +410,8 @@ If you want `eslc` in your [`$PATH`][41], `npm install --global eslisp`.  (You
 might need `sudo`.)  Then `eslc` program takes eslisp code as input and outputs
 JavaScript.
 
-The compiler runs as a [REPL][42] if given no arguments, though it doesn't
-(yet) support macros in that mode.
+If run interactively without arguments, the compiler loads a [REPL][42] that
+you can type commands into to test them.
 
 You can also just pipe data to it to compile it if you want.
 
