@@ -11,26 +11,80 @@ your own language features, [like this][9].
 > :warning: **Note the 0.x.x [semver][10].**  The API may shift under your
 > feet.
 
-<!-- !test program ./bin/eslc | head -c -1 -->
+## Philosophy
+
+-   **Small core, close to JS**.  This core eslisp corresponds closely with the
+    [estree][11] abstract syntax tree format, and hence matches output JS
+    clearly.  It's purely a syntax adapter unless you use macros.
+
+-   **Maximum user control**.  Users must be able to easily extend the language
+    to their needs, and to publish their features independently of the core
+    language.
+
+    User-defined macros must be treated like built-in ones, and are just
+    ordinary JS functions.  This means you can write them in anything that
+    compiles to JavaScript, put them on [npm][12], and `require` them.
+
+## Motivating example
+
+Here's an example of implementing conditional compilation in eslisp:
+
+<!-- !test program DEBUG=1 ./bin/eslc | head -c -1 -->
 
 <!-- !test in fib -->
 
-    ; Only include given statement if `$DEBUG` environment variable is set
+    ; Macros are functions bound to names, which operate on code.  This one
+    ; checks whether the `$DEBUG` environment variable is set, and if so,
+    ; returns a call to `console.log` that also includes a string of the code
+    ; that was passed in.
     (macro debug
-     (lambda (statement)
-      (return (?: (. process env DEBUG)
-                  statement
-                  null))))
+     (lambda (expression)
+      (if (. process env DEBUG)
+        (return `((. console log)
+                  ; Compile the input expression to JavaScript, and convert
+                  ; that to a string.
+                  ,((. this string)
+                    ((. this compileToJs)
+                     ((. this compile) expression)))
+                  "="
+                  ,expression))
+       (return null))))
 
     (var fib ; Fibonacci number sequence
-       (lambda (x)
-        (debug ((. console log) (+ "resolving number " x)))
-        (switch x
-         (0 (return 0))
-         (1 (return 1))
-         (default (return (+ (fib (- x 1)) (fib (- x 2))))))))
+     (lambda (x)
+
+      ; Conditionally compile logging code
+      (debug x)
+
+      ; Basic Fibonacci algorithm
+      (switch x
+       (0 (return 0))
+       (1 (return 1))
+       (default (return (+ (fib (- x 1)) (fib (- x 2))))))))
+
+Compiled with `DEBUG=1 eslc file.esl`, that compiles to this JavaScript:
 
 <!-- !test out fib -->
+
+    var fib = function (x) {
+        console.log('x', '=', x);
+        switch (x) {
+        case 0:
+            return 0;
+        case 1:
+            return 1;
+        default:
+            return fib(x - 1) + fib(x - 2);
+        }
+    };
+
+Note how the generated `console.log` also has *the name of the variable `x` as
+a string*.  Try changing the `debug` call to `(debug ((. Math pow) (+ x 1) 2)`
+and watch the logging code change to say `Math.pow(x + 1, 2)` also inside the
+first string.  (You can edit it in your browser [on runkit
+here](https://runkit.com/anko/590b2059e9af030012b47bb8).)
+
+Compiled with just `eslc file.esl`, the logging code disappears:
 
     var fib = function (x) {
         switch (x) {
@@ -43,20 +97,15 @@ your own language features, [like this][9].
         }
     };
 
-## Philosophy
+Doing it this way has a few advantages:
 
--   **Small core, close to JS**.  This core eslisp corresponds closely with the
-    [estree][11] abstract syntax tree format, and hence matches output JS
-    clearly.  It's purely a syntax adapter unless you use macros.
+ - Your output code is smaller, compared to the usual technique of hiding your
+   debug code behind a boolean flag.
+ - This actually logs the expression that produced the result.  Can't do that
+   in JS without writing it manually every time, because you can't invoke the
+   compiler at compile-time.
 
--   **Maximum user control**.  Users must be able to easily extend the language
-    to their needs, and to publish their features independently of the core
-    language.
-
-    User-defined macros are treated like built-in ones, and are just ordinary
-    JS functions.  This means you can write them in anything that compiles to
-    JavaScript, put them on [npm][12], and `require` them.
-
+<!-- !test program ./bin/eslc | head -c -1 -->
 
 ## Why?
 
