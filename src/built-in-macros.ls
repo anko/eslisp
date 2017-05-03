@@ -8,7 +8,7 @@ statementify = require \./es-statementify
 Module = require \module
 require! \path
 
-chained-binary-expr = (type, operator) ->
+chained-binary-expr = (type, operator, associativity=\right) ->
   macro = ->
     | &length is 0 =>
       throw Error "binary expression macro `#operator` unexpectedly called \
@@ -20,11 +20,19 @@ chained-binary-expr = (type, operator) ->
       left  : @compile &0
       right : @compile &1
     | otherwise =>
-      [ head, ...rest ] = &
-      macro.call do
-        this
-        macro.call this, @compile head
-        macro.apply this, rest
+      switch associativity
+      | \right
+        [ head, ...rest ] = &
+        macro.call do
+          this
+          macro.call this, @compile head
+          macro.apply this, rest
+      | \left
+        [ ...first-few, last ] = &
+        macro.call do
+          this
+          macro.apply this, first-few
+          macro.call this, @compile last
 
   ->
     if &length is 1
@@ -39,8 +47,8 @@ unary-expr = (operator) -> (arg) ->
   prefix : true
   argument : @compile arg
 
-n-ary-expr = (operator) ->
-  n-ary = chained-binary-expr \BinaryExpression operator
+n-ary-expr = (operator, associativity=\right) ->
+  n-ary = chained-binary-expr \BinaryExpression operator, associativity
   unary = unary-expr operator
   ->
     switch &length
@@ -108,11 +116,11 @@ compile-unless-empty-list = (compile, ast) ->
                        else null
 
 contents =
-  \+ : n-ary-expr \+
-  \- : n-ary-expr \-
-  \* : chained-binary-expr \BinaryExpression \*
-  \/ : chained-binary-expr \BinaryExpression \/
-  \% : chained-binary-expr \BinaryExpression \%
+  \+ : n-ary-expr \+ \left
+  \- : n-ary-expr \- \left
+  \* : chained-binary-expr \BinaryExpression \* \left
+  \/ : chained-binary-expr \BinaryExpression \/ \left
+  \% : chained-binary-expr \BinaryExpression \% \left
 
   \++  : update-expression \++ type : \prefix # Synonym for below
   \++_ : update-expression \++ type : \prefix
@@ -121,33 +129,33 @@ contents =
   \--_ : update-expression \-- type : \prefix
   \_-- : update-expression \-- type : \suffix
 
-  \&& : chained-binary-expr \LogicalExpression \&&
-  \|| : chained-binary-expr \LogicalExpression \||
+  \&& : chained-binary-expr \LogicalExpression \&& \left
+  \|| : chained-binary-expr \LogicalExpression \|| \left
   \!  : unary-expr \!
 
-  \< : chained-binary-expr \BinaryExpression \<
-  \> : chained-binary-expr \BinaryExpression \>
-  \<= : chained-binary-expr \BinaryExpression \<=
-  \>= : chained-binary-expr \BinaryExpression \>=
+  \< : chained-binary-expr \BinaryExpression \< \left
+  \> : chained-binary-expr \BinaryExpression \> \left
+  \<= : chained-binary-expr \BinaryExpression \<= \left
+  \>= : chained-binary-expr \BinaryExpression \>= \left
 
   \delete : unary-expr \delete
   \typeof : unary-expr \typeof
   \void   : unary-expr \void
-  \instanceof : chained-binary-expr \BinaryExpression \instanceof
-  \in : chained-binary-expr \BinaryExpression \in
+  \instanceof : chained-binary-expr \BinaryExpression \instanceof \left
+  \in : chained-binary-expr \BinaryExpression \in \left
 
-  \& : chained-binary-expr \BinaryExpression \&
-  \| : chained-binary-expr \BinaryExpression \|
-  \^ : chained-binary-expr \BinaryExpression \^
-  \>>  : chained-binary-expr \BinaryExpression \>>
-  \<<  : chained-binary-expr \BinaryExpression \<<
-  \>>> : chained-binary-expr \BinaryExpression \>>>
+  \& : chained-binary-expr \BinaryExpression \& \left
+  \| : chained-binary-expr \BinaryExpression \| \left
+  \^ : chained-binary-expr \BinaryExpression \^ \left
+  \>>  : chained-binary-expr \BinaryExpression \>> \left
+  \<<  : chained-binary-expr \BinaryExpression \<< \left
+  \>>> : chained-binary-expr \BinaryExpression \>>> \left
   \~ : unary-expr \~
 
-  \==  : chained-binary-expr \BinaryExpression \==
-  \!=  : chained-binary-expr \BinaryExpression \!=
-  \=== : chained-binary-expr \BinaryExpression \===
-  \!== : chained-binary-expr \BinaryExpression \!==
+  \==  : chained-binary-expr \BinaryExpression \== \left
+  \!=  : chained-binary-expr \BinaryExpression \!= \left
+  \=== : chained-binary-expr \BinaryExpression \=== \left
+  \!== : chained-binary-expr \BinaryExpression \!== \left
 
   \=    : chained-binary-expr \AssignmentExpression \=
   \+=   : chained-binary-expr \AssignmentExpression \+=

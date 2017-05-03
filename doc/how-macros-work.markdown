@@ -135,7 +135,7 @@ as—
 
 <!-- !test out mean macro -->
 
-    (1 + (2 + a)) / 3;
+    (1 + 2 + a) / 3;
 
 If we had used the plain unquote (`,`) instead of unquote-splicing (`,@`), we'd
 have gotten `(/ (+ (1 2 a)) 3)` which would compile to nonsense JS, as eslisp

@@ -215,7 +215,7 @@ to what you'd expect.
 
 <!-- !test out arithmetic -->
 
-    1 + (2 + 3);
+    1 + 2 + 3;
     a - b;
     -a;
     3 / 4;
@@ -427,7 +427,7 @@ macro compiles to a return-statement.
 <!-- !test out function expression -->
 
     var f = function (a, b) {
-        return 5 * (a * b);
+        return 5 * a * b;
     };
 
 You can also give a name to a function expression as the optional first
