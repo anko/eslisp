@@ -56,41 +56,66 @@ test "string literal newline escape" ->
   esl '"ok\\nthen"'
     ..`@equals` "'ok\\nthen';"
 
-test "left-associative operators" ->
-  ops = <[ * / % + - << >> >>> < <= > >= in instanceof
-           == != === !== & ^ | && || ]>
-  @plan ops.length + 1
-  for o in ops
+test "binary operators work" ->
+  # Except for update operators, check that the JavaScript operators that eslisp
+  # uses the same characters for, as in:
+  #
+  #   (<operator> a b c)
+  #
+  # compiles to
+  #
+  #   a <opearator> b <opearator> c;
+  #
+  <[ + - * / % + - << >> >>> < <= > >= in instanceof == != === !== & ^ | & || =
+    += -= *= /= %= <<= >>= >>>= &= ^= |= ]> .for-each (o) ~>
     @equals do
       esl "(#o a b c)"
       "a #o b #o c;"
-      "operator #o is left-associative"
-  # The one special case: because "," in eslisp is reserved for a different
-  # thing, we use "seq" for the sequence expression.
+      "operator #o works"
+  # The one special case is the sequence expression operator ",": because ","
+  # in eslisp is reserved for a different thing, we call that "seq".
   @equals do
     esl "(seq a b c)"
     "a, b, c;"
-    "operator seq is left-associative"
+    "operator seq works"
 
-test "plus nests" ->
+test "unary operators work" ->
+  # Operators that have NO space between them an the operand
+  <[ !  ~ + - ]> .for-each (o) ~>
+    @equals do
+      esl "(#o a)"
+      "#{o}a;"
+      "unary operator #o works"
+
+  # Operators that have a space between them an the operand
+  <[ typeof void delete ]> .for-each (o) ~>
+    @equals do
+      esl "(#o a)"
+      "#{o} a;"
+      "unary operator #o works"
+
+test "ternary operator" ->
+  esl '(?: "x" 0 1)'
+    ..`@equals` "'x' ? 0 : 1;"
+
+test "update operators work" ->
+  eq = (input, output) ~> @equals (esl input), output
+  @comment \prefix
+  "(++ x)" `eq` "++x;"
+  "(-- x)" `eq` "--x;"
+  "(++_ x)" `eq` "++x;"
+  "(--_ x)" `eq` "--x;"
+  @comment \postfix
+  "(_++ x)" `eq` "x++;"
+  "(_-- x)" `eq` "x--;"
+
+# The JavaScript operators we don't yet support are:
+#
+#   yield yield* ** **=
+
+test "manual plus nesting" ->
   esl "(+ 1 (+ 2 3))"
     ..`@equals` "1 + (2 + 3);"
-
-test "unary plus" ->
-  esl "(+ 1)"
-    ..`@equals` "+1;"
-
-test "unary minus" ->
-  esl "(- 1)"
-    ..`@equals` "-1;"
-
-test "n-ary minus is left-associative" ->
-  esl "(- 10 2 1)"
-    ..`@equals` "10 - 2 - 1;"
-
-test "n-ary multiplication is left-associative" ->
-  esl "(* 1 2 3)"
-    ..`@equals` "1 * 2 * 3;"
 
 test "unary multiplication is invalid" ->
   (-> esl "(* 2)")
@@ -99,42 +124,6 @@ test "unary multiplication is invalid" ->
 test "unary division is invalid" ->
   (-> esl "(/ 2)")
     ..`@throws` Error
-
-test "prefix increment expression" ->
-  esl "(_++ x)"
-    ..`@equals` "x++;"
-
-test "postfix incremente expression" ->
-  esl "(++_ x) (++ x)"
-    ..`@equals` "++x;\n++x;"
-
-test "prefix decrement expression" ->
-  esl "(--_ x) (-- x)"
-    ..`@equals` "--x;\n--x;"
-
-test "postfix decrement expression" ->
-  esl "(_-- x)"
-    ..`@equals` "x--;"
-
-test "unary logical not" ->
-  esl "(! 1)"
-    ..`@equals` "!1;"
-
-test "unary delete" ->
-  esl "(delete x)"
-    ..`@equals` "delete x;"
-
-test "unary delete" ->
-  esl "(typeof x)"
-    ..`@equals` "typeof x;"
-
-test "unary void" ->
-  esl "(void x)"
-    ..`@equals` "void x;"
-
-test "unary bitwise not" ->
-  esl "(~ x)"
-    ..`@equals` "~x;"
 
 test "function expression" ->
   esl "(lambda (x) (return (+ x 1)))"
@@ -270,10 +259,6 @@ test "if-statement without alternate" ->
           x();
       }
       """
-
-test "ternary expression" ->
-  esl '(?: "something" 0 1)'
-    ..`@equals` "'something' ? 0 : 1;"
 
 test "while loop with explicit body" ->
   esl '(while (-- n) (block
