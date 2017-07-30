@@ -253,6 +253,14 @@ test "return statement" ->
   esl "(lambda () (return \"hello there\"))"
     ..`@equals` "(function () {\n    return 'hello there';\n});"
 
+test "empty return statement" ->
+  esl "(lambda () (return))"
+    ..`@equals` "(function () {\n    return;\n});"
+
+test "return with too many args throws" ->
+  (-> esl "(lambda () (return 1 2))")
+    ..`@throws` Error
+
 test "member expression" ->
   esl "(. console log)"
     ..`@equals` "console.log;"

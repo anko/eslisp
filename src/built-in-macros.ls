@@ -283,8 +283,11 @@ contents =
     body  : body
 
   \return : (arg) ->
+    if &length not in [ 0 1 ]
+      throw Error "Expected `return` macro to get 0 or 1 arguments, but got \
+                   #{&length}"
     type : \ReturnStatement
-    argument : @compile arg
+    argument : if arg then @compile arg else null
 
   \. : do
 
