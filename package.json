@@ -4,7 +4,7 @@
   "description": "minimal S-expression syntax and macro system for JavaScript",
   "main": "./lib",
   "scripts": {
-    "prepublish": "make -j all",
+    "prepare": "make -j all",
     "test": "make -j test",
     "test-readme": "make -j test-readme",
     "test-docs": "make -j test-docs"
