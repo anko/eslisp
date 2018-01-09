@@ -1,8 +1,7 @@
 language: node_js
 node_js:
-  - "4"
-  - "5"
   - "6"
   - "7"
   - "8"
+  - "9"
 script: echo "code tests" ; npm run test; echo "readme tests" ; npm run test-readme ; echo "documentation example tests" ; npm run test-docs
