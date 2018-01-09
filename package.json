@@ -36,18 +36,18 @@
   "devDependencies": {
     "concat-stream": "^1.6.0",
     "livescript": "^1.4.0",
-    "rimraf": "^2.4.1",
-    "source-map": "^0.5.3",
-    "tape": "^4.0.0",
+    "rimraf": "^2.6.2",
+    "source-map": "^0.7.0",
+    "tape": "^4.8.0",
     "tests-ex-markdown": "^2.0.0",
-    "tmp": "0.0.31",
-    "uuid": "^3.0.1"
+    "tmp": "0.0.33",
+    "uuid": "^3.2.1"
   },
   "dependencies": {
-    "chalk": "^1.1.1",
+    "chalk": "^2.3.0",
     "concat-stream": "^1.4.7",
-    "convert-source-map": "^1.1.2",
-    "escodegen": "^1.4.1",
+    "convert-source-map": "^1.5.1",
+    "escodegen": "^1.9.0",
     "esutils": "^2.0.2",
     "esvalid": "1.1.0",
     "nopt": "^4.0.1",
