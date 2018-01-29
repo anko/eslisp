@@ -37,7 +37,7 @@
     "concat-stream": "^1.6.0",
     "livescript": "^1.4.0",
     "rimraf": "^2.6.2",
-    "source-map": "^0.7.0",
+    "source-map": "^0.6.0",
     "tape": "^4.8.0",
     "tests-ex-markdown": "^2.0.0",
     "tmp": "0.0.33",
