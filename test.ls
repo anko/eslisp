@@ -1,5 +1,7 @@
 #!/usr/bin/env lsc
-consume-map = require \source-map .SourceMapConsumer .bind!
+consume-map = (map, action) ->>
+  { SourceMapConsumer } = require \source-map
+  await SourceMapConsumer.with map, null, action
 { spawn } = require \child_process
 { unique } = require \prelude-ls
 require! <[ tape tmp fs uuid rimraf path ]>
@@ -1167,7 +1169,7 @@ test "multiple transform-macros are applied in order" ->
 ## Source maps
 ##
 
-test "identifier source map" ->
+test-async "identifier source map" ->
   { code, map } = esl.with-source-map "x" filename : "test.esl"
 
   code `@equals` "x;"
@@ -1177,13 +1179,14 @@ test "identifier source map" ->
     ..sources.length `@equals` 1
     ..sources-content.length `@equals` 1
 
-  consume-map map
+  consume-map map, ~>> it
     ..original-position-for line : 1 column : 0
       ..line `@equals` 1
       ..column `@equals` 0
       ..name `@equals` \x
+  @end!
 
-test "identifier source map (with leading spaces)" ->
+test-async "identifier source map (with leading spaces)" ->
   { code, map } = esl.with-source-map "   x" filename : "test.esl"
 
   code `@equals` "x;"
@@ -1193,14 +1196,15 @@ test "identifier source map (with leading spaces)" ->
     ..sources.length `@equals` 1
     ..sources-content.length `@equals` 1
 
-  consume-map map
+  consume-map map, ~>> it
     ..original-position-for line : 1 column : 0
       ..line `@equals` 1
       ..column `@equals` 3
       ..name `@equals` \x
+  @end!
 
 
-test "boolean literal source map" ->
+test-async "boolean literal source map" ->
 
   { code, map } = esl.with-source-map "true" filename : "test.esl"
 
@@ -1211,13 +1215,14 @@ test "boolean literal source map" ->
     ..sources.length `@equals` 1
     ..sources-content.length `@equals` 1
 
-  consume-map map
+  consume-map map, ~>> it
     ..original-position-for line : 1 column : 0
       ..line `@equals` 1
       ..column `@equals` 0
       @not-ok ..name
+  @end!
 
-test "number literal source map" ->
+test-async "number literal source map" ->
 
   { code, map } = esl.with-source-map "42" filename : "test.esl"
 
@@ -1228,13 +1233,14 @@ test "number literal source map" ->
     ..sources.length `@equals` 1
     ..sources-content.length `@equals` 1
 
-  consume-map map
+  consume-map map, ~>> it
     ..original-position-for line : 1 column : 0
       ..line `@equals` 1
       ..column `@equals` 0
       @not-ok ..name
+  @end!
 
-test "string literal source map" ->
+test-async "string literal source map" ->
 
   { code, map } = esl.with-source-map '"hello"' filename : "test.esl"
 
@@ -1245,13 +1251,14 @@ test "string literal source map" ->
     ..sources.length `@equals` 1
     ..sources-content.length `@equals` 1
 
-  consume-map map
+  consume-map map, ~>> it
     ..original-position-for line : 1 column : 0
       ..line `@equals` 1
       ..column `@equals` 0
       @not-ok ..name
+  @end!
 
-test "call expression source map" ->
+test-async "call expression source map" ->
 
   { code, map } = esl.with-source-map '(f a b)' filename : "test.esl"
 
@@ -1263,7 +1270,7 @@ test "call expression source map" ->
     ..sources-content.length `@equals` 1
     ..names `@deep-equals` <[ f a b ]>
 
-  consume-map map
+  consume-map map, ~>> it
     ..original-position-for line : 1 column : 0
       ..line `@equals` 1
       ..column `@equals` 1
@@ -1276,8 +1283,9 @@ test "call expression source map" ->
       ..line `@equals` 1
       ..column `@equals` 5
       ..name `@equals` \b
+  @end!
 
-test "macro return source map" ->
+test-async "macro return source map" ->
 
   { code, map } = esl.with-source-map '(+ a b)' filename : "test.esl"
 
@@ -1289,7 +1297,7 @@ test "macro return source map" ->
     ..sources-content.length `@equals` 1
     ..names `@deep-equals` <[ a b ]>
 
-  consume-map map
+  consume-map map, ~>> it
     ..original-position-for line : 1 column : 0
       ..line `@equals` 1
       ..column `@equals` 3
@@ -1302,8 +1310,9 @@ test "macro return source map" ->
       ..line `@equals` 1
       ..column `@equals` 5
       ..name `@equals` \b
+  @end!
 
-test "macro return source map (across multiple lines)" ->
+test-async "macro return source map (across multiple lines)" ->
 
   { code, map } = esl.with-source-map '(+\na\nb)' filename : "test.esl"
 
@@ -1315,7 +1324,7 @@ test "macro return source map (across multiple lines)" ->
     ..sources-content.length `@equals` 1
     ..names `@deep-equals` <[ a b ]>
 
-  consume-map map
+  consume-map map, ~>> it
     ..original-position-for line : 1 column : 0
       ..line `@equals` 2
       ..column `@equals` 0
@@ -1328,6 +1337,7 @@ test "macro return source map (across multiple lines)" ->
       ..line `@equals` 3
       ..column `@equals` 0
       ..name `@equals` \b
+  @end!
 
 test-async "macros can be defined when eslisp is used from the Node REPL" ->
   @plan 2
