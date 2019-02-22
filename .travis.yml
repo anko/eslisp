@@ -1,4 +1,10 @@
 language: node_js
 node_js:
-  - node
-script: echo "code tests" ; npm run test; echo "readme tests" ; npm run test-readme ; echo "documentation example tests" ; npm run test-docs
+ - node
+script:
+ - echo "code tests"
+ - npm run test
+ - echo "readme tests"
+ - npm run test-readme
+ - echo "documentation example tests"
+ - npm run test-docs
