@@ -426,14 +426,21 @@ contents =
         # current working directory.
         | otherwise => [ process.cwd!, null ]
 
-      new-module = new Module "eslisp-internal:#displayed-filename" null
-        ..paths    = Module._node-module-paths lookup-filename
-        ..filename = displayed-filename
-      require-substitute = new-module.require.bind new-module
+      # If attempting to construct a new `Module` fails (such as in a web
+      # browser, where the `Module` module doesn't exist, and "require-ing a
+      # module from a relative path" is a nonsensical concept), then we let it
+      # fail, and silently fall back to plain `require`.
+      require-substitute = null
+      try
+        new-module = new Module "eslisp-internal:#displayed-filename" null
+          ..paths    = Module._node-module-paths lookup-filename
+          ..filename = displayed-filename
+        require-substitute := new-module.require.bind new-module
+      catch TypeError
+        require-substitute := require
 
       let require = require-substitute
         eval "(#{env.compile-to-js es-ast})"
-
     switch &length
     | 1 =>
       form = &0
