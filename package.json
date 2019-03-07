@@ -7,7 +7,8 @@
     "prepare": "make -j all",
     "test": "make -j test",
     "test-readme": "make -j test-readme",
-    "test-docs": "make -j test-docs"
+    "test-docs": "make -j test-docs",
+    "test-browser": "make -j test-browser"
   },
   "directories": {
     "lib": "./lib",

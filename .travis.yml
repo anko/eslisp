@@ -8,3 +8,5 @@ script:
  - npm run test-readme
  - echo "documentation example tests"
  - npm run test-docs
+ - echo "browser tests"
+ - npm run test-browser
