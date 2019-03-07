@@ -17,6 +17,9 @@ clean:
 test: all
 	@lsc test.ls
 
+test-browser: all
+	@lsc test-browser.ls
+
 test-readme: all readme.markdown
 	@txm readme.markdown
 
@@ -24,6 +27,6 @@ test-docs: all doc/how-macros-work.markdown doc/basics-reference.markdown
 	@txm doc/how-macros-work.markdown
 	@txm doc/basics-reference.markdown
 
-test-all: all test test-readme test-docs
+test-all: all test test-readme test-docs test-browser
 
 .PHONY: all clean test test-readme test-docs test-all

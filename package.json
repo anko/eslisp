@@ -34,8 +34,12 @@
   "bugs": "https://github.com/anko/eslisp/issues",
   "license": "ISC",
   "devDependencies": {
+    "anyify": "^1.0.1",
+    "browserify": "^16.2.3",
     "concat-stream": "^2.0.0",
+    "ecstatic": "^3.3.1",
     "livescript": "^1.6.0",
+    "puppeteer": "^1.12.2",
     "rimraf": "^2.6.3",
     "source-map": "0.7.3",
     "tape": "^4.10.1",
