@@ -40,7 +40,7 @@
     "concat-stream": "^2.0.0",
     "ecstatic": "^3.3.1",
     "livescript": "^1.6.0",
-    "puppeteer": "^1.12.2",
+    "puppeteer": "^1.13.0",
     "rimraf": "^2.6.3",
     "source-map": "0.7.3",
     "tape": "^4.10.1",
@@ -51,7 +51,7 @@
   "dependencies": {
     "chalk": "^2.4.2",
     "convert-source-map": "1.6.0",
-    "escodegen": "^1.11.0",
+    "escodegen": "^1.11.1",
     "esutils": "^2.0.2",
     "esvalid": "1.1.0",
     "nopt": "^4.0.1",
