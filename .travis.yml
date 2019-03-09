@@ -1,12 +1,13 @@
 language: node_js
 node_js:
  - node
-script:
- - echo "code tests"
- - npm run test
- - echo "readme tests"
- - npm run test-readme
- - echo "documentation example tests"
- - npm run test-docs
- - echo "browser tests"
- - npm run test-browser
+jobs:
+  include:
+    - name: "Code tests (Node)"
+      script: npm run test
+    - name: "Code tests (Chromium)"
+      script: npm run test-browser
+    - name: "Readme example tests"
+      script: npm run test-readme
+    - name: "Documentation example tests"
+      script: npm run test-docs
