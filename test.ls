@@ -809,9 +809,9 @@ test "when returned from an IIFE, macros can share state" ->
                  timesPrev (lambda (n)
                                    (*= x ((. this evaluate) n))
                                    (return ((. this atom) ((. x toString))))))))))
-      (plusPrev 2) (timesPrev 2)
+      (plusPrev 2) (timesPrev 9)
        """
-   ..`@equals` "2;\n4;"
+   ..`@equals` "2;\n18;"
 
 test "error thrown by macro is caught with a descriptive message" ->
 
