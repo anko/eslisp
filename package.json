@@ -50,9 +50,9 @@
   },
   "dependencies": {
     "chalk": "^2.4.2",
-    "convert-source-map": "1.6.0",
-    "escodegen": "^1.11.1",
-    "esutils": "^2.0.2",
+    "convert-source-map": "^1.7.0",
+    "escodegen": "^1.12.1",
+    "esutils": "^2.0.3",
     "esvalid": "1.1.0",
     "nopt": "^4.0.1",
     "prelude-ls": "^1.1.1",
