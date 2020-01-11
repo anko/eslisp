@@ -816,16 +816,54 @@ test "when returned from an IIFE, macros can share state" ->
 test "error thrown by macro is caught with a descriptive message" ->
 
   tests =
+    # The macro throws an Error
     * code : """
              (macro x (lambda () (throw (Error "aaah"))))
              (x)
              """
       desired-error : "Error evaluating macro `x` (called at line 2, column 0): aaah"
+
+    # The macro has a logical error, and a ReferenceError is thrown
     * code : """
              (macro x (lambda () (m)))
              (x)
              """
       desired-error : "Error evaluating macro `x` (called at line 2, column 0): m is not defined"
+
+
+      # The macro returns a call to itself, recurs infinitely, overflows the
+      # stack, and a RangeError is thrown.
+      #
+      # Q:  Why are we testing for 2 possible errors?
+      #
+      # A:  Because JavaScript implementations are really flaky about catching
+      # stack overflow errors.  When the stack overflows and a RangeError is
+      # thrown, one of 2 outcomes is possible:
+      #
+      # 1. The error is delivered to the try-catch that we wrap around macro
+      #    calls.  The catch adds helpful extra information to the error before
+      #    rethrowing it.
+      #
+      #    So we get the augmented error message here.
+      #
+      # 2. The implementation arbitrarily decides that the stack is too full to
+      #    be doing any more function calls, and ignores the try-catch because
+      #    it feels like it.
+      #
+      #    So we get the generic error message here.
+      #
+      #    (Or maybe the implementation also throws past this try-catch in the
+      #    tests, and the tests crash.  We, uh, just hope that doesn't happen?
+      #    It hasn't happened for me for some reason.  Yet.)
+    * code: """
+            (macro test
+             (lambda (x) (return '(test))))
+            (test)
+            """
+      desired-error: [
+        * "Error evaluating macro `test` (called at unknown location; likely returned from a macro): Maximum call stack size exceeded"
+        * "Maximum call stack size exceeded"
+      ]
 
   tests.for-each (it, i) ~>
     caught = false
@@ -833,12 +871,20 @@ test "error thrown by macro is caught with a descriptive message" ->
       esl it.code
     catch e
       caught := true
-      if e.message isnt it.desired-error
-        @fail "Code #i produced wrong error message"
+      if (typeof! it.desired-error) is \Array
+        if it.desired-error .some (is e.message)
+          @pass "Error message matches one of the options"
+        else
+          fail-message = "Error message doesn't match any of the options:\n"
+          fail-message += "The message was: '#{e.message}'.\nCorrect options were:"
+          for x in it.desired-error
+            fail-message += "\n - #{x}"
+          @fail fail-message
+      else
+        @equals e.message, it.desired-error, "Error message matches"
     finally
-      if not caught
-        @fail "Code #i did not throw an error (expected it to)"
-      @pass!
+      if caught then @pass "Threw an error"
+      else @fail "Code #i did not throw an error (expected it to)"
 
 test "macro constructor called with no arguments is an error" ->
   -> esl "(macro)"
