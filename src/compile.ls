@@ -128,12 +128,17 @@ list-to-estree = (env, { values }:ast, options={}) ->
     try
       macro-return := that.apply local-env, rest
     catch e
+      # Prepend information to the error's message about the macro it came
+      # from, to help in debugging.  Then re-throw it.
 
-      # Prepend data to the error message to help in debugging.
+      explanation = "Error evaluating macro `#{head.value}`"
 
-      { line, column } = ast.location.start
-      e.message  = "Error evaluating macro `#{head.value}` \
-                    (called at line #line, column #column): #{e.message}"
+      if ast.location
+        { line, column } = ast.location.start
+        explanation += " (called at line #line, column #column)"
+      else
+        explanation += " (called at unknown location; likely returned from a macro)"
+      e.message = "#explanation: #{e.message}"
       throw e
 
     switch typeof! macro-return
