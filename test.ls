@@ -1050,6 +1050,17 @@ test "macros allow redefinition of captured macros" ->
     '''
     ..`@equals` "yes();"
 
+test "macro can return code that calls itself" ->
+  esl '''
+  (macro test
+   (lambda (x)
+    (if x (return x)
+          (return '(test fromSelfCall)))))
+
+  (test)
+  '''
+    ..`@equals` "fromSelfCall;"
+
 test "invalid AST returned by macro throws error" ->
   @throws do
     ->
