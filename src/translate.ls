@@ -11,6 +11,26 @@ compile          = require \./compile
 
 { errors } = require \esvalid
 
+errors-about-nodes-esvalid-understands = do ->
+  # Ignore errors about nodes that esvalid can't currently handle.
+  (ast) ->
+    # This list is gathered from
+    # https://github.com/estools/esvalid/blob/2693f0906a3336de05d3325d10f8aa8297211bdb/index.js
+    # At time of writing, esvalid version is 1.1.0
+    esvalid-supported-node-types = <[
+      ArrayExpression AssignmentExpression BinaryExpression BlockStatement
+      BreakStatement CallExpression CatchClause ConditionalExpression
+      ContinueStatement DebuggerStatement DoWhileStatement EmptyStatement
+      ExpressionStatement ForInStatement ForStatement FunctionDeclaration
+      FunctionExpression Identifier IfStatement LabeledStatement Literal
+      LogicalExpression MemberExpression NewExpression ObjectExpression Program
+      ReturnStatement SequenceExpression SwitchCase SwitchStatement ThisExpression
+      ThrowStatement TryStatement UnaryExpression UpdateExpression
+      VariableDeclaration VariableDeclarator WhileStatement WithStatement
+    ]>
+    err = errors ast
+      .filter (.node.type in esvalid-supported-node-types)
+
 module.exports = (root-env, ast, options={}) ->
 
   transform-macros = (options.transform-macros || []) .map (func) ->
@@ -30,7 +50,7 @@ module.exports = (root-env, ast, options={}) ->
            |> (.filter (isnt null)) # because macro definitions emit null
            |> (.map statementify)
 
-  err = errors program-ast
+  err = errors-about-nodes-esvalid-understands program-ast
   if err.length
     first-error = err.0
     throw first-error

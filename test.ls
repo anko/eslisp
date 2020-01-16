@@ -1184,6 +1184,21 @@ test "macro can compile and return parameter as estree" ->
     '''
       ..`@equals` "3;\n'hi';\nc();\n({ a: b });"
 
+test "macro can handle new-ish JS features like ClassDeclaration" ->
+  esl '''
+    (macro test
+     (lambda ()
+      (return (object
+        "type" "ClassDeclaration"
+        "id" (object "type" "Identifier" "name" "A")
+        "superClass" null
+        "body" (object
+          "type" "ClassBody"
+          "body" (array))))))
+    (test)
+    '''
+      ..`@equals` "class A {\n}"
+
 test "multiple invocations of the compiler are separate" ->
   esl "(macro what (lambda () (return 'hi)))"
   esl "(what)"
