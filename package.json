@@ -38,23 +38,23 @@
     "anyify": "^1.0.1",
     "browserify": "^16.2.3",
     "concat-stream": "^2.0.0",
-    "ecstatic": "^3.3.1",
+    "ecstatic": "^4.1.2",
     "livescript": "^1.6.0",
-    "puppeteer": "^1.13.0",
-    "rimraf": "^2.6.3",
+    "puppeteer": "^2.1.1",
+    "rimraf": "^3.0.2",
     "source-map": "0.7.3",
-    "tape": "^4.10.1",
-    "tests-ex-markdown": "^2.0.0",
-    "tmp": "0.0.33",
-    "uuid": "^3.3.2"
+    "tape": "^4.13.2",
+    "tests-ex-markdown": "^3.0.0",
+    "tmp": "0.1.0",
+    "uuid": "^7.0.2"
   },
   "dependencies": {
-    "chalk": "^2.4.2",
+    "chalk": "^3.0.0",
     "convert-source-map": "^1.7.0",
-    "escodegen": "^1.12.1",
+    "escodegen": "^1.14.1",
     "esutils": "^2.0.3",
     "esvalid": "1.1.0",
-    "nopt": "^4.0.1",
+    "nopt": "^4.0.3",
     "prelude-ls": "^1.1.1",
     "sexpr-plus": "^7.0.0"
   }
