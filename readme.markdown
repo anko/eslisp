@@ -11,6 +11,9 @@ your own language features, [like this][9].
 > :warning: **Note the 0.x.x [semver][10].**  The API may shift under your
 > feet.
 
+> :warning: **Only ES5 is supported right now.**  Unless you [write the macros
+> yourself](https://github.com/anko/eslisp/issues/60#issuecomment-718196427).
+
 ## Philosophy
 
 -   **Small core, close to JS**.  This core eslisp corresponds closely with the
