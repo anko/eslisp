@@ -37,7 +37,6 @@
   "devDependencies": {
     "anyify": "^1.0.1",
     "browserify": "^16.2.3",
-    "concat-stream": "^2.0.0",
     "ecstatic": "^4.1.2",
     "livescript": "^1.6.0",
     "puppeteer": "^2.1.1",
@@ -50,6 +49,7 @@
   },
   "dependencies": {
     "chalk": "^3.0.0",
+    "concat-stream": "^2.0.0",
     "convert-source-map": "^1.7.0",
     "escodegen": "^1.14.1",
     "esutils": "^2.0.3",
