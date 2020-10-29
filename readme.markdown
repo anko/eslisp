@@ -439,6 +439,11 @@ whatever, so you can put the macro function in a separate file and do—
 
 —to use it.
 
+Or if you'd like to also be able to load macros from `.esl` eslisp files
+without first compiling them to JavaScript, you can do that with
+
+    (macroRequire someName "./file.esl")
+
 This means you can publish eslisp macros on [npm][38].  The name prefix
 `eslisp-` and keyword `eslisp-macro` are recommended.  [Some exist
 already.][39]

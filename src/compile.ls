@@ -166,7 +166,7 @@ list-to-estree = (env, { values }:ast, options={}) ->
           ..?loc ||= head.location
 
     | otherwise =>
-      throw Error "Unexpected macro return type #that"
+      throw Error "Unexpected macro return type from #{head.value }: #that"
 
   else
     # Compile to a function call

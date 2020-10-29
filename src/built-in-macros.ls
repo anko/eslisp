@@ -7,6 +7,7 @@ statementify = require \./es-statementify
 } = require \./import-macro
 Module = require \module
 require! \path
+require! \fs
 
 chained-binary-expr = (type, operator, associativity=\right) ->
   macro = ->
@@ -409,6 +410,66 @@ contents =
       handler : catch-clause
       finalizer : finally-clause
 
+  \macroRequire :  ->
+    env = this
+
+    # Load a macro from the specified file.  If the file's extension is '.esl',
+    # load it as eslisp code.
+
+    compile-file-as-macro = (file-name) ->
+      # Read the file's contents, and if it's an eslisp file, compile it to JS.
+      file-content = fs.read-file-sync file-name, \utf-8
+      if file-name.ends-with '.esl'
+        eslisp-to-js = require "./index"
+        file-content := eslisp-to-js file-content
+
+      # Run the file as a new module.
+      new-module = new Module file-name, module
+        ..paths = Module._node-module-paths file-name
+        ..filename = file-name
+      new-module._compile file-content, file-name
+
+      return new-module.exports
+
+    switch &length
+    case 1
+      [ file-name ] = arguments
+      unless file-name.type in <[ atom string ]>
+        throw Error "Invalid require path: #{JSON.stringify file-name}"
+
+      file-name .= value
+
+      macro = compile-file-as-macro file-name
+      switch typeof! macro
+      | \Object =>
+        for k, v of macro then env.import-macro k, v
+      | \Function =>
+        throw Error "Cannot load macro from function without name given"
+      | otherwise =>
+        throw Error "Invalid macro return value #{JSON.stringify macro}"
+
+      env.import-macro name, macro-func
+
+    case 2
+      [ name, file-name ] = arguments
+      unless name.type in <[ atom string ]>
+        throw Error "Invalid macro name: #{JSON.stringify name}"
+      unless file-name.type in <[ atom string ]>
+        throw Error "Invalid require path: #{JSON.stringify file-name}"
+
+      name .= value
+      file-name .= value
+
+      macro-func = compile-file-as-macro file-name
+      env.import-macro name, macro-func
+
+    default
+      throw Error """
+        macroRequire: Unexpected number of arguments.
+        Got #{&length}.  Expected 1 or 2.
+        """
+    return null
+
   \macro : ->
     env = this
 
@@ -441,6 +502,7 @@ contents =
 
       let require = require-substitute
         eval "(#{env.compile-to-js es-ast})"
+
     switch &length
     | 1 =>
       form = &0

@@ -1199,6 +1199,51 @@ test "macro can handle new-ish JS features like ClassDeclaration" ->
     '''
       ..`@equals` "class A {\n}"
 
+if not running-in-browser
+  test "macroRequire can load a macro from .esl file" ->
+    { name, fd } = tmp.file-sync postfix: \.esl
+    fs.write-sync fd, '''
+    (= (. module exports) (lambda (x) (return `(hiFromOtherFile ,x))))
+    '''
+    esl """
+      (macroRequire test "#name")
+      (test asd)
+      """
+        ..`@equals` "hiFromOtherFile(asd);"
+
+    fs.unlink-sync name # clean up
+
+  test "macroRequire can load macros from .esl file (as object)" ->
+    { name, fd } = tmp.file-sync postfix: \.esl
+    fs.write-sync fd, '''
+    (= (. module exports)
+       (object a (lambda (x) (return 'a))
+               b (lambda (x) (return 'b))))
+    '''
+    esl """
+      (macroRequire "#name")
+      (a)
+      (b)
+      """
+        ..`@equals` "a;\nb;"
+
+    fs.unlink-sync name # clean up
+
+  test "macroRequire can load a macro from .js file outputting estree" ->
+    { name, fd } = tmp.file-sync postfix: \.js
+    fs.write-sync fd, '''
+    module.exports = function () {
+      return { type: "Identifier", name: "hiFromOtherFile" }
+    }
+    '''
+    esl """
+      (macroRequire test "#name")
+      (test asd)
+      """
+        ..`@equals` "hiFromOtherFile;"
+
+    fs.unlink-sync name # clean up
+
 test "multiple invocations of the compiler are separate" ->
   esl "(macro what (lambda () (return 'hi)))"
   esl "(what)"

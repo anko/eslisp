@@ -184,12 +184,12 @@ generate arbitrary JavaScript are built in to eslisp.
 
 #### Macro-related
 
-| name         | description                           |
-| ------------ | ------------------------------------- |
-| `macro`      | macro directive                       |
-| `capmacro`   | environment-capturing macro directive |
-| `quote`      | quotation operator                    |
-| `quasiquote` | quasiquote                            |
+| name           | description                           |
+| -------------- | ------------------------------------- |
+| `macro`        | macro directive                       |
+| `macroRequire` | loads a macro from .esl file          |
+| `quote`        | quotation operator                    |
+| `quasiquote`   | quasiquote                            |
 
 These are only valid inside `quasiquote`:
 
@@ -583,7 +583,27 @@ or `finally`, in which case they are treated as the catch- or finally-clause.
 Either the catch- or finally- or both clauses need to be present, but they can
 appear at any position.  At the end is probably most readable.
 
-## User-defined macros
+## Loading existing macros
+
+From an .esl or .js file that exports a function:
+
+    (macroRequire macroName "./path/to/file.esl")
+
+From an .esl or .js file that exports an object which properties you want to
+load as macros:
+
+    (macroRequire "./path/to/file.esl")
+
+From an npm module that exports a function:
+
+    (macro macroName (require "module-name"))
+
+From an npm module that exports an object which properties you want to load as
+macros:
+
+    (macro (require "module-name"))
+
+## Defining your own macros
 
 If you can think of any better way to write any of the above, or wish you could
 write something in a way that you can't in core eslisp, check out [how macros
