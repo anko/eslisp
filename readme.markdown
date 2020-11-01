@@ -1,7 +1,7 @@
 # eslisp [![](https://img.shields.io/npm/v/eslisp.svg?style=flat-square)][1] [![](https://img.shields.io/travis/anko/eslisp.svg?style=flat-square)][2] [![](https://img.shields.io/badge/chat-gitter_%E2%86%92-blue.svg?style=flat-square)][3]
 
 An [S-expression][4] syntax for [ECMAScript][5]/JavaScript, with [Lisp-like
-hygienic macros][6].  Minimal core, maximally customisable.
+macros][6].  Minimal core, maximally customisable.
 
 This is not magic:  It's just an S-expression encoding of the [estree][7] AST
 format.  The macros are ordinary JS functions that return objects, which just
