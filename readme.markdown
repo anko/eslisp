@@ -114,7 +114,7 @@ Doing it this way has a few advantages:
 
 I wanted JavaScript to be [homoiconic][13] and have modular macros written in
 the same language.  I feel like this is the [adjacent possible][14] in that
-direction.  [Sweet.js][15] exists for macros, but theyre awkward to write and
+direction.  [Sweet.js][15] exists for macros, but they're awkward to write and
 aren't JavaScript.  [Various JavaScript lisps][16] exist, but most have
 featuritis from trying too hard to be Lisp (rather than just being a JS
 syntax), and none have macros that are just JS functions.
@@ -456,7 +456,7 @@ argument (`-t` for short). For example,
 
     eslc --transform eslisp-propertify myprogram.esl
 
-uses [eslisp-propertify][40] to convert all atoms containg dots into member
+uses [eslisp-propertify][40] to convert all atoms containing dots into member
 expressions.  The flag can be specified multiple times.
 
 ## Try it
