@@ -24,6 +24,7 @@ print-usage = ->
     -h, --help                print usage, exit
     -t, --transform           macro to `require` and wrap whole input in; can
                                 be specified multiple times
+    -o, --output 	      output file (stdout used as default)
     -s, --source-map-outfile  file to save source map in; remember to add the
                                 appropriate `//\# sourceMappingURL=...` comment
                                 to the end of your output JS file
@@ -34,6 +35,7 @@ options =
   version   : Boolean
   help      : Boolean
   transform : Array
+  output : String
   \source-map-outfile : String
   \embed-source-map : Boolean
 
@@ -41,6 +43,7 @@ option-shorthands =
   v : \--version
   h : \--help
   t : \--transform
+  o : \--output
   s : \--source-map-outfile
   S : \--embed-source-map
 
@@ -114,7 +117,10 @@ compile-and-show = (code, filename=null) ->
       js-code += "\n#source-map-data-uri-comment"
 
     # Print finished JavaScript to stdout.
-    console.log js-code
+    if parsed-options.output
+       fs.write-file-sync parsed-options.output, js-code
+    else
+        console.log js-code
 
   catch err
     if err instanceof InvalidAstError
