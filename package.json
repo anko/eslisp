@@ -44,7 +44,7 @@
     "source-map": "0.7.3",
     "tape": "^4.13.2",
     "tests-ex-markdown": "^3.0.0",
-    "tmp": "0.1.0",
+    "tmp": "0.2.6",
     "uuid": "^7.0.2"
   },
   "dependencies": {
